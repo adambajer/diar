@@ -1,0 +1,14 @@
+# Node.js modules
+node_modules/
+npm-debug.log*
+
+# Logs
+logs/
+*.log
+
+# Environment Variables
+.env
+
+# OS and Editor Files
+.DS_Store
+Thumbs.db
