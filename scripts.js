@@ -36,17 +36,20 @@ let activeCell = null; // Added variable
 // Initialize Planner on DOM Load
 // ========================
 document.addEventListener("DOMContentLoaded", () => {
-    renderPlanner(); 
+    renderPlanner();
+    updateYearAndMonthDisplay();
+    renderMiniCalendar();
 });
+
 
 // ========================
 // Render Planner Function
 // ========================
 async function renderPlanner() {
     currentStartOfWeek = getStartOfWeek(baseDate);
-    renderHeaders(currentStartOfWeek);
+    //renderHeaders(currentStartOfWeek);
     renderTimeSlots(currentStartOfWeek);
-    renderYearCalendar();
+   // renderYearCalendar();
   
      const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
 
@@ -85,7 +88,7 @@ function renderHeaders(startOfWeek) {
         const dayDate = addDays(startOfWeek, i);
         const th = document.createElement('th');
         th.className = "day-header";
-        th.innerHTML = `<span class="day-subheader">${dayDate.toLocaleString('cs-CZ', { weekday: 'long' })}</span><span class="big">${dayDate.getDate()}</span>
+        th.innerHTML = `<span class="day-subheader">${dayDate.toLocaleString('cs-CZ', { weekday: 'short' })}</span><span class="big">${dayDate.getDate()}</span>
                         `;
         dayHeaders.appendChild(th);
     }
@@ -112,7 +115,7 @@ function renderTimeSlots(startOfWeek) {
 
             const timeLabel = document.createElement("span");
             timeLabel.className = "time-label";
-            timeLabel.innerText = `${formatHour(hour)}:00`;
+            timeLabel.innerText = `${formatHour(hour)}`;
             cell.appendChild(timeLabel);
 
             // Spinner Element
@@ -389,16 +392,7 @@ function addDays(date, days) {
     return result;
 }
 
-// Get Start of the Week (Monday)
-function getStartOfWeek(date) {
-    const clonedDate = new Date(date);
-    const day = clonedDate.getDay() || 7; // Sunday = 7
-    const diff = (day === 7 ? -6 : 1) - day;
-    clonedDate.setDate(clonedDate.getDate() + diff);
-    clonedDate.setHours(0, 0, 0, 0);
-    return clonedDate;
-}
-
+ 
 // Get Week Number
 function getWeekNumber(date) {
     const startOfWeek = getStartOfWeek(new Date(date));
@@ -433,7 +427,7 @@ function getHourFromTime(timeString) {
 
 // Format Hour for Display
 function formatHour(hour) {
-    return hour.toString().padStart(2, '0');
+    return hour.toString().padStart(1, '0');
 }
 
 // ========================
@@ -493,61 +487,48 @@ function fetchNotesForWeekFromFirebase(weekStartDate) {
             console.error("Error fetching notes from Firebase:", error);
             return null;
         });
+}function getStartOfWeek(date) {
+    const result = new Date(date);
+    const day = result.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const diff = (day === 0 ? -6 : 1) - day; // Adjust so that Monday is the start of the week
+    result.setDate(result.getDate() + diff);
+    return result;
 }
+
 function renderYearCalendar() {
-    const yearCalendar = document.getElementById("year-calendar");
-    const yearDisplay = document.getElementById("year-display");
-    const weekDisplay = document.getElementById("week-number-display");
+    const yearCalendar = document.querySelector(".year-calendar");
+    const currentYear = baseDate.getFullYear();
+    const currentMonth = baseDate.getMonth();
 
     yearCalendar.innerHTML = ""; // Clear existing content
-    const currentYear = baseDate.getFullYear(); // Get year dynamically
-    const currentMonth = baseDate.getMonth(); // Get currently selected month
-    const currentWeek = getWeekNumber(baseDate); // Get current week number dynamically
-
-    // Update year and week number in the sidebar
-    yearDisplay.innerText = currentYear;
-    weekDisplay.innerText = `Týden ${currentWeek}`;
 
     for (let month = 0; month < 12; month++) {
         const firstDay = new Date(currentYear, month, 1);
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
         const monthName = firstDay.toLocaleString('cs-CZ', { month: 'long' });
 
-        // Create month container
         const monthContainer = document.createElement("div");
-        monthContainer.className = "month-container";
-
-        // Add rotated month label
-        const monthLabel = document.createElement("div");
-        monthLabel.className = "month-label";
-        monthLabel.innerText = monthName;
-
-        // Highlight the currently selected month in blue
+        monthContainer.className = "month-container shadow-sm";
         if (month === currentMonth) {
-            monthLabel.classList.add("selected");
+            monthContainer.classList.add("expanded");
         }
 
-        monthContainer.appendChild(monthLabel);
-
-        // Create calendar table
-        const calendarTable = document.createElement("table");
-        calendarTable.className = "month-calendar";
-
-        const thead = document.createElement("thead");
-        const headerRow = document.createElement("tr");
-        ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach(day => {
-            const th = document.createElement("th");
-            th.innerText = day;
-            headerRow.appendChild(th);
+        const monthLabel = document.createElement("div");
+        monthLabel.className = "month-label";
+        monthLabel.innerText = monthName.toUpperCase();
+        monthLabel.addEventListener("mouseenter", () => {
+            document.querySelectorAll(".month-container").forEach(el => el.classList.remove("expanded"));
+            monthContainer.classList.add("expanded");
         });
-        thead.appendChild(headerRow);
-        calendarTable.appendChild(thead);
+
+        const calendar = document.createElement("table");
+        calendar.className = "month-calendar";
 
         const tbody = document.createElement("tbody");
-        let currentRow = document.createElement("tr");
+        let row = document.createElement("tr");
 
         for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
-            currentRow.appendChild(document.createElement("td"));
+            row.appendChild(document.createElement("td"));
         }
 
         for (let day = 1; day <= daysInMonth; day++) {
@@ -557,36 +538,33 @@ function renderYearCalendar() {
             const cell = document.createElement("td");
             cell.innerText = day;
 
-            if (date >= getStartOfWeek(baseDate) && date < addDays(getStartOfWeek(baseDate), 7)) {
+            if (
+                date >= getStartOfWeek(baseDate) && 
+                date < addDays(getStartOfWeek(baseDate), 7)
+            ) {
                 cell.classList.add("current-week");
             }
 
             cell.addEventListener("click", () => goToSpecificDate(dateStr));
 
-            fetchNoteFromFirebase(dateStr, "00:00").then(note => {
-                if (note) {
-                    const noteIndicator = document.createElement("div");
-                    noteIndicator.className = "note-indicator";
-                    cell.appendChild(noteIndicator);
-                }
-            });
-
-            currentRow.appendChild(cell);
+            row.appendChild(cell);
 
             if (date.getDay() === 0 || day === daysInMonth) {
-                tbody.appendChild(currentRow);
-                currentRow = document.createElement("tr");
+                tbody.appendChild(row);
+                row = document.createElement("tr");
             }
         }
 
-        calendarTable.appendChild(tbody);
-        monthContainer.appendChild(calendarTable);
+        calendar.appendChild(tbody);
 
+        monthContainer.appendChild(monthLabel);
+        monthContainer.appendChild(calendar);
         yearCalendar.appendChild(monthContainer);
     }
 }
 
 
+
 // Navigate to a specific date in the planner
 function goToSpecificDate(dateStr) {
     baseDate = new Date(dateStr);
@@ -598,4 +576,122 @@ function goToSpecificDate(dateStr) {
 function goToSpecificDate(dateStr) {
     baseDate = new Date(dateStr);
     renderPlanner();
+}
+document.getElementById("open-year-calendar").addEventListener("click", () => {
+    renderYearCalendarModal();
+    const modal = new bootstrap.Modal(document.getElementById("yearCalendarModal"));
+    modal.show();
+});
+function renderYearCalendarModal() {
+    const container = document.querySelector(".year-calendar-modal");
+    container.innerHTML = ""; // Clear existing content
+
+    const currentYear = baseDate.getFullYear();
+
+    for (let month = 0; month < 12; month++) {
+        const firstDay = new Date(currentYear, month, 1);
+        const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+        const monthName = firstDay.toLocaleString('cs-CZ', { month: 'long' });
+
+        const monthContainer = document.createElement("div");
+        monthContainer.className = "month-container-modal";
+
+        const monthLabel = document.createElement("h5");
+        monthLabel.innerText = monthName.toUpperCase();
+        monthLabel.className = "text-center";
+
+        const table = document.createElement("table");
+        table.className = "table table-bordered table-sm";
+
+        const tbody = document.createElement("tbody");
+        let row = document.createElement("tr");
+
+        for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
+            row.appendChild(document.createElement("td"));
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const cell = document.createElement("td");
+            cell.innerText = day;
+
+            row.appendChild(cell);
+
+            if (new Date(currentYear, month, day).getDay() === 0 || day === daysInMonth) {
+                tbody.appendChild(row);
+                row = document.createElement("tr");
+            }
+        }
+
+        table.appendChild(tbody);
+        monthContainer.appendChild(monthLabel);
+        monthContainer.appendChild(table);
+        container.appendChild(monthContainer);
+    }
+}function renderMiniCalendar() {
+    const container = document.getElementById("mini-calendar-container");
+    container.innerHTML = ""; // Clear existing content
+
+    const currentYear = baseDate.getFullYear();
+    const currentMonth = baseDate.getMonth();
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    const table = document.createElement("table");
+    table.className = "table table-sm table-bordered";
+
+    const tbody = document.createElement("tbody");
+    let row = document.createElement("tr");
+
+    // Empty cells for days before the first of the month
+    for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
+        row.appendChild(document.createElement("td"));
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+
+        const cell = document.createElement("td");
+        cell.innerText = day;
+
+        // Highlight today's date
+        if (date.toDateString() === new Date().toDateString()) {
+            cell.classList.add("bg-primary", "text-white");
+        }
+
+        row.appendChild(cell);
+
+        if (date.getDay() === 0 || day === daysInMonth) {
+            tbody.appendChild(row);
+            row = document.createElement("tr");
+        }
+    }
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+}
+
+function updateYearAndMonthDisplay() {
+    const currentYear = baseDate.getFullYear();
+    const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
+
+    document.getElementById("current-year").innerText = currentYear;
+    document.getElementById("current-month-name").innerText = currentMonthName.toUpperCase();
+    document.getElementById("selected-month").innerText = currentMonthName;
+}
+// Handle switching to the previous month
+document.getElementById("prev-month").addEventListener("click", () => {
+    baseDate.setMonth(baseDate.getMonth() - 1); // Move to the previous month
+    updateMonthView();
+});
+
+// Handle switching to the next month
+document.getElementById("next-month").addEventListener("click", () => {
+    baseDate.setMonth(baseDate.getMonth() + 1); // Move to the next month
+    updateMonthView();
+});
+
+// Update the mini-calendar, current month name, and year display
+function updateMonthView() {
+    renderMiniCalendar();
+    updateYearAndMonthDisplay();
 }
