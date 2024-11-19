@@ -171,3 +171,239 @@ td.time-slot .note-text {
   background-color: #007bff !important;
   color: white !important;
 }
+.mini-calendar {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+}
+
+.mini-calendar td {
+  cursor: pointer;
+  text-align: center;
+  vertical-align: middle;
+  width: 14.285%; /* Fixed width for all days (7 columns) */
+  height: 2.5rem; /* Adjust as needed */
+}
+
+.mini-calendar td:nth-child(7) {
+  color: red; /* Sundays in red */
+}
+
+.year-calendar-modal .month-container-modal {
+  margin-bottom: 1rem;
+}
+
+.year-calendar-modal td {
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  width: 14.285%; /* Ensure equal column widths */
+  height: 2.5rem; /* Adjust height */
+}
+
+.year-calendar-modal td:nth-child(7) {
+  color: red; /* Sundays in red */
+}
+
+/* Adjust button sizes */
+button.btn-sm {
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+}
+
+/* Ensure the full year calendar is contained */
+.year-calendar-modal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.year-calendar-modal .month-container-modal {
+  width: calc(100% / 4 - 1rem); /* 4 months per row */
+}
+
+    /* Top Header Styles */
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background-color: #f8f9fa;
+  }
+
+  .current-year {
+      font-size: 1.5rem;
+      font-weight: bold;
+  }
+
+  .current-month-navigation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .current-month-name {
+      font-size: 1.25rem;
+      font-weight: 500;
+  }
+
+  .selected-week {
+      background-color: #d1ecf1 !important;
+      color: #0c5460 !important;
+      border-radius: 4px;
+  }
+
+  /* Planner Styles */
+  .planner-table th, .planner-table td {
+      vertical-align: top;
+      position: relative;
+      width: 14.28%; /* Equal width for 7 columns */
+  }
+
+  .real-date {
+      display: block;
+      font-size: 0.75rem;
+      color: #6c757d;
+  }
+
+  .spinner-border {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+  }
+
+  /* Year Calendar Modal Styles */
+  .year-calendar-modal {
+      max-height: 70vh;
+      overflow-y: auto;
+  }
+
+  .month-container-modal {
+      margin-bottom: 20px;
+  }
+
+  /* Real-Time Clock */
+  #real-time-clock {
+      font-size: 1.25rem;
+      font-weight: bold;
+  }
+
+  /* Hover Effects */
+  .time-slot:hover {
+      background-color: #f1f1f1;
+  }
+
+  .note-text:focus {
+      outline: 2px solid #0d6efd;
+  } /* Top Header Styles */
+  .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      background-color: #f8f9fa;
+      flex-wrap: wrap;
+  }
+
+  .top-header-left, .top-header-center, .top-header-right {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 5px 0;
+  }
+
+  .current-year {
+      font-size: 1.5rem;
+      font-weight: bold;
+  }
+
+  .current-month-navigation {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+  }
+
+  .current-month-name {
+      font-size: 1.25rem;
+      font-weight: 500;
+  }
+
+  .selected-week {
+      background-color: #d1ecf1 !important;
+      color: #0c5460 !important;
+      border-radius: 4px;
+  }
+
+  /* Planner Styles */
+  .planner-table th, .planner-table td {
+      vertical-align: top;
+      position: relative;
+      width: 14.28%; /* Equal width for 7 columns */
+      padding: 10px;
+      height: 80px;
+  }
+
+  .real-date {
+      display: block;
+      font-size: 0.75rem;
+      color: #6c757d;
+  }
+
+  .spinner-border {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+  }
+
+  /* Year Calendar Modal Styles */
+  .year-calendar-modal {
+      max-height: 70vh;
+      overflow-y: auto;
+  }
+
+  .month-container-modal {
+      margin-bottom: 20px;
+  }
+
+  /* Real-Time Clock */
+  #real-time-clock {
+      font-size: 1.25rem;
+      font-weight: bold;
+  }
+
+  /* Hover Effects */
+  .time-slot:hover {
+      background-color: #f1f1f1;
+  }
+
+  .note-text:focus {
+      outline: 2px solid #0d6efd;
+  }
+
+  /* Listening Indicator Styles */
+  #mic-indicator {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      cursor: pointer;
+      z-index: 1000;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+      .planner-table th, .planner-table td {
+          padding: 5px;
+          height: 60px;
+      }
+
+      .current-year {
+          font-size: 1.2rem;
+      }
+
+      .current-month-name {
+          font-size: 1rem;
+      }
+  }

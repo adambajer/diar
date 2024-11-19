@@ -14,62 +14,85 @@
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-</head>
-<body class="container-fluid bg-light">
-    <div class="planner-container row">
-        <!-- Left Panel: Mini-Calendar -->
-        <div class="col-3">
-            <div class="mini-calendar">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <button class="btn btn-secondary" id="prev-month">◀</button>
-                    <h4 id="selected-month" class="text-center mb-0"></h4>
-                    <button class="btn btn-secondary" id="next-month">▶</button>
-                </div>
-                <div id="mini-calendar-container"></div>
-                <button class="btn btn-primary w-100 mt-2" id="open-year-calendar">View Year</button>
+</head>  
+<body>
+
+    <!-- Top Header -->
+    <div class="top-header">
+        <div class="top-header-left">
+            <!-- Real-Time Clock -->
+            <div id="real-time-clock">00:00:00</div>
+            <!-- Today's Date -->
+            <div id="today-date" class="badge bg-secondary">19.11.2024</div>
+        </div>
+        <div class="top-header-center">
+            <!-- Mini Calendar -->
+            <div id="mini-calendar-container"></div>
+            <!-- Selected Week Number -->
+            <div id="selected-week-number" class="badge bg-primary">Týden 46</div>
+        </div>
+        <div class="top-header-right">
+            <!-- Current Year -->
+            <div class="current-year">
+                <span id="current-year">2024</span>
+                <button id="open-year-calendar" class="btn btn-outline-primary btn-sm ms-2" title="Otevřít roční kalendář">
+                    <i class="bi bi-calendar-fill"></i>
+                </button>
             </div>
-            
-        </div>
-
-        <!-- Middle Panel: Selected Month Name -->
-        <div class="col-6 d-flex justify-content-center align-items-center">
-            <h1 id="current-month-name" class="display-3"></h1>
-        </div>
-
-        <!-- Right Panel: Year Display -->
-        <div class="col-3 d-flex justify-content-center align-items-center">
-            <h1 id="current-year" class="display-4"></h1>
+            <!-- Current Month Navigation -->
+            <div class="current-month-navigation">
+                <button id="prev-month" class="btn btn-outline-secondary btn-sm">&laquo;</button>
+                <span id="current-month-name">LISTOPAD</span>
+                <button id="next-month" class="btn btn-outline-secondary btn-sm">&raquo;</button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal for Year Calendar -->
+    <!-- Weekly Planner -->
+    <div class="container my-4">
+        <table class="table table-bordered planner-table">
+            <thead>
+                <tr id="day-headers">
+                    <!-- Day Headers will be injected here -->
+                </tr>
+            </thead>
+            <tbody id="time-slots">
+                <!-- Time Slots will be injected here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Year Calendar Modal -->
     <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="yearCalendarModalLabel">Full Year Calendar</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Kalendář pro <span id="selected-year">2024</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="year-calendar-modal">
-                        <!-- Full Year Calendar dynamically rendered -->
-                    </div>
+                <div class="modal-body year-calendar-modal">
+                    <!-- Year Calendar will be injected here -->
                 </div>
             </div>
         </div>
-    </div>    <!-- Calendar Table -->
-    <table class="table table-bordered table-hover mt-4">
-        <thead class="table-light">
-            <tr id="day-headers"></tr>
-        </thead>
-        <tbody id="time-slots"></tbody>
-    </table>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    </div>
+
+    <!-- Annyang Listening Indicator (Microphone Icon) -->
+    <div id="mic-indicator">
+        <i class="bi bi-mic-fill" style="font-size: 2rem; color: #6c757d;"></i>
+    </div>
+
+<!-- Bootstrap JS and dependencies (Popper.js) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<!-- Optional: Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
     <!-- Bootstrap JS (optional for interactive components) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
 
     <script src="scripts.js"></script>
 </body>
