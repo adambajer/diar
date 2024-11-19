@@ -381,16 +381,46 @@ button.btn-sm {
 
   .note-text:focus {
       outline: 2px solid #0d6efd;
-  }
+  }/* Listening Indicator Styles */
+#mic-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  cursor: pointer;
+  z-index: 1000;
+  outline: none; /* Prevent focus outline */
+}
 
-  /* Listening Indicator Styles */
-  #mic-indicator {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      cursor: pointer;
-      z-index: 1000;
-  }
+#mic-indicator:focus {
+  outline: none;
+}
+
+#mic-indicator:hover {
+  color: #0d6efd; /* Change color on hover */
+}
+
+/* Microphone Icon within Cells */
+.note-text-container {
+  position: relative;
+}
+
+.note-text-container .cell-mic {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #6c757d;
+}
+
+.note-text-container .cell-mic.active {
+  color: #0d6efd;
+}
+
+.note-text-container .cell-mic:hover {
+  color: #0d6efd;
+}
+
 
   /* Responsive Adjustments */
   @media (max-width: 768px) {
