@@ -1,409 +1,108 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-
-  font-family: Arial, sans-serif;
-}
-td {
-  background-color: #ccc;
-}
-/* Year Calendar Container */
-.year-calendar {
+/* Top Header Styles */
+.top-header {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  overflow-x: auto;
-  background-color: white;
-
-  gap: 0.5vw;  
-  padding-bottom: 1vw;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  flex-wrap: wrap;
 }
 
-/* Month Container */
-.month-container {
+.top-header-left, .top-header-center, .top-header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 5px 0;
+}
+
+.current-year {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.current-month-navigation {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.current-month-name {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+.selected-week {
+  background-color: #d1ecf1 !important;
+  color: #0c5460 !important;
+  border-radius: 4px;
+}
+
+/* Planner Styles */
+.planner-table th, .planner-table td {
+  vertical-align: top;
   position: relative;
-  transition: all 0.3s ease-in-out;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border-top-left-radius: 5px; /* Rounded corners for better visual appeal */
-  border-bottom-left-radius: 5px;
-  border: 1px solid #ccc; 
-  align-items: center;
-  background-color: #fff;
+  width: 14.28%; /* Equal width for 7 columns */
+  padding: 10px;
+  height: 80px;
 }
 
-.month-label {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  writing-mode: vertical-lr;
-  transform: rotate(180deg);
-  text-align: center;
-  font-size: 1.5vw;
-  font-weight: bold;
-  color: #333;
-  cursor: pointer;
-  padding: 0.4vw;
-  transition: background-color 0.3s ease;
-  width: 100%; /* Make the label take full width */ 
-  box-sizing: border-box; /* Ensure padding doesn’t overflow */
+.real-date {
+  display: block;
+  font-size: 0.75rem;
+  color: #6c757d;
 }
 
-.month-container.expanded .month-label {
-  writing-mode: horizontal-tb;
-  transform: rotate(0deg);
-}
-
-.month-label:hover { 
-}
-
-/* Day Subheaders (Optional Vertical Alignment) */
-.day-subheader {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  text-transform: uppercase;
-  font-size: 0.8vw;
-  color: #aaa;
-}
-
-/* Month Calendar */
-.month-calendar {
-  display: none; 
-  table-layout: fixed; /* Ensure equal-sized cells */
-  border-collapse: collapse;
-  font-size: 1vw;
-}
-
-.month-container.expanded .month-calendar {
-  display: table; /* Only show expanded months */
-}
-.month-container.expanded {
-  
-  transform: translateY(1vw);
-}
-
-/* Calendar Styling */
-.month-calendar th,
-.month-calendar td {
-  text-align: center;
-  vertical-align: middle;
-  padding: 0.2vw;
-  border: 1px solid #eaeaea;
-  height: auto;
-}
-
-.month-calendar td {
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-.month-calendar td:hover {
-  outline:1px solid #547998; 
-}
-
-/* Highlight Sundays */
-.month-calendar td:nth-child(7) {
-  color: red;
-}
-
-#day-headers th:nth-child(7) span.big {
-  color: red;
-}
-
-/* Highlight Current Day */
-.month-calendar td.today {
-  background-color: #9f8842;
-  font-weight: bold;
-  color: white;
-}
-
-/* Weekly Planner Section */
-.big {
-  font-size: 1.2vw;
-  margin-left: 0vw;
-}
-
-/* Time Slots */
-span.time-label {
+.spinner-border {
   position: absolute;
-  top: 0px;
-  left: 0.5vw;
-  color: #ccc;
+  top: 5px;
+  right: 5px;
 }
 
-td.time-slot {
-  position: relative;
-}
-
-td.time-slot .note-text {
-  padding-left: 1.5vw;
-  outline: none;
-}
-
-/* Hover Effects for Better Interaction */
-.time-slot:hover { 
-  cursor: pointer;
-}
-.month-calendar td.current-week {
-  border-bottom: 1px solid blue;
-}.mini-calendar {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
+/* Year Calendar Modal Styles */
+.year-calendar-modal {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .month-container-modal {
-  margin-bottom: 1rem;
+  margin-bottom: 20px;
 }
 
-.table-bordered td {
-  text-align: center;
-  vertical-align: middle;
+.month-container-modal table {
+  margin-bottom: 10px;
 }
 
-.bg-primary {
-  background-color: #007bff !important;
-  color: white !important;
-}
-.mini-calendar {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
+/* Real-Time Clock */
+#real-time-clock {
+  font-size: 1.25rem;
+  font-weight: bold;
 }
 
-.mini-calendar td {
-  cursor: pointer;
-  text-align: center;
-  vertical-align: middle;
-  width: 14.285%; /* Fixed width for all days (7 columns) */
-  height: 2.5rem; /* Adjust as needed */
+/* Hover Effects */
+.time-slot:hover {
+  background-color: #f1f1f1;
 }
 
-.mini-calendar td:nth-child(7) {
-  color: red; /* Sundays in red */
-}
-
-.year-calendar-modal .month-container-modal {
-  margin-bottom: 1rem;
-}
-
-.year-calendar-modal td {
-  text-align: center;
-  vertical-align: middle;
-  cursor: pointer;
-  width: 14.285%; /* Ensure equal column widths */
-  height: 2.5rem; /* Adjust height */
-}
-
-.year-calendar-modal td:nth-child(7) {
-  color: red; /* Sundays in red */
-}
-
-/* Adjust button sizes */
-button.btn-sm {
-  font-size: 0.9rem;
-  padding: 0.3rem 0.5rem;
-}
-
-/* Ensure the full year calendar is contained */
-.year-calendar-modal {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.year-calendar-modal .month-container-modal {
-  width: calc(100% / 4 - 1rem); /* 4 months per row */
-}
-
-    /* Top Header Styles */
-    .top-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      background-color: #f8f9fa;
-  }
-
-  .current-year {
-      font-size: 1.5rem;
-      font-weight: bold;
-  }
-
-  .current-month-navigation {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-  }
-
-  .current-month-name {
-      font-size: 1.25rem;
-      font-weight: 500;
-  }
-
-  .selected-week {
-      background-color: #d1ecf1 !important;
-      color: #0c5460 !important;
-      border-radius: 4px;
-  }
-
-  /* Planner Styles */
-  .planner-table th, .planner-table td {
-      vertical-align: top;
-      position: relative;
-      width: 14.28%; /* Equal width for 7 columns */
-  }
-
-  .real-date {
-      display: block;
-      font-size: 0.75rem;
-      color: #6c757d;
-  }
-
-  .spinner-border {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-  }
-
-  /* Year Calendar Modal Styles */
-  .year-calendar-modal {
-      max-height: 70vh;
-      overflow-y: auto;
-  }
-
-  .month-container-modal {
-      margin-bottom: 20px;
-  }
-
-  /* Real-Time Clock */
-  #real-time-clock {
-      font-size: 1.25rem;
-      font-weight: bold;
-  }
-
-  /* Hover Effects */
-  .time-slot:hover {
-      background-color: #f1f1f1;
-  }
-
-  .note-text:focus {
-      outline: 2px solid #0d6efd;
-  } /* Top Header Styles */
-  .top-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      background-color: #f8f9fa;
-      flex-wrap: wrap;
-  }
-
-  .top-header-left, .top-header-center, .top-header-right {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin: 5px 0;
-  }
-
-  .current-year {
-      font-size: 1.5rem;
-      font-weight: bold;
-  }
-
-  .current-month-navigation {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-  }
-
-  .current-month-name {
-      font-size: 1.25rem;
-      font-weight: 500;
-  }
-
-  .selected-week {
-      background-color: #d1ecf1 !important;
-      color: #0c5460 !important;
-      border-radius: 4px;
-  }
-
-  /* Planner Styles */
-  .planner-table th, .planner-table td {
-      vertical-align: top;
-      position: relative;
-      width: 14.28%; /* Equal width for 7 columns */
-      padding: 10px;
-      height: 80px;
-  }
-
-  .real-date {
-      display: block;
-      font-size: 0.75rem;
-      color: #6c757d;
-  }
-
-  .spinner-border {
-      position: absolute;
-      top: 5px;
-      right: 5px;
-  }
-
-  /* Year Calendar Modal Styles */
-  .year-calendar-modal {
-      max-height: 70vh;
-      overflow-y: auto;
-  }
-
-  .month-container-modal {
-      margin-bottom: 20px;
-  }
-
-  /* Real-Time Clock */
-  #real-time-clock {
-      font-size: 1.25rem;
-      font-weight: bold;
-  }
-
-  /* Hover Effects */
-  .time-slot:hover {
-      background-color: #f1f1f1;
-  }
-
-  .note-text:focus {
-      outline: 2px solid #0d6efd;
-  }/* Listening Indicator Styles */
-#mic-indicator {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  cursor: pointer;
-  z-index: 1000;
-  outline: none; /* Prevent focus outline */
-}
-
-#mic-indicator:focus {
-  outline: none;
-}
-
-#mic-indicator:hover {
-  color: #0d6efd; /* Change color on hover */
-}
-
-/* Microphone Icon within Cells */
+/* Make .note-text Fill the Entire Cell */
 .note-text-container {
   position: relative;
+  width: 100%;
+  height: 100%;
 }
 
+.note-text {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.note-text:focus {
+  outline: 2px solid #0d6efd;
+}
+
+/* Microphone Icon Styling */
 .note-text-container .cell-mic {
   position: absolute;
   top: 5px;
@@ -411,29 +110,47 @@ button.btn-sm {
   cursor: pointer;
   font-size: 1rem;
   color: #6c757d;
+  opacity: 0;
+  transition: opacity 0.3s ease, color 0.3s ease;
+}
+
+.time-slot:hover .cell-mic {
+  opacity: 1;
 }
 
 .note-text-container .cell-mic.active {
-  color: #0d6efd;
+  color: #dc3545; /* Change color to indicate active state */
+  animation: pulse 1s infinite;
 }
 
 .note-text-container .cell-mic:hover {
   color: #0d6efd;
 }
 
+/* Pulse Animation for Active Mic */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
 
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-      .planner-table th, .planner-table td {
-          padding: 5px;
-          height: 60px;
-      }
-
-      .current-year {
-          font-size: 1.2rem;
-      }
-
-      .current-month-name {
-          font-size: 1rem;
-      }
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .planner-table th, .planner-table td {
+      padding: 5px;
+      height: 60px;
   }
+
+  .current-year {
+      font-size: 1.2rem;
+  }
+
+  .current-month-name {
+      font-size: 1rem;
+  }
+}
+
+/* Toast Styles (Ensure Toasts are Visible) */
+.toast-container {
+  z-index: 1055; /* Ensure toasts appear above other elements */
+}

@@ -71,6 +71,8 @@ async function renderPlanner() {
 
     if (weekNotes) {
         populatePlannerWithNotes(weekNotes);
+    } else {
+        console.log("No notes found for the current week.");
     }
 
     // Highlight the selected week in calendars
@@ -143,22 +145,12 @@ function renderTimeSlots(startOfWeek) {
             // Create microphone icon
             const micIcon = document.createElement("i");
             micIcon.className = "bi bi-mic-fill cell-mic";
-            micIcon.title = "Klikněte pro přepis hlasu";
+            micIcon.title = "Přepis hlasu";
             micIcon.setAttribute('aria-label', 'Přepis hlasu');
             micIcon.setAttribute('role', 'button');
 
-            // Add click event to mic icon
-            micIcon.addEventListener('click', (event) => {
-                event.preventDefault();
-                event.stopPropagation(); // Prevent cell selection on mic click
-                if (currentTranscribingCell === noteTextElement) {
-                    // If already transcribing this cell, stop transcription
-                    stopTranscription();
-                } else {
-                    // Start transcription for this cell
-                    startTranscription(noteTextElement);
-                }
-            });
+            // Remove hover-based transcription initiation
+            // Instead, transcription starts on middle mouse click on the cell
 
             // Append elements to container
             noteContainer.appendChild(noteTextElement);
@@ -166,6 +158,21 @@ function renderTimeSlots(startOfWeek) {
 
             // Append container to cell
             cell.appendChild(noteContainer);
+
+            // Add middle mouse button listener to cell for starting transcription
+            cell.addEventListener('mousedown', (event) => {
+                if (event.button === 1) { // 1 denotes middle mouse button
+                    event.preventDefault(); // Prevent default middle-click behavior (e.g., auto-scroll)
+                    startTranscription(noteTextElement);
+                }
+            });
+
+            // Optional: Prevent default middle-click behavior on the document
+            document.addEventListener('contextmenu', function(event) {
+                if (event.button === 1) {
+                    event.preventDefault();
+                }
+            });
 
             row.appendChild(cell);
 
@@ -351,7 +358,7 @@ async function saveNoteToFirebase(date, time, text) {
         })
         .catch(error => {
             console.error(`Error saving note for ${date} at ${time}:`, error);
-            alert("Failed to save the note. Please try again.");
+            showToast("Failed to save the note. Please try again.");
         });
 }
 
@@ -370,7 +377,7 @@ async function deleteNoteFromFirebase(date, time) {
         })
         .catch(error => {
             console.error(`Error deleting note for ${date} at ${time}:`, error);
-            alert("Failed to delete the note. Please try again.");
+            showToast("Failed to delete the note. Please try again.");
         });
 }
 
@@ -389,6 +396,7 @@ function fetchNoteFromFirebase(date, time) {
         .then(snapshot => snapshot.val())
         .catch(error => {
             console.error(`Error fetching note for ${date} at ${time}:`, error);
+            showToast("Failed to fetch the note.");
             return null;
         });
 }
@@ -404,6 +412,7 @@ function fetchNotesForWeekFromFirebase(weekStartDate) {
         .then(snapshot => snapshot.val())
         .catch(error => {
             console.error("Error fetching notes from Firebase:", error);
+            showToast("Failed to fetch notes from Firebase.");
             return null;
         });
 }
@@ -715,9 +724,15 @@ function updateYearAndMonthDisplay() {
     const currentMonthNameElement = document.getElementById("current-month-name");
     const selectedMonthElement = document.getElementById("selected-month");
 
+    console.log("Updating Year and Month Display...");
+    console.log("currentYearElement:", currentYearElement);
+    console.log("currentMonthNameElement:", currentMonthNameElement);
+    console.log("selectedMonthElement:", selectedMonthElement);
+
     if (currentYearElement) {
         const currentYear = baseDate.getFullYear();
         currentYearElement.innerText = currentYear;
+        console.log(`Set current year to ${currentYear}`);
     } else {
         console.error("Element with ID 'current-year' not found.");
     }
@@ -725,6 +740,7 @@ function updateYearAndMonthDisplay() {
     if (currentMonthNameElement) {
         const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
         currentMonthNameElement.innerText = currentMonthName.toUpperCase();
+        console.log(`Set current month name to ${currentMonthName.toUpperCase()}`);
     } else {
         console.error("Element with ID 'current-month-name' not found.");
     }
@@ -732,6 +748,7 @@ function updateYearAndMonthDisplay() {
     if (selectedMonthElement) {
         const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
         selectedMonthElement.innerText = `Vybraný měsíc: ${currentMonthName.toUpperCase()}`;
+        console.log(`Set selected month to ${currentMonthName.toUpperCase()}`);
     } else {
         console.error("Element with ID 'selected-month' not found.");
     }
@@ -795,39 +812,14 @@ function setupWebSpeechAPI() {
     // Check for browser support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-        alert("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.");
+        showToast("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.");
         return;
     }
 
     recognition = new SpeechRecognition();
-    recognition.lang = 'cs-CZ'; // Czech language
+    recognition.lang = 'cs-CZ'; // Set language to Czech
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-
-    // Function to start transcription
-    function startTranscription(cell) {
-        if (currentTranscribingCell) {
-            // Already transcribing another cell
-            alert("Již probíhá přepis. Prosím, dokončete jej před zahájením nového.");
-            return;
-        }
-
-        currentTranscribingCell = cell;
-        const micIcon = cell.parentElement.querySelector('.cell-mic');
-        micIcon.classList.add('active');
-
-        recognition.start();
-    }
-
-    // Function to stop transcription
-    function stopTranscription() {
-        if (recognition && currentTranscribingCell) {
-            recognition.stop();
-            const micIcon = currentTranscribingCell.parentElement.querySelector('.cell-mic');
-            micIcon.classList.remove('active');
-            currentTranscribingCell = null;
-        }
-    }
 
     // Handle transcription results
     recognition.addEventListener('result', (event) => {
@@ -839,9 +831,14 @@ function setupWebSpeechAPI() {
             const dateObj = addDays(currentStartOfWeek, day);
             const date = format(dateObj, 'yyyy-MM-dd');
             const time = formatHour(hour);
-            saveNoteToFirebase(date, time, transcript);
+            saveNoteToFirebase(date, time, transcript)
+                .then(() => {
+                    showToast(`Poznámka přidána: "${transcript}"`);
+                })
+                .catch((error) => {
+                    showToast("Chyba při ukládání poznámky.");
+                });
             saveSelectedDateToLocalStorage(dateObj); // Save to local storage
-            alert(`Poznámka přidána: "${transcript}"`);
             stopTranscription();
         }
     });
@@ -853,13 +850,12 @@ function setupWebSpeechAPI() {
     });
 
     recognition.addEventListener('error', (event) => {
-        console.error('Chyba přepisu hlasu:', event.error);
-        alert("Chyba přepisu hlasu. Prosím, zkuste to znovu.");
+        console.error(`Chyba přepisu hlasu (${event.error}):`, event);
+        showToast(`Chyba přepisu hlasu: ${event.error}. Prosím, zkuste to znovu.`);
         if (currentTranscribingCell) {
             stopTranscription();
         }
     });
- 
 }
 
 // ========================
@@ -868,7 +864,7 @@ function setupWebSpeechAPI() {
 
 function startTranscription(noteTextElement) {
     if (currentTranscribingCell) {
-        alert("Již probíhá přepis. Prosím, dokončete jej před zahájením nového.");
+        showToast("Již probíhá přepis. Prosím, dokončete jej před zahájením nového.");
         return;
     }
 
@@ -877,6 +873,7 @@ function startTranscription(noteTextElement) {
     micIcon.classList.add('active');
 
     recognition.start();
+    showToast("Začíná přepis hlasu. Prosím, mluvte nyní.");
 }
 
 function stopTranscription() {
@@ -886,4 +883,40 @@ function stopTranscription() {
         micIcon.classList.remove('active');
         currentTranscribingCell = null;
     }
+}
+
+// ========================
+// Note Clearing Function
+// ========================
+
+function clearNote(noteTextElement, day, hour) {
+    if (confirm("Opravdu chcete smazat tuto poznámku?")) {
+        noteTextElement.innerText = '';
+        const dateObj = addDays(currentStartOfWeek, day);
+        const date = format(dateObj, 'yyyy-MM-dd');
+        const time = formatHour(hour);
+        deleteNoteFromFirebase(date, time)
+            .then(() => {
+                showToast("Poznámka byla úspěšně smazána.");
+            })
+            .catch((error) => {
+                showToast("Chyba při mazání poznámky.");
+            });
+    }
+}
+
+// ========================
+// Toast Notification Function
+// ========================
+
+function showToast(message) {
+    const toastEl = document.getElementById('notification-toast');
+    if (!toastEl) {
+        console.error("Toast element with ID 'notification-toast' not found.");
+        return;
+    }
+    const toastBody = toastEl.querySelector('.toast-body');
+    toastBody.innerText = message;
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
 }
