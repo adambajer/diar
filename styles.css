@@ -148,6 +148,11 @@
   .current-month-name {
       font-size: 1rem;
   }
+
+  /* Always show mic icon on touch devices */
+  .note-text-container .cell-mic {
+      opacity: 1;
+  }
 }
 
 /* Toast Styles (Ensure Toasts are Visible) */
