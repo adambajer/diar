@@ -800,7 +800,7 @@ function setupWebSpeechAPI() {
     }
 
     recognition = new SpeechRecognition();
-    recognition.lang = 'cs-CZ'; // Set language to Czech
+    recognition.lang = 'cs-CZ'; // Czech language
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -859,10 +859,7 @@ function setupWebSpeechAPI() {
             stopTranscription();
         }
     });
-
-    // Attach the startTranscription function to window for access in event listeners
-    window.startTranscription = startTranscription;
-    window.stopTranscription = stopTranscription;
+ 
 }
 
 // ========================
