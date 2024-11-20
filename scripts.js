@@ -149,8 +149,16 @@ function renderTimeSlots(startOfWeek) {
             micIcon.setAttribute('aria-label', 'Přepis hlasu');
             micIcon.setAttribute('role', 'button');
 
-            // Remove hover-based transcription initiation
-            // Instead, transcription starts on middle mouse click on the cell
+            // Add tap/click event listener to mic icon for mobile and desktop
+            micIcon.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent the event from bubbling up to the cell
+                startTranscription(noteTextElement);
+            });
+
+            micIcon.addEventListener('touchstart', (event) => {
+                event.preventDefault(); // Prevent touch from triggering other events
+                startTranscription(noteTextElement);
+            });
 
             // Append elements to container
             noteContainer.appendChild(noteTextElement);
