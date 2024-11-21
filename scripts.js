@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Žádné uložené datum nenalezeno. Používám aktuální datum.");
     }
 
-    updateTodayDate();
+    setupClock(); // Inicializace reálného času
     updateYearAndMonthDisplay();
 
     renderPlanner();
@@ -56,39 +56,154 @@ document.addEventListener("DOMContentLoaded", () => {
     renderYearCalendarModal();
 
     addMonthNavigationListeners();
-    addWeekNavigationListeners(); // Přidání listenerů pro týdenní navigaci
     setupYearCalendarButton();
     setupWebSpeechAPI(); // Inicializace Web Speech API pro přepis hlasu
-    setupClock(); // Inicializace reálného času
+    renderMonthHeader(); // Nový funkce pro vykreslení měsíců
 });
+
+// ========================
+// Vykreslení Měsíčního Headeru
+// ========================
+
+function renderMonthHeader() {
+    const yearHeaderContainer = document.getElementById("year-header");
+    yearHeaderContainer.innerHTML = ""; // Vyčištění existujícího headeru
+
+    const currentYear = baseDate.getFullYear();
+
+    // Vytvoření tabulky pro měsíce
+    const yearTable = document.createElement("table");
+    yearTable.className = "table year-header-table text-center";
+    yearTable.style.width = "100%";
+
+    const monthRow = document.createElement("tr");
+
+    // Názvy měsíců v češtině
+    const monthNames = [
+        "LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN",
+        "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"
+    ];
+
+    monthNames.forEach((monthName, index) => {
+        const monthCell = document.createElement("td");
+        monthCell.innerText = monthName;
+        monthCell.className = "month-cell";
+        monthCell.dataset.month = index; // Uložení indexu měsíce
+
+        // Klikací event pro navigaci na vybraný měsíc
+        monthCell.addEventListener("click", () => {
+            console.log(`Kliknuto na měsíc: ${monthName}`);
+            baseDate = new Date(currentYear, index, 1);
+            renderPlanner();
+            renderMiniCalendar();
+            renderYearCalendarModal();
+            renderDayNumbersRow(); // Vykreslení řádku s dny
+            updateYearAndMonthDisplay();
+            saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+        });
+
+        monthRow.appendChild(monthCell);
+    });
+
+    yearTable.appendChild(monthRow);
+    yearHeaderContainer.appendChild(yearTable);
+
+    // Vykreslení řádku s dny
+    renderDayNumbersRow();
+}
+
+// ========================
+// Vykreslení Řádku s Dny Měsíce
+// ========================
+
+function renderDayNumbersRow() {
+    const dayNumbersContainer = document.getElementById("day-numbers");
+    dayNumbersContainer.innerHTML = ""; // Vyčištění existujícího řádku
+
+    const currentYear = baseDate.getFullYear();
+    const currentMonth = baseDate.getMonth();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    const row = document.createElement("div");
+    row.className = "day-numbers-row";
+    row.style.display = "flex";
+    row.style.justifyContent = "space-around";
+    row.style.marginTop = "10px";
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+
+        const dayCell = document.createElement("div");
+        dayCell.innerText = day;
+        dayCell.className = "day-cell";
+        dayCell.style.padding = "10px";
+        dayCell.style.border = "1px solid #ccc";
+        dayCell.style.textAlign = "center";
+        dayCell.style.flex = "1"; // Rovnoměrné rozdělení
+        dayCell.style.cursor = "pointer";
+        dayCell.style.position = "relative";
+
+        // Zvýraznění nedělí v červené
+        if (date.getDay() === 0) {
+            dayCell.style.color = "red";
+        }
+
+        // Klikací event pro navigaci na vybraný den
+        dayCell.addEventListener("click", () => {
+            console.log(`Kliknuto na den: ${day}`);
+            baseDate = date;
+            renderPlanner();
+            renderMiniCalendar();
+            renderYearCalendarModal();
+            updateYearAndMonthDisplay();
+            saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+        });
+
+        // Zvýraznění aktuálního dne
+        const today = new Date();
+        if (
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        ) {
+            dayCell.style.backgroundColor = "#e0f7fa"; // Světle modrá
+        }
+
+        row.appendChild(dayCell);
+    }
+
+    dayNumbersContainer.appendChild(row);
+}
 
 // ========================
 // Vykreslení Týdenního Plánovače
 // ========================
 
 async function renderPlanner() {
-    console.log("Vykresluji plánovač...");
+    console.log("Rendering planner...");
+    
+    // Calculate start and end of the week
     currentStartOfWeek = getStartOfWeek(baseDate);
+    const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
+
+    // Render headers and time slots for the correct week
     renderHeaders(currentStartOfWeek);
     renderTimeSlots(currentStartOfWeek);
 
+    // Highlight the selected week and update the week number display
+    highlightSelectedWeek(currentStartOfWeek);
+    updateSelectedWeekNumber(currentStartOfWeek);
+
+    // Fetch and display notes for the week
     const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
-    console.log(`Načítám poznámky pro týden začínající: ${weekStartDate}`);
-
+    console.log(`Fetching notes for the week starting: ${weekStartDate}`);
     const weekNotes = await fetchNotesForWeekFromFirebase(weekStartDate);
-
     if (weekNotes) {
-        console.log("Poznámky nalezeny. Vkládám do plánovače.");
+        console.log("Notes found. Populating planner.");
         populatePlannerWithNotes(weekNotes);
     } else {
-        console.log("Nebyl nalezen žádný zápis pro aktuální týden.");
+        console.log("No notes found for the current week.");
     }
-
-    // Zvýraznění vybraného týdne v kalendářích
-    highlightSelectedWeek(currentStartOfWeek);
-
-    // Aktualizace zobrazení čísla vybraného týdne
-    updateSelectedWeekNumber(currentStartOfWeek);
 }
 
 // Render Day Headers (Day Names and Real Dates)
@@ -105,7 +220,6 @@ function renderHeaders(startOfWeek) {
         th.innerHTML = `
             <span class="day-name">${dayDate.toLocaleString('cs-CZ', { weekday: 'long' })}</span>
             <span class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'short', day: 'numeric' })}">${dayDate.getDate()}</span>
-            
         `;
         dayHeaders.appendChild(th);
     }
@@ -232,56 +346,56 @@ function renderMiniCalendar() {
     const firstDay = new Date(currentYear, currentMonth, 1);
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-    const table = document.createElement("table");
-    table.className = "table table-sm table-bordered text-center";
- 
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.flexWrap = "wrap";
+    row.style.justifyContent = "space-around";
 
-    const tbody = document.createElement("tbody");
-    let row = document.createElement("tr");
-
-    // Prázdné buňky pro dny před prvním dnem měsíce
-    for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
-        row.appendChild(document.createElement("td"));
-    }
-
+    // Vytvoření denních buněk
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
 
-        const cell = document.createElement("td");
-        cell.innerText = day;
+        const dayCell = document.createElement("div");
+        dayCell.innerText = day;
+        dayCell.className = "day-cell";
+        dayCell.style.padding = "10px";
+        dayCell.style.border = "1px solid #ccc";
+        dayCell.style.textAlign = "center";
+        dayCell.style.flex = "1"; // Rovnoměrné rozdělení
+        dayCell.style.cursor = "pointer";
+        dayCell.style.position = "relative";
 
-        // Zvýraznění nedělí
+        // Zvýraznění nedělí v červené
         if (date.getDay() === 0) {
-            cell.style.color = "red";
+            dayCell.style.color = "red";
         }
 
         // Přidání click eventu
-        cell.addEventListener("click", () => {
+        dayCell.addEventListener("click", () => {
             console.log(`Kliknuto na mini kalendář: den ${day}`);
             baseDate = date;
             renderPlanner();
             renderMiniCalendar();
             renderYearCalendarModal();
+            renderDayNumbersRow(); // Vykreslení řádku s dny
             updateYearAndMonthDisplay();
             saveSelectedDateToLocalStorage(date); // Uložení do local storage
         });
 
-        // Zvýraznění, pokud je týden vybraný
-        if (isDateInCurrentSelectedWeek(date)) {
-            cell.classList.add("selected-week");
-            console.log(`Buňka mini kalendáře pro den ${day} je ve vybraném týdnu.`);
+        // Zvýraznění aktuálního dne
+        const today = new Date();
+        if (
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        ) {
+            dayCell.style.backgroundColor = "#e0f7fa"; // Světle modrá
         }
 
-        row.appendChild(cell);
-
-        if (date.getDay() === 0 || day === daysInMonth) {
-            tbody.appendChild(row);
-            row = document.createElement("tr");
-        }
+        row.appendChild(dayCell);
     }
 
-    table.appendChild(tbody);
-    container.appendChild(table);
+    container.appendChild(row);
 }
 
 // ========================
@@ -329,7 +443,7 @@ function renderYearCalendarModal() {
                 cell.style.color = "red";
             }
 
-            // Zvýraznění, pokud je týden vybraný
+            // Zvýraznění, pokud je den ve vybraném týdnu
             if (isDateInCurrentSelectedWeek(date)) {
                 cell.classList.add("selected-week");
                 console.log(`Buňka ročního kalendáře pro den ${day}, měsíc ${month + 1} je ve vybraném týdnu.`);
@@ -342,6 +456,7 @@ function renderYearCalendarModal() {
                 renderPlanner();
                 renderMiniCalendar();
                 renderYearCalendarModal();
+                renderDayNumbersRow(); // Vykreslení řádku s dny
                 updateYearAndMonthDisplay();
                 saveSelectedDateToLocalStorage(date); // Uložení do local storage
                 // Zavření modalu po výběru data
@@ -458,6 +573,14 @@ function getStartOfWeek(date) {
     return result;
 }
 
+// Get the end of the week (Sunday)
+function getEndOfWeek(startOfWeek) {
+    const result = new Date(startOfWeek);
+    result.setDate(result.getDate() + 6);
+    result.setHours(23, 59, 59, 999); // Set time to the end of the day
+    return result;
+}
+
 // Přidání Dnů k Datu
 function addDays(date, days) {
     const result = new Date(date);
@@ -526,7 +649,7 @@ function sanitizeInput(str) {
 
 // Formátování Hodiny
 function formatHour(hour) {
-    return hour.toString().padStart(1, '0') + '';
+    return hour.toString().padStart(2, '0') + ':00';
 }
 
 // ========================
@@ -541,6 +664,7 @@ function addMonthNavigationListeners() {
         renderPlanner();
         renderMiniCalendar();
         renderYearCalendarModal();
+        renderDayNumbersRow(); // Vykreslení řádku s dny
         updateYearAndMonthDisplay();
         saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
     });
@@ -551,29 +675,7 @@ function addMonthNavigationListeners() {
         renderPlanner();
         renderMiniCalendar();
         renderYearCalendarModal();
-        updateYearAndMonthDisplay();
-        saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
-    });
-}
-
-// Přidání Event Listenerů pro Navigaci Týdnů
-function addWeekNavigationListeners() {
-    document.getElementById("prev-week").addEventListener("click", () => {
-        console.log("Kliknuto na předchozí týden.");
-        baseDate.setDate(baseDate.getDate() - 7);
-        renderPlanner();
-        renderMiniCalendar();
-        renderYearCalendarModal();
-        updateYearAndMonthDisplay();
-        saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
-    });
-
-    document.getElementById("next-week").addEventListener("click", () => {
-        console.log("Kliknuto na následující týden.");
-        baseDate.setDate(baseDate.getDate() + 7);
-        renderPlanner();
-        renderMiniCalendar();
-        renderYearCalendarModal();
+        renderDayNumbersRow(); // Vykreslení řádku s dny
         updateYearAndMonthDisplay();
         saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
     });
@@ -720,165 +822,6 @@ async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinner
 }
 
 // ========================
-// Zvýraznění Vybraného Týdne v Kalendářích
-// ========================
-function highlightSelectedWeek(startOfWeek) {
-    console.log("Zvýrazňuji vybraný týden v kalendářích.");
-
-    // Zvýraznění v Mini Kalendáři
-    const miniCalendarCells = document.querySelectorAll("#mini-calendar-container td");
-    miniCalendarCells.forEach(cell => {
-        const day = parseInt(cell.innerText, 10);
-        if (isNaN(day)) return;
-
-        const cellDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), day);
-        if (isDateInCurrentSelectedWeek(cellDate)) {
-            cell.classList.add("selected-week");
-            console.log(`Buňka mini kalendáře pro den ${day} je ve vybraném týdnu.`);
-        } else {
-            cell.classList.remove("selected-week");
-        }
-    });
-
-    // Zvýraznění v Ročním Kalendáři Modal
-    const yearCalendarCells = document.querySelectorAll(".year-calendar-modal td");
-    yearCalendarCells.forEach(cell => {
-        const day = parseInt(cell.innerText, 10);
-        if (isNaN(day)) return;
-
-        const monthHeader = cell.closest(".month-container-modal").querySelector("h5");
-        if (!monthHeader) return;
-
-        const monthName = monthHeader.textContent.trim();
-        const monthIndex = new Date(`${monthName} 1, ${baseDate.getFullYear()}`).getMonth();
-        const cellDate = new Date(baseDate.getFullYear(), monthIndex, day);
-
-        if (isDateInCurrentSelectedWeek(cellDate)) {
-            cell.classList.add("selected-week");
-            console.log(`Buňka ročního kalendáře pro den ${day}, měsíc ${monthIndex + 1} je ve vybraném týdnu.`);
-        } else {
-            cell.classList.remove("selected-week");
-        }
-    });
-}
-
-// ========================
-// Reálný Čas
-// ========================
-function setupClock() {
-    const clockElement = document.getElementById("real-time-clock");
-    if (!clockElement) {
-        console.error("Element s ID 'real-time-clock' nebyl nalezen.");
-        return;
-    }
-
-    console.log("Inicializuji reálný čas.");
-
-    function updateClock() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        clockElement.innerText = `${hours}:${minutes}:${seconds}`;
-    }
-
-    updateClock(); // Počáteční volání
-    setInterval(updateClock, 1000); // Aktualizace každou sekundu
-}
-
-// ========================
-// Funkce pro Aktualizaci Zobrazení
-// ========================
-
-// Aktualizace Zobrazení Roku a Měsíce
-function updateYearAndMonthDisplay() {
-    const currentYearElement = document.getElementById("current-year");
-    const currentMonthNameElement = document.getElementById("current-month-name");
-    const selectedMonthElement = document.getElementById("selected-month");
-
-    console.log("Aktualizuji zobrazení roku a měsíce...");
-    console.log("currentYearElement:", currentYearElement);
-    console.log("currentMonthNameElement:", currentMonthNameElement);
-    console.log("selectedMonthElement:", selectedMonthElement);
-
-    if (currentYearElement) {
-        const currentYear = baseDate.getFullYear();
-        currentYearElement.innerText = currentYear;
-        console.log(`Nastaven aktuální rok na ${currentYear}`);
-    } else {
-        console.error("Element s ID 'current-year' nebyl nalezen.");
-    }
-
-    if (currentMonthNameElement) {
-        const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
-        currentMonthNameElement.innerText = currentMonthName.toUpperCase();
-        console.log(`Nastaven aktuální měsíc na ${currentMonthName.toUpperCase()}`);
-    } else {
-        console.error("Element s ID 'current-month-name' nebyl nalezen.");
-    }
-
-    if (selectedMonthElement) {
-        const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
-        selectedMonthElement.innerText = `Vybraný měsíc: ${currentMonthName.toUpperCase()}`;
-        console.log(`Nastaven vybraný měsíc na ${currentMonthName.toUpperCase()}`);
-    } else {
-        console.error("Element s ID 'selected-month' nebyl nalezen.");
-    }
-}
-
-// Aktualizace Zobrazení Dnešního Data
-function updateTodayDate() {
-    const todayDateElement = document.getElementById("today-date");
-    if (!todayDateElement) {
-        console.error("Element s ID 'today-date' nebyl nalezen.");
-        return;
-    }
-    const today = new Date();
-    const day = today.getDate().toString().padStart(2, '0');
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const year = today.getFullYear();
-    todayDateElement.innerText = `${day}.${month}.${year}`;
-}
-
-// Aktualizace Zobrazení Čísla Vybraného Týdne
-function updateSelectedWeekNumber(startOfWeek) {
-    const selectedWeekNumberElement = document.getElementById("selected-week-number");
-    if (!selectedWeekNumberElement) {
-        console.error("Element s ID 'selected-week-number' nebyl nalezen.");
-        return;
-    }
-    const weekNumber = getWeekNumber(startOfWeek);
-    selectedWeekNumberElement.innerText = `${weekNumber}. TÝDEN`;
-}
-
-// ========================
-// Další Navigační Funkce
-// ========================
-
-// Navigace na Konkrétní Datum
-function goToSpecificDate(dateStr) {
-    console.log(`Navigace na konkrétní datum: ${dateStr}`);
-    baseDate = new Date(dateStr);
-    currentStartOfWeek = getStartOfWeek(baseDate); // Aktualizace týdne na základě vybraného data
-    renderPlanner(); // Přerenderování plánovače s aktualizovanými daty
-    renderMiniCalendar();
-    renderYearCalendarModal();
-    updateYearAndMonthDisplay();
-    saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
-}
-
-// ========================
-// Funkce pro Local Storage
-// ========================
-
-// Uložení Vybraného Data do Local Storage
-function saveSelectedDateToLocalStorage(date) {
-    const dateStr = date.toISOString();
-    localStorage.setItem("selectedDate", dateStr);
-    console.log(`Vybraný datum uložen do local storage: ${dateStr}`);
-}
-
-// ========================
 // Integrace Web Speech API pro Přepis
 // ========================
 function setupWebSpeechAPI() {
@@ -1022,16 +965,452 @@ function showToast(message, type = 'success') {
     const toastHeader = toastEl.querySelector('.toast-header');
 
     toastBody.innerText = message;
- 
- 
 
-    // Přidat třídy na základě typu
+    // Resetovat HTML obsah pro ikonky
+    toastBody.innerHTML = ''; // Vyčištění předchozího obsahu
+
+    // Přidat ikonu na základě typu
     if (type === 'success') {
-        toastBody.innerHTML ='<i class="bi bi-info-square text-success me-2"></i>' +toastBody.innerHTML;
-        } else if (type === 'error') {
-            toastBody.innerHTML ='<i class="bi bi-exclamation-triangle text-danger me-2"></i>'+ toastBody.innerHTML;
-        }
+        const icon = document.createElement('i');
+        icon.className = "bi bi-check-circle-fill text-success me-2";
+        toastBody.appendChild(icon);
+    } else if (type === 'error') {
+        const icon = document.createElement('i');
+        icon.className = "bi bi-exclamation-triangle-fill text-danger me-2";
+        toastBody.appendChild(icon);
+    } else {
+        const icon = document.createElement('i');
+        icon.className = "bi bi-info-circle-fill text-info me-2";
+        toastBody.appendChild(icon);
+    }
+
+    // Přidat text
+    const messageSpan = document.createElement('span');
+    messageSpan.innerText = message;
+    toastBody.appendChild(messageSpan);
 
     const toast = new bootstrap.Toast(toastEl);
     toast.show();
+}
+
+// ========================
+// Reálný Čas a Datum
+// ========================
+function setupClock() {
+    const clockElement = document.getElementById("real-time-clock");
+    const dateElement = document.getElementById("real-time-date");
+    
+    if (!clockElement || !dateElement) {
+        console.error("Clock or date elements not found!");
+        return;
+    }
+
+    console.log("Inicializuji reálný čas...");
+
+    function updateClock() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        clockElement.innerText = `${hours}:${minutes}:${seconds}`;
+
+        const day = now.getDate().toString().padStart(2, '0');
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const year = now.getFullYear();
+        dateElement.innerText = `${day}.${month}.${year}`;
+    }
+
+    updateClock(); // Počáteční volání
+    setInterval(updateClock, 1000); // Aktualizace každou sekundu
+}
+
+// ========================
+// Funkce pro Aktualizaci Zobrazení
+// ========================
+
+// Aktualizace Zobrazení Roku a Měsíce
+function updateYearAndMonthDisplay() {
+    const currentYearElement = document.getElementById("current-year");
+    const currentMonthNameElement = document.getElementById("current-month-name");
+    const selectedMonthElement = document.getElementById("selected-month");
+
+    console.log("Aktualizuji zobrazení roku a měsíce...");
+    console.log("currentYearElement:", currentYearElement);
+    console.log("currentMonthNameElement:", currentMonthNameElement);
+    console.log("selectedMonthElement:", selectedMonthElement);
+
+    if (currentYearElement) {
+        const currentYear = baseDate.getFullYear();
+        currentYearElement.innerText = currentYear;
+        console.log(`Nastaven aktuální rok na ${currentYear}`);
+    } else {
+        console.error("Element s ID 'current-year' nebyl nalezen.");
+    }
+
+    if (currentMonthNameElement) {
+        const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
+        currentMonthNameElement.innerText = currentMonthName.toUpperCase();
+        console.log(`Nastaven aktuální měsíc na ${currentMonthName.toUpperCase()}`);
+    } else {
+        console.error("Element s ID 'current-month-name' nebyl nalezen.");
+    }
+
+    if (selectedMonthElement) {
+        const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
+        selectedMonthElement.innerText = `Vybraný měsíc: ${currentMonthName.toUpperCase()}`;
+        console.log(`Nastaven vybraný měsíc na ${currentMonthName.toUpperCase()}`);
+    } else {
+        console.error("Element s ID 'selected-month' nebyl nalezen.");
+    }
+}
+
+// Aktualizace Zobrazení Dnešního Data
+ 
+
+// Aktualizace Zobrazení Čísla Vybraného Týdne
+function updateSelectedWeekNumber(startOfWeek) {
+    const selectedWeekNumberElement = document.getElementById("selected-week-number");
+    if (!selectedWeekNumberElement) {
+        console.error("Element s ID 'selected-week-number' nebyl nalezen.");
+        return;
+    }
+    const weekNumber = getWeekNumber(startOfWeek);
+    selectedWeekNumberElement.innerText = `${weekNumber}. TÝDEN`;
+}
+
+// ========================
+// Další Navigační Funkce
+// ========================
+
+// Navigace na Konkrétní Datum
+function goToSpecificDate(dateStr) {
+    console.log(`Navigace na konkrétní datum: ${dateStr}`);
+    baseDate = new Date(dateStr);
+    currentStartOfWeek = getStartOfWeek(baseDate); // Aktualizace týdne na základě vybraného data
+    renderPlanner(); // Přerenderování plánovače s aktualizovanými daty
+    renderMiniCalendar();
+    renderYearCalendarModal();
+    renderDayNumbersRow(); // Vykreslení řádku s dny
+    updateYearAndMonthDisplay();
+    saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+}
+
+// ========================
+// Funkce pro Local Storage
+// ========================
+
+// Uložení Vybraného Data do Local Storage
+function saveSelectedDateToLocalStorage(date) {
+    const dateStr = date.toISOString();
+    localStorage.setItem("selectedDate", dateStr);
+    console.log(`Vybraný datum uložen do local storage: ${dateStr}`);
+}
+// ========================
+// Integrace Web Speech API pro Přepis
+// ========================
+function setupWebSpeechAPI() {
+    console.log("Inicializuji Web Speech API pro přepis hlasu.");
+
+    // Kontrola podpory prohlížečem
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        showToast("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.", 'error');
+        console.error("Web Speech API není podporováno ve vašem prohlížeči.");
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = 'cs-CZ'; // Nastavení jazyka na češtinu
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    // Obsluha výsledků přepisu hlasu
+    recognition.addEventListener('result', (event) => {
+        console.log("Přepis hlasu dokončen. Zpracovávám výsledky.");
+        const transcript = event.results[0][0].transcript.trim();
+        console.log(`Transkript: "${transcript}"`);
+        if (currentTranscribingCell) {
+            currentTranscribingCell.innerText = transcript;
+            const day = parseInt(currentTranscribingCell.getAttribute('data-day'), 10);
+            const hour = parseInt(currentTranscribingCell.getAttribute('data-hour'), 10);
+            const dateObj = addDays(currentStartOfWeek, day);
+            const date = format(dateObj, 'yyyy-MM-dd');
+            const time = formatHour(hour);
+            console.log(`Ukládám přepis pro den ${day}, hodina ${hour}: "${transcript}"`);
+            saveNoteToFirebase(date, time, transcript)
+                .then(() => {
+                    showToast(`Poznámka přidána: "${transcript}"`, 'success');
+                })
+                .catch((error) => {
+                    showToast("Chyba při ukládání poznámky.", 'error');
+                });
+            saveSelectedDateToLocalStorage(dateObj); // Uložení do local storage
+            stopTranscription(); // Vyčištění aktuální transkripční buňky
+        } else {
+            console.warn("Aktivní buňka pro přepis nebyla nalezena.");
+        }
+    });
+
+    // Obsluha události 'speechend' bez volání stopTranscription
+    recognition.addEventListener('speechend', () => {
+        console.log("Přepis hlasu skončil (speechend).");
+        // Nepřesouvat 'stopTranscription' zde, aby 'result' mohl zpracovat transkript
+    });
+
+    recognition.addEventListener('error', (event) => {
+        console.error(`Chyba přepisu hlasu (${event.error}):`, event);
+        showToast(`Chyba přepisu hlasu: ${event.error}. Prosím, zkuste to znovu.`, 'error');
+        if (currentTranscribingCell) {
+            stopTranscription();
+        }
+    });
+}
+
+// ========================
+// Správa Přepisu Hlasu
+// ========================
+function startTranscription(noteTextElement) {
+    console.log("Spouštím přepis hlasu.");
+    if (currentTranscribingCell) {
+        showToast("Již probíhá přepis.", 'error');
+        console.warn("Pokus o zahájení přepisu, zatímco již běží jiný přepis.");
+        return;
+    }
+
+    currentTranscribingCell = noteTextElement;
+    const micIcon = noteTextElement.parentElement.querySelector('.cell-mic');
+    micIcon.classList.add('active');
+
+    // Přidání třídy 'recording' k buňce
+    const cell = noteTextElement.closest('td');
+    cell.classList.add('recording');
+
+    try {
+        recognition.start();
+        console.log("Přepis hlasu zahájen.");
+        showToast("Začíná přepis hlasu. Prosím, mluvte nyní.", 'success');
+    } catch (error) {
+        console.error("Chyba při spuštění přepisu hlasu:", error);
+        showToast("Nepodařilo se spustit přepis hlasu.", 'error');
+    }
+}
+
+function stopTranscription() {
+    console.log("Zastavuji přepis hlasu.");
+    if (recognition && currentTranscribingCell) {
+        recognition.stop();
+        const micIcon = currentTranscribingCell.parentElement.querySelector('.cell-mic');
+        micIcon.classList.remove('active');
+
+        // Odebrání třídy 'recording' z buňky
+        const cell = currentTranscribingCell.closest('td');
+        cell.classList.remove('recording');
+
+        console.log("Přepis hlasu zastaven.");
+        currentTranscribingCell = null;
+    } else {
+        console.warn("Pokoušíte se zastavit přepis, ale žádný přepis neběží.");
+    }
+}
+
+// Přidání hover efektu pro zobrazení mini kalendáře
+function attachMonthHoverEffect() {
+    const monthCells = document.querySelectorAll(".month-cell");
+
+    monthCells.forEach((monthCell) => {
+        monthCell.addEventListener("mouseenter", () => {
+            const monthIndex = parseInt(monthCell.dataset.month, 10);
+            renderMiniCalendarForMonth(baseDate.getFullYear(), monthIndex);
+        });
+
+        monthCell.addEventListener("mouseleave", () => {
+            const miniCalendarContainer = document.getElementById("mini-calendar-container");
+            miniCalendarContainer.style.display = "none"; // Skrytí mini kalendáře
+        });
+    });
+}
+
+// Úprava renderMonthHeader pro přidání hover efektu
+function renderMonthHeader() {
+    const yearHeaderContainer = document.getElementById("year-header");
+    yearHeaderContainer.innerHTML = ""; // Vyčištění existujícího headeru
+
+    const currentYear = baseDate.getFullYear();
+
+    // Vytvoření tabulky pro měsíce
+    const yearTable = document.createElement("table");
+    yearTable.className = "table year-header-table text-center";
+    yearTable.style.width = "100%";
+    yearTable.style.position = "relative"; // Pro absolutní pozicování mini kalendáře
+
+    const monthRow = document.createElement("tr");
+
+    // Názvy měsíců v češtině
+    const monthNames = [
+        "LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN",
+        "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"
+    ];
+
+    monthNames.forEach((monthName, index) => {
+        const monthCell = document.createElement("td");
+        monthCell.innerText = monthName;
+        monthCell.className = "month-cell";
+        monthCell.dataset.month = index; // Uložení indexu měsíce
+
+        // Klikací event pro navigaci na vybraný měsíc
+        monthCell.addEventListener("click", () => {
+            console.log(`Kliknuto na měsíc: ${monthName}`);
+            baseDate = new Date(currentYear, index, 1);
+            renderPlanner();
+            renderMiniCalendar();
+            renderYearCalendarModal();
+            renderDayNumbersRow(); // Vykreslení řádku s dny
+            updateYearAndMonthDisplay();
+            saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+        });
+
+        monthRow.appendChild(monthCell);
+    });
+
+    yearTable.appendChild(monthRow);
+    yearHeaderContainer.appendChild(yearTable);
+
+    // Vykreslení řádku s dny
+    renderDayNumbersRow();
+
+    // Přidání hover efektu pro zobrazení mini kalendáře
+    attachMonthHoverEffect();
+}
+
+// Přidání Event Listenerů pro zavření mini kalendáře při kliknutí mimo něj
+document.addEventListener("click", (event) => {
+    const miniCalendarContainer = document.getElementById("mini-calendar-container");
+    const yearHeader = document.getElementById("year-header");
+
+    if (!yearHeader.contains(event.target) && !miniCalendarContainer.contains(event.target)) {
+        miniCalendarContainer.style.display = "none";
+    }
+});
+
+// Přidání event listenerů po vykreslení headeru
+document.addEventListener("DOMContentLoaded", () => {
+    renderMonthHeader();
+});
+
+// ========================
+// Úprava renderMiniCalendarForMonth pro správné zobrazování
+// ========================
+function renderMiniCalendarForMonth(year, month) {
+    const miniCalendarContainer = document.getElementById("mini-calendar-container");
+    miniCalendarContainer.innerHTML = ""; // Clear previous mini calendar
+
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.flexWrap = "wrap";
+    row.style.justifyContent = "space-around";
+    row.style.backgroundColor = "#fff";
+    row.style.padding = "10px";
+    row.style.border = "1px solid #ccc";
+    row.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    row.style.position = "absolute";
+    row.style.top = "100%";
+    row.style.left = "0";
+    row.style.zIndex = "1000";
+
+    // Vytvoření denních buněk
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+
+        const dayCell = document.createElement("div");
+        dayCell.innerText = day;
+        dayCell.className = "day-cell";
+        dayCell.style.padding = "5px";
+        dayCell.style.border = "1px solid #ccc";
+        dayCell.style.textAlign = "center";
+        dayCell.style.flex = "1 0 14%"; // Přibližně 7 buněk na řádek
+        dayCell.style.cursor = "pointer";
+
+        // Zvýraznění nedělí v červené
+        if (date.getDay() === 0) {
+            dayCell.style.color = "red";
+        }
+
+        // Přidání click eventu
+        dayCell.addEventListener("click", () => {
+            console.log(`Kliknuto na mini kalendář: den ${day}`);
+            baseDate = date;
+            renderPlanner();
+            renderMiniCalendar();
+            renderYearCalendarModal();
+            renderDayNumbersRow(); // Vykreslení řádku s dny
+            updateYearAndMonthDisplay();
+            saveSelectedDateToLocalStorage(date); // Uložení do local storage
+            miniCalendarContainer.style.display = "none"; // Skrytí mini kalendáře po výběru
+        });
+
+        // Zvýraznění aktuálního dne
+        const today = new Date();
+        if (
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        ) {
+            dayCell.style.backgroundColor = "#e0f7fa"; // Světle modrá
+        }
+
+        row.appendChild(dayCell);
+    }
+
+    miniCalendarContainer.appendChild(row);
+    miniCalendarContainer.style.display = "block"; // Zobrazení mini kalendáře
+}
+
+// ========================
+// Zvýraznění Vybraného Týdne v Kalendářích
+// ========================
+function highlightSelectedWeek(startOfWeek) {
+    console.log("Zvýrazňuji vybraný týden v kalendářích.");
+
+    // Zvýraznění v Mini Kalendáři
+    const miniCalendarCells = document.querySelectorAll("#mini-calendar-container .day-cell");
+    miniCalendarCells.forEach(cell => {
+        const day = parseInt(cell.innerText, 10);
+        if (isNaN(day)) return;
+
+        const cellDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), day);
+        if (isDateInCurrentSelectedWeek(cellDate)) {
+            cell.classList.add("selected-week");
+            cell.style.backgroundColor = "#d1e7dd"; // Light green
+            console.log(`Buňka mini kalendáře pro den ${day} je ve vybraném týdnu.`);
+        } else {
+            cell.classList.remove("selected-week");
+            cell.style.backgroundColor = ""; // Reset background
+        }
+    });
+
+    // Zvýraznění v Ročním Kalendáři Modal
+    const yearCalendarCells = document.querySelectorAll(".year-calendar-modal .day-cell");
+    yearCalendarCells.forEach(cell => {
+        const day = parseInt(cell.innerText, 10);
+        if (isNaN(day)) return;
+
+        const monthHeader = cell.closest(".month-container-modal").querySelector("h5");
+        if (!monthHeader) return;
+
+        const monthName = monthHeader.textContent.trim();
+        const monthIndex = new Date(`${monthName} 1, ${baseDate.getFullYear()}`).getMonth();
+        const cellDate = new Date(baseDate.getFullYear(), monthIndex, day);
+
+        if (isDateInCurrentSelectedWeek(cellDate)) {
+            cell.classList.add("selected-week");
+            cell.style.backgroundColor = "#d1e7dd"; // Light green
+            console.log(`Buňka ročního kalendáře pro den ${day}, měsíc ${monthIndex + 1} je ve vybraném týdnu.`);
+        } else {
+            cell.classList.remove("selected-week");
+            cell.style.backgroundColor = ""; // Reset background
+        }
+    });
 }
