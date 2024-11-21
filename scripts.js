@@ -132,7 +132,7 @@ function renderTimeSlots(startOfWeek) {
 
             // Spinner Element
             const spinner = document.createElement("div");
-            spinner.className = "spinner-border spinner-border-sm text-primary";
+            spinner.className = "spinner-border spinner-border-sm text-success";
             spinner.style.display = "none"; // Skrytí spinneru inicialně
             cell.appendChild(spinner);
 
