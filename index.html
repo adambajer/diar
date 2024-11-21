@@ -1,55 +1,87 @@
 <!DOCTYPE html>
 <html lang="cs">
+
 <head>
     <meta charset="UTF-8">
     <title>Týdenní Plánovač</title>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
+        rel="stylesheet">
     <!-- Include Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Include Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Include Custom CSS -->
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <!-- Favicon and Other Icons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="shortcut icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
-</head>  
-<body>
+</head>
 
+<body>
     <!-- Top Header -->
-    <div class="top-header">
-        <div class="top-header-left">
-            <!-- Real-Time Clock -->
-            <div id="real-time-clock">00:00:00</div>
-            <!-- Today's Date -->
-            <div id="today-date" class="badge bg-secondary">19.11.2024</div>
-        </div>
-        <div class="top-header-center">
-            <!-- Mini Calendar -->
-            <div id="mini-calendar-container"></div>
-            <!-- Selected Week Number -->
-            <div id="selected-week-number" class="badge bg-primary">Týden 46</div>
-        </div>
-        <div class="top-header-right">
-            <!-- Current Year -->
-            <div class="current-year">
-                <span id="current-year">2024</span>
-                <button id="open-year-calendar" class="btn btn-outline-primary btn-sm ms-2" title="Otevřít roční kalendář">
-                    <i class="bi bi-calendar-fill"></i>
-                </button>
+    <div class="top-header ps-2 shadow-sm">
+        <!-- Left Section (Week Navigation, Clock, Date) -->
+
+        <div class="left-hed">
+            <div class="me-3">
+                <div id="mini-calendar-container" class="mini-calendar"></div>
+    
             </div>
-            <!-- Current Month Navigation -->
-            <div class="current-month-navigation">
-                <button id="prev-month" class="btn btn-outline-secondary btn-sm">&laquo;</button>
+        <div class="icons me-3">
+         
+            <div>
+                <i id="prev-week" class="bi bi-arrow-up-square"></i>
+                <i id="next-week" class="bi bi-arrow-down-square"></i>
+            </div>
+            <div>
+                <div class="current-month-navigation">
+                    <i id="prev-month" class="bi bi-arrow-left-square"></i>
+
+                    <i id="next-month" class="bi bi-arrow-right-square"></i>
+                </div>
+            </div>
+            <div>
+                <i id="open-year-calendar" class="bi bi-calendar3"></i>
+            </div>
+            
+        </div>
+        <div class="labels me-1">
+
+          
+                
+            <div class="current-week-navigation">
+                <div id="selected-week-number" class="">Týden 46</div>
+            </div>
+             <div>
+
                 <span id="current-month-name">LISTOPAD</span>
-                <button id="next-month" class="btn btn-outline-secondary btn-sm">&raquo;</button>
             </div>
+            
+             <div class="current-year">
+                <span id="current-year">2024</span>
+            </div>
+               
         </div>
+       
+    </div>
+    <div class="me-3">
+<div class="real-nadpis">Aktuálně</div>
+        <div id="real-time-clock" class="d-block w-100">00:00:00</div>
+        <div id="today-date" class="d-block w-100">19.11.2024</div>
+    </div>
     </div>
 
+   
     <!-- Weekly Planner -->
-    <div class="container my-4">
+    <div class="m-2 my-4">
         <table class="table table-bordered planner-table">
             <thead>
                 <tr id="day-headers">
@@ -63,7 +95,8 @@
     </div>
 
     <!-- Year Calendar Modal -->
-    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel" aria-hidden="true">
+    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
@@ -82,11 +115,8 @@
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="notification-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header">
-                <strong class="me-auto">Notifikace</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Zavřít"></button>
-            </div>
-            <div class="toast-body">
+         
+            <div class="toast-body" id="toast-body">
                 <!-- Message will be injected here -->
             </div>
         </div>
@@ -94,9 +124,13 @@
 
     <!-- Bootstrap JS and dependencies (Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <!-- Your Updated JavaScript -->
+
+    <!-- Include Custom JavaScript -->
     <script src="scripts.js"></script>
 </body>
+
+</html>
