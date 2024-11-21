@@ -125,10 +125,7 @@ function renderDayNumbersRow() {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
     const row = document.createElement("div");
-    row.className = "day-numbers-row";
-    row.style.display = "flex";
-    row.style.justifyContent = "space-around";
-    row.style.marginTop = "10px";
+    row.className = "day-numbers-row"; 
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
@@ -358,8 +355,7 @@ function renderMiniCalendar() {
         const dayCell = document.createElement("div");
         dayCell.innerText = day;
         dayCell.className = "day-cell";
-        dayCell.style.padding = "10px";
-        dayCell.style.border = "1px solid #ccc";
+        dayCell.style.padding = "10px"; 
         dayCell.style.textAlign = "center";
         dayCell.style.flex = "1"; // Rovnoměrné rozdělení
         dayCell.style.cursor = "pointer";
