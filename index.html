@@ -33,65 +33,70 @@
         <div class="left-hed">
             <div class="me-3">
                 <div id="mini-calendar-container" class="mini-calendar"></div>
-    
-            </div>
-        <div class="icons me-3">
-         
-            <div>
-                <i id="prev-week" class="bi bi-arrow-up-square"></i>
-                <i id="next-week" class="bi bi-arrow-down-square"></i>
-            </div>
-            <div>
-                <div class="current-month-navigation">
-                    <i id="prev-month" class="bi bi-arrow-left-square"></i>
 
-                    <i id="next-month" class="bi bi-arrow-right-square"></i>
+            </div>
+            <div class="icons me-3">
+
+                <div>
+                    <i id="prev-week" class="bi bi-arrow-up-square"></i>
+                    <i id="next-week" class="bi bi-arrow-down-square"></i>
                 </div>
+                <div>
+                    <div class="current-month-navigation">
+                        <i id="prev-month" class="bi bi-arrow-left-square"></i>
+
+                        <i id="next-month" class="bi bi-arrow-right-square"></i>
+                    </div>
+                </div>
+                <div>
+                    <i id="open-year-calendar" class="bi bi-calendar3"></i>
+                </div>
+
             </div>
-            <div>
-                <i id="open-year-calendar" class="bi bi-calendar3"></i>
+            <div class="labels me-1">
+
+
+
+                <div class="current-week-navigation">
+                    <div id="selected-week-number" class="">Týden 46</div>
+                </div>
+                <div>
+
+                    <span id="current-month-name">LISTOPAD</span>
+                </div>
+
+                <div class="current-year">
+                    <span id="current-year">2024</span>
+                </div>
+
             </div>
-            
+
         </div>
-        <div class="labels me-1">
-
-          
-                
-            <div class="current-week-navigation">
-                <div id="selected-week-number" class="">Týden 46</div>
-            </div>
-             <div>
-
-                <span id="current-month-name">LISTOPAD</span>
-            </div>
-            
-             <div class="current-year">
-                <span id="current-year">2024</span>
-            </div>
-               
+        <div class="me-3">
+            <div class="real-nadpis">Aktuálně</div>
+            <div id="real-time-clock" class="d-block w-100">00:00:00</div>
+            <div id="today-date" class="d-block w-100">19.11.2024</div>
         </div>
-       
-    </div>
-    <div class="me-3">
-<div class="real-nadpis">Aktuálně</div>
-        <div id="real-time-clock" class="d-block w-100">00:00:00</div>
-        <div id="today-date" class="d-block w-100">19.11.2024</div>
-    </div>
     </div>
 
-   
+
     <!-- Weekly Planner -->
     <div class="">
-        <table class="table table-bordered planner-table">
-            <thead>
-                <tr id="day-headers">
-                    <!-- Day Headers will be injected here -->
-                </tr>
-            </thead>
-            <tbody id="time-slots">
-                <!-- Time Slots will be injected here -->
-            </tbody>
-        </table>
+        <div class="planner-table-container">
+
+
+
+            <table class="table table-bordered planner-table">
+                <thead>
+                    <tr id="day-headers">
+                        <!-- Day Headers will be injected here -->
+                    </tr>
+                </thead>
+                <tbody id="time-slots">
+                    <!-- Time Slots will be injected here -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Year Calendar Modal -->
@@ -115,7 +120,7 @@
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="notification-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-         
+
             <div class="toast-body" id="toast-body">
                 <!-- Message will be injected here -->
             </div>

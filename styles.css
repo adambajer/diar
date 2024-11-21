@@ -50,11 +50,10 @@
 }
 .recording {
   
-  box-shadow: 0px 0px 7px 3px rgb(255 12 12 / 75%) !important;
+  box-shadow: 0px 0px 5px 0px rgba(255, 12, 12, 0.424) !important;
   z-index: 99999;
   display: block;
-  width: 100%;
-  width: 100% !important;
+  width: 100%; 
 
 }
 .top-header .bi {
@@ -207,37 +206,41 @@
            transform: scale(1);
        }
    }
-   
    /* ========================
-      Responsive Styles
-      ======================== */
-   @media (max-width: 768px) {
-       .top-header { 
-           align-items: flex-start;
-           padding: 2vw; /* Increased padding for better spacing on smaller screens */
-       }
-   
-       .top-header-left,
-       .top-header-center,
-       .top-header-right {
-           width: 100%; /* Full width for each section */
-           gap: 0.3vw; /* Consistent gap */
-       }
-   
-       .current-year,
-       .current-month-name {
-           font-size: 1.2vw; /* Replaced 1.2rem with 1.2vw */
-       }
-   
-       .planner-table th,
-       .planner-table td {
-           padding: 0.26vw; /* Replaced 5px with 0.26vw */
-        }
-   
-       .note-text-container .cell-mic {
-           opacity: 1; /* Always show mic icon on touch devices */
-       }
-   }
+   Responsive Styles for Phones in Vertical Orientation
+  /* Responsive Styles for Phones in Vertical Orientation */
+@media (max-width: 768px) {
+  .planner-table-container table {
+      display: grid !important;
+      grid-template-columns: repeat(7, 100%); /* Each column takes full width of viewport */
+      overflow-x: auto; /* Allow horizontal scrolling */
+      scroll-snap-type: x mandatory; /* Snap to columns */
+      width: auto;
+  }
+
+  .planner-table th, 
+  .planner-table td {
+      scroll-snap-align: center; /* Snap to the center of the viewport */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+  }
+
+  /* Highlight current date column */
+  .planner-table .current-date {
+      border: 2px solid hsl(155, 100%, 92%);
+      background-color: hsl(155, 100%, 96%);
+  }
+
+  /* Hide overflow from the viewport */
+  .planner-table-container {
+      overflow-x: hidden; /* Ensures only the current column is visible without scrolling */
+      position: relative;
+  }
+}
+
+
    
    /* ========================
       Toast Notifications
