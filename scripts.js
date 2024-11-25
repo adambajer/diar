@@ -221,7 +221,7 @@ function renderHeaders(startOfWeek) {
         dayHeaders.appendChild(th);
     }
 }
-
+  
 // Render Time Slots for Each Day
 function renderTimeSlots(startOfWeek) {
     const tbody = document.getElementById("time-slots");
@@ -1028,13 +1028,11 @@ function setupClock() {
 function updateYearAndMonthDisplay() {
     const currentYearElement = document.getElementById("current-year");
     const currentMonthNameElement = document.getElementById("current-month-name");
-    const selectedMonthElement = document.getElementById("selected-month");
-
+ 
     console.log("Aktualizuji zobrazení roku a měsíce...");
     console.log("currentYearElement:", currentYearElement);
     console.log("currentMonthNameElement:", currentMonthNameElement);
-    console.log("selectedMonthElement:", selectedMonthElement);
-
+ 
     if (currentYearElement) {
         const currentYear = baseDate.getFullYear();
         currentYearElement.innerText = currentYear;
@@ -1051,13 +1049,7 @@ function updateYearAndMonthDisplay() {
         console.error("Element s ID 'current-month-name' nebyl nalezen.");
     }
 
-    if (selectedMonthElement) {
-        const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
-        selectedMonthElement.innerText = `Vybraný měsíc: ${currentMonthName.toUpperCase()}`;
-        console.log(`Nastaven vybraný měsíc na ${currentMonthName.toUpperCase()}`);
-    } else {
-        console.error("Element s ID 'selected-month' nebyl nalezen.");
-    }
+     
 }
 
 // Aktualizace Zobrazení Dnešního Data
@@ -1255,6 +1247,9 @@ function renderMonthHeader() {
 
         // Klikací event pro navigaci na vybraný měsíc
         monthCell.addEventListener("click", () => {
+      
+           
+            monthCell.classList.add("active");
             console.log(`Kliknuto na měsíc: ${monthName}`);
             baseDate = new Date(currentYear, index, 1);
             renderPlanner();
@@ -1367,11 +1362,11 @@ function renderMiniCalendarForMonth(year, month) {
 // ========================
 // Zvýraznění Vybraného Týdne v Kalendářích
 // ========================
-function highlightSelectedWeek(startOfWeek) {
+function highlightSelectedWeek(currentStartOfWeek) {
     console.log("Zvýrazňuji vybraný týden v kalendářích.");
 
     // Zvýraznění v Mini Kalendáři
-    const miniCalendarCells = document.querySelectorAll("#mini-calendar-container .day-cell");
+    const miniCalendarCells = document.querySelectorAll("#day-numbers .day-cell");
     miniCalendarCells.forEach(cell => {
         const day = parseInt(cell.innerText, 10);
         if (isNaN(day)) return;

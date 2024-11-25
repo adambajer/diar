@@ -26,37 +26,46 @@
     <!-- Top Header -->
     <div class="top-header shadow-sm">
         <!-- Left Section (Year Header, Navigation, Labels) -->
-        <div class="year-header-container" id="year-header"></div>
         <div class="left-hed">
+            <div class="d-inline-block pe-2">
+            <div class="current-month-navigation d-inline-table ">
+                <i id="open-year-calendar" class="bi bi-calendar3"></i>                <span id="current-year">2024</span>
+            </div>
 
+                <div class="d-inline-block pe-2">
+
+                    <i id="prev-month" class="bi bi-arrow-left-square"></i>
+                    <i id="next-month" class="bi bi-arrow-right-square"></i>
+                </div>
+
+                <div class="d-inline-block">
+                    <span id="current-month-name">LISTOPAD</span><br>
+              
+                </div>
+
+            </div>
             <div class="current-week-navigation">
-                <i id="prev-week" class="bi bi-arrow-left-square"></i>
-                <i id="next-week" class="bi bi-arrow-right-square"></i>
-
                 <span id="selected-week-number" class="">Týden 46</span>
-            </div>
-            <div class="current-month-navigation">
 
-
-                <i id="prev-month" class="bi bi-arrow-left-square"></i>
-                <i id="next-month" class="bi bi-arrow-right-square"></i>
-                <span id="current-month-name">LISTOPAD</span>
             </div>
+
             <div>
-                <i id="open-year-calendar" class="bi bi-calendar3"></i>
-                <span id="current-year">2024</span>
+                
 
             </div>
-            <div id="real-time-info" >
+            <div id="real-time-info">
+                
+                <span id="real-time-date">19.11.2024</span><br>
                 <span id="real-time-clock" class="me-4">00:00:00</span>
 
-                <span id="real-time-date">19.11.2024</span>
             </div>
         </div>
-    </div>
-     <!-- Right Section (Real-Time Info) -->
+        <div class="year-header-container" id="year-header"></div>
 
- 
+    </div>
+    <!-- Right Section (Real-Time Info) -->
+
+
     <!-- Row for Day Numbers -->
     <div id="day-numbers" class="day-numbers-container"></div>
 
