@@ -356,7 +356,64 @@ thead {
     display: flex; 
     font-size: 1.5vw; /* Adjusted font size */ 
 }
- 
+ /* ========================
+   Mobile-Specific Styles for Week Calendar
+   ======================== */
+@media (max-width: 768px) {
+    /* Week container styling */
+    .planner-table-container {
+        display: flex;
+        overflow-x: auto; /* Enable horizontal scrolling */
+        scroll-snap-type: x mandatory; /* Snap to each day */
+        width: 100%; /* Full width for the viewport */
+    }
+
+    /* Day cell adjustments */
+    .day-cell {
+        flex: 0 0 100%; /* Each day takes full width */
+        scroll-snap-align: center; /* Snap to center of the viewport */
+        margin: 0; /* Remove margin for compact layout */
+        padding: 20px; /* Add padding for touch navigation */
+        text-align: center; /* Center text inside the day */
+        font-size: 1.5rem; /* Adjust font size for visibility */
+        background-color: #f9f9f9; /* Background for each day */
+        border: 1px solid #ddd; /* Optional border for separation */
+    }
+
+    /* Highlight for the selected/current day */
+    .day-cell.selected-day {
+        background-color: #e0f7fa; /* Light blue for selected day */
+        border: 2px solid #007bff; /* Blue border for emphasis */
+        color: #007bff; /* Highlighted text color */
+    }
+
+    /* Navigation buttons */
+    .day-navigation {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px;
+    }
+
+    .day-navigation button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .day-navigation button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+    /* Hide week view for mobile */
+    .week-row {
+        display: none;
+    }
+}
 
 #selected-week-number, #current-month-name {
     font-size: 1.5vw; /* Adjusted font size */
