@@ -58,59 +58,9 @@ document.addEventListener("DOMContentLoaded", () => {
     addMonthNavigationListeners();
     setupYearCalendarButton();
     setupWebSpeechAPI(); // Inicializace Web Speech API pro přepis hlasu
-    renderMonthHeader(); // Nový funkce pro vykreslení měsíců
+ //   renderMonthHeader(); // Nový funkce pro vykreslení měsíců
 });
-
-// ========================
-// Vykreslení Měsíčního Headeru
-// ========================
-
-function renderMonthHeader() {
-    const yearHeaderContainer = document.getElementById("year-header");
-    yearHeaderContainer.innerHTML = ""; // Vyčištění existujícího headeru
-
-    const currentYear = baseDate.getFullYear();
-
-    // Vytvoření tabulky pro měsíce
-    const yearTable = document.createElement("table");
-    yearTable.className = "table year-header-table text-center";
-    yearTable.style.width = "100%";
-
-    const monthRow = document.createElement("tr");
-
-    // Názvy měsíců v češtině
-    const monthNames = [
-        "LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN",
-        "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"
-    ];
-
-    monthNames.forEach((monthName, index) => {
-        const monthCell = document.createElement("td");
-        monthCell.innerText = monthName;
-        monthCell.className = "month-cell";
-        monthCell.dataset.month = index; // Uložení indexu měsíce
-
-        // Klikací event pro navigaci na vybraný měsíc
-        monthCell.addEventListener("click", () => {
-            console.log(`Kliknuto na měsíc: ${monthName}`);
-            baseDate = new Date(currentYear, index, 1);
-            renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal();
-            renderDayNumbersRow(); // Vykreslení řádku s dny
-            updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
-        });
-
-        monthRow.appendChild(monthCell);
-    });
-
-    yearTable.appendChild(monthRow);
-    yearHeaderContainer.appendChild(yearTable);
-
-    // Vykreslení řádku s dny
-    renderDayNumbersRow();
-}
+ 
 
 // ========================
 // Vykreslení Řádku s Dny Měsíce
@@ -1285,7 +1235,7 @@ document.addEventListener("click", (event) => {
 
 // Přidání event listenerů po vykreslení headeru
 document.addEventListener("DOMContentLoaded", () => {
-    renderMonthHeader();
+  //  renderMonthHeader();
 });
 
 // ========================
