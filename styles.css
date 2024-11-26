@@ -45,13 +45,7 @@
     flex: 1 0 14%;
     margin: 2px;
     transition: background-color 0.2s ease;
-}.planner-table-container {
-    cursor: grab;
-
-    display: flex;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-}
+} 
 .planner-table-container.active {
     cursor: grabbing;
 }
@@ -323,13 +317,38 @@
     cursor: pointer;
 }
 #real {
-   
+
+    width: 100%;
+    position: absolute;
     flex-direction: row;
     align-items: flex-start;
     display: flex !important
 ;
     align-items: center;
-    
-    background-color: #f9f9f9; /* Adjust as needed */
+    background-color: #f9f9f9;
     justify-content: space-between;
+}/* Existing styles */
+
+/* Planner Container */
+.planner-container {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
 }
+
+/* Slide Wrapper */
+.planner-slide-wrapper {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    will-change: transform;    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+} 
+
+
+/* Planner Table Container */
+.planner-table-container {
+    flex: 0 0 100%;
+    width: 100%;
+}
+
+/* Existing styles */

@@ -21,6 +21,8 @@ const database = firebase.database();
 // ========================
 // Global Variables
 // ========================
+// Global Variables for Animation
+let isAnimating = false;
 
 let baseDate = new Date(); // Tracks the currently selected date
 let currentStartOfWeek = null;
@@ -977,21 +979,68 @@ function handleSwipeGesture() {
 }
 
 function moveToNextWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    const slideWrapper = document.querySelector('.planner-slide-wrapper');
+
+    // Clone the current planner to create the next week's planner
+    const newPlanner = slideWrapper.cloneNode(true);
     baseDate.setDate(baseDate.getDate() + 7);
-    renderPlanner();
-    renderMiniCalendar();
-    renderYearCalendarModal();
-    updateYearAndMonthDisplay();
-    saveSelectedDateToLocalStorage(baseDate);
+    renderPlanner(newPlanner.querySelector('.planner-table-container'));
+
+    // Append the new planner to the slide wrapper
+    slideWrapper.parentNode.appendChild(newPlanner);
+
+    // Animate the slide
+    slideWrapper.style.transform = 'translateX(-100%)';
+
+    // After animation ends, clean up
+    slideWrapper.addEventListener('transitionend', () => {
+        slideWrapper.parentNode.removeChild(slideWrapper);
+        newPlanner.classList.remove('planner-slide-wrapper');
+        newPlanner.style.transform = '';
+        newPlanner.classList.add('planner-slide-wrapper');
+        isAnimating = false;
+    }, { once: true });
+
+    updateAfterWeekChange();
 }
 
 function moveToPreviousWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    const slideWrapper = document.querySelector('.planner-slide-wrapper');
+
+    // Clone the current planner to create the previous week's planner
+    const newPlanner = slideWrapper.cloneNode(true);
     baseDate.setDate(baseDate.getDate() - 7);
-    renderPlanner();
-    renderMiniCalendar();
-    renderYearCalendarModal();
-    updateYearAndMonthDisplay();
-    saveSelectedDateToLocalStorage(baseDate);
+    renderPlanner(newPlanner.querySelector('.planner-table-container'));
+
+    // Insert the new planner before the current one
+    slideWrapper.parentNode.insertBefore(newPlanner, slideWrapper);
+
+    // Set initial position for sliding in
+    newPlanner.style.transform = 'translateX(-100%)';
+
+    // Trigger reflow to ensure the transform is applied
+    newPlanner.offsetHeight; // eslint-disable-line no-unused-expressions
+
+    // Animate the slide
+    newPlanner.style.transform = 'translateX(0)';
+    slideWrapper.style.transform = 'translateX(100%)';
+
+    // After animation ends, clean up
+    newPlanner.addEventListener('transitionend', () => {
+        slideWrapper.parentNode.removeChild(slideWrapper);
+        newPlanner.classList.remove('planner-slide-wrapper');
+        newPlanner.style.transform = '';
+        newPlanner.classList.add('planner-slide-wrapper');
+        isAnimating = false;
+    }, { once: true });
+
+    updateAfterWeekChange();
 }
 
 // ========================
