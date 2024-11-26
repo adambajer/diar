@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPlanner();
     renderMiniCalendar();
     renderYearCalendarModal();
-
+    renderDayNumbersRow();
     addMonthNavigationListeners();
     setupYearCalendarButton();
     setupWebSpeechAPI(); // Inicializace Web Speech API pro přepis hlasu
@@ -82,13 +82,7 @@ function renderDayNumbersRow() {
 
         const dayCell = document.createElement("div");
         dayCell.innerText = day;
-        dayCell.className = "day-cell";
-        dayCell.style.padding = "10px";
-        dayCell.style.border = "1px solid #ccc";
-        dayCell.style.textAlign = "center";
-        dayCell.style.flex = "1"; // Rovnoměrné rozdělení
-        dayCell.style.cursor = "pointer";
-        dayCell.style.position = "relative";
+        dayCell.className = "day-cell";   
 
         // Zvýraznění nedělí v červené
         if (date.getDay() === 0) {
@@ -165,8 +159,8 @@ function renderHeaders(startOfWeek) {
         const th = document.createElement("th");
         th.className = "day-header";
         th.innerHTML = `
-            <span class="day-name">${dayDate.toLocaleString('cs-CZ', { weekday: 'long' })}</span>
-            <span class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'short', day: 'numeric' })}">${dayDate.getDate()}</span>
+            <div class="day-name">${dayDate.toLocaleString('cs-CZ', { weekday: 'long' })}</div>
+            <div class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'long', day: 'numeric' })}">${dayDate.toLocaleDateString('cs-CZ', {  day: 'numeric',month: 'numeric',  })}</div>
         `;
         dayHeaders.appendChild(th);
     }
