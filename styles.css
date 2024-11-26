@@ -6,7 +6,9 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+.table>:not(caption)>*>* {
+    padding: 0.2vw;
+}
 /* ========================
    Top Header Styles
    ======================== */
@@ -17,7 +19,7 @@
     justify-content: space-between;
     align-items: center;
     background-color: #f9f9f9;
-    padding: 1vw;
+    padding: 0.5vw;
 }
 .left-hed {
     display: flex;
@@ -319,7 +321,7 @@
 #real {
 
     width: 100%;
-    position: absolute;
+    position: static;
     flex-direction: row;
     align-items: flex-start;
     display: flex !important

@@ -27,12 +27,13 @@
     <div class="top-header border-bottom">
         <!-- Left Section (Year Header, Navigation, Labels) -->
         <div class="d-inline-block">
-                 <i id="prev-month" class="bi bi-arrow-left-square"></i>
-                <i id="next-month" class="bi bi-arrow-right-square"></i>
-                <span id="current-month-name" class="ms-2 border-left">LISTOPAD</span> <span id="selected-week-number" class="ms-2">Týden 46</span>
-                <i id="open-year-calendar" class="ms-2 bi bi-calendar3"></i>
-                <span id="current-year" class="ms-2">2024</span>
-           
+            <i id="prev-month" class="bi bi-arrow-left-square"></i>
+            <i id="next-month" class="bi bi-arrow-right-square"></i>
+            <span id="current-month-name" class="ms-2 border-left">LISTOPAD</span> <span id="selected-week-number"
+                class="ms-2">Týden 46</span>
+            <i id="open-year-calendar" class="ms-2 bi bi-calendar3"></i>
+            <span id="current-year" class="ms-2">2024</span>
+
         </div>
         <div class="year-header-container" id="year-header"></div>
     </div>
@@ -41,40 +42,42 @@
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
         <div class="planner-slide-wrapper">
-    <!-- Weekly Planner -->
-    <div class="planner-table-container">
-        <div class="week-view">
+            <!-- Weekly Planner -->
+            <div class="planner-table-container">
+                <div class="week-view">
 
-        <table class="table table-bordered planner-table">
-            <thead>
-                <tr id="day-headers">
-                    <!-- Day Headers will be injected here -->
-                </tr>
-            </thead>
-            <tbody id="time-slots">
-                <!-- Time Slots will be injected here -->
-            </tbody>
-        </table>
+                    <table class="table table-bordered planner-table">
+                        <thead>
+                            <tr id="day-headers">
+                                <!-- Day Headers will be injected here -->
+                            </tr>
+                        </thead>
+                        <tbody id="time-slots">
+                            <!-- Time Slots will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
         </div>
-      
     </div>
-</div>
-</div>
-<!-- Slider Container -->
-<div class="week-slider-container">
-    <input type="range" id="week-slider" min="0" max="52" value="0" step="1" list="tickmarks" aria-label="Week Slider">
-    <datalist id="tickmarks">
-      <option value="0" label="1"></option>
-      <option value="13"></option>
-      <option value="26"></option>
-      <option value="39"></option>
-      <option value="52" label="53"></option>
-    </datalist>
+    <!-- Slider Container -->
+    <div class="week-slider-container">
+        <input type="range" id="week-slider" min="0" max="52" value="0" step="1" list="tickmarks"
+            aria-label="Week Slider">
+        <datalist id="tickmarks">
+            <option value="0" label="1"></option>
+            <option value="13"></option>
+            <option value="26"></option>
+            <option value="39"></option>
+            <option value="52" label="53"></option>
+        </datalist>
     </div>
 
-   
+
     <!-- Year Calendar Modal -->
-    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel" aria-hidden="true">
+    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
@@ -93,12 +96,12 @@
         <div class="me-3">Aktuální datum:</div>
         <span id="real-time-date" class="me-3">19.11.2024</span>
         <div class="me-3">Aktuální čas:</div>
-        <span id="real-time-clock">00:00:00</span> 
+        <span id="real-time-clock">00:00:00</span>
         <div class="week-navigation">
             <button id="prev-week" class="btn btn-secondary">Další týden</button>
             <button id="next-week" class="btn btn-secondary">Předchozí týden</button>
         </div>
-        
+
     </div>
 
     <!-- Mini Calendar Container -->
