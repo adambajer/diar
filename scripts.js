@@ -66,8 +66,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
     setupSwipeListeners(); // Initialize swipe listeners   
      setupDragScrolling();
-     setupKeyboardNavigation();
-     setupWeekSlider();
+     setupKeyboardNavigation(); 
+     generateSliderTicks();
+    setupCustomSlider();
 
 });
 
@@ -106,7 +107,9 @@ function renderDayNumbersRow() {
             renderMiniCalendar();
             renderYearCalendarModal();
             updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(baseDate); // Save to local storage
+            saveSelectedDateToLocalStorage(baseDate); // Save to local storage   // Existing initialization code...
+            generateSliderTicks();
+            setupCustomSlider();
         });
 
         // Highlight the current day
@@ -1138,35 +1141,7 @@ function setupWeekNavigationButtons() {
         moveToNextWeek();
     });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-    // Existing initialization code...
-    setupWeekNavigationButtons();
-});
-// ========================
-// Slider Initialization and Event Handling
-// ========================
-function setupWeekSlider() {
-    const slider = document.getElementById('week-slider');
-
-    // Calculate the total number of weeks in the year
-    const totalWeeks = getWeeksInYear(baseDate.getFullYear());
-    slider.max = totalWeeks - 1; // Zero-based index
-    slider.value = getWeekNumber(baseDate) - 1; // Set slider to current week
-
-    // Update planner when slider value changes
-    slider.addEventListener('input', () => {
-        const selectedWeek = parseInt(slider.value, 10) + 1;
-        navigateToWeek(selectedWeek);
-    });
-}
-
-// Function to get the total number of weeks in a year
-function getWeeksInYear(year) {
-    const d = new Date(year, 11, 31);
-    const week = getWeekNumber(d);
-    return week;
-}
+ 
 
 // Function to navigate to a specific week number
 function navigateToWeek(weekNumber) {
@@ -1187,9 +1162,100 @@ function navigateToWeek(weekNumber) {
 
     console.log(`Navigated to week ${weekNumber} of ${year}`);
 }
+// Existing JavaScript code
 
-// Call setupWeekSlider after DOM content is loaded
-document.addEventListener("DOMContentLoaded", () => {
-    // Existing initialization code...
-    setupWeekSlider();
-});
+// ========================
+// Custom Slider Initialization and Event Handling
+// ========================
+function generateSliderTicks() {
+    const slider = document.getElementById('custom-slider');
+    const currentYear = baseDate.getFullYear();
+    const daysInYear = isLeapYear(currentYear) ? 366 : 365;
+
+    // Clear existing ticks
+    slider.innerHTML = '';
+
+    for (let day = 1; day <= daysInYear; day++) {
+        const tick = document.createElement('div');
+        tick.className = 'slider-tick';
+        tick.dataset.day = day;
+
+        // Add month labels on the first day of each month
+        const date = getDateFromDay(currentYear, day);
+        if (date.getDate() === 1) {
+            const monthLabel = document.createElement('span');
+            monthLabel.className = 'month-label';
+            monthLabel.innerText = date.toLocaleString('cs-CZ', { month: 'short' });
+            tick.appendChild(monthLabel);
+        }
+
+        slider.appendChild(tick);
+    }
+}
+
+function setupCustomSlider() {
+    const slider = document.getElementById('custom-slider');
+    const tooltip = document.getElementById('custom-slider-tooltip');
+
+    slider.addEventListener('mousemove', (event) => {
+        if (event.target.classList.contains('slider-tick')) {
+            const day = parseInt(event.target.dataset.day, 10);
+            const currentYear = baseDate.getFullYear();
+            const date = getDateFromDay(currentYear, day);
+
+            // Update tooltip text
+            tooltip.innerText = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Position tooltip
+            const sliderRect = slider.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const tickRect = event.target.getBoundingClientRect();
+            const left = tickRect.left + tickRect.width / 2 - tooltipRect.width / 2;
+
+            tooltip.style.left = `${left}px`; 
+
+            // Show tooltip
+            tooltip.style.opacity = '1';
+        } else {
+            // Hide tooltip if not hovering over a tick
+            tooltip.style.opacity = '0';
+        }
+    });
+
+    slider.addEventListener('mouseout', () => {
+        // Hide tooltip when mouse leaves the slider
+        tooltip.style.opacity = '0';
+    });
+
+    // Navigate to date on click
+    slider.addEventListener('click', (event) => {
+        if (event.target.classList.contains('slider-tick')) {
+            const day = parseInt(event.target.dataset.day, 10);
+            const currentYear = baseDate.getFullYear();
+            const selectedDate = getDateFromDay(currentYear, day);
+
+            baseDate = selectedDate;
+            renderPlanner();
+            renderMiniCalendar();
+            renderYearCalendarModal();
+            updateYearAndMonthDisplay();
+            saveSelectedDateToLocalStorage(baseDate);
+        }
+    });
+}
+
+// Call generateSliderTicks and setupCustomSlider after DOM content is loaded
+ 
+
+// Function to determine if a year is a leap year
+function isLeapYear(year) {
+    return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+}
+
+// Function to get a date from day of the year
+function getDateFromDay(year, day) {
+    const date = new Date(year, 0); // January 1st
+    return new Date(date.setDate(day));
+}
+
+// Existing JavaScript code

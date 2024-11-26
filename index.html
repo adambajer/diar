@@ -62,17 +62,13 @@
         </div>
     </div>
     <!-- Slider Container -->
-    <div class="week-slider-container">
-        <input type="range" id="week-slider" min="0" max="52" value="0" step="1" list="tickmarks"
-            aria-label="Week Slider">
-        <datalist id="tickmarks">
-            <option value="0" label="1"></option>
-            <option value="13"></option>
-            <option value="26"></option>
-            <option value="39"></option>
-            <option value="52" label="53"></option>
-        </datalist>
+<!-- Custom Slider Container -->
+<div class="custom-slider-container">
+    <div id="custom-slider">
+        <!-- Ticks will be generated dynamically -->
     </div>
+    <div id="custom-slider-tooltip" class="custom-slider-tooltip">Date</div>
+</div>
 
 
     <!-- Year Calendar Modal -->
@@ -93,10 +89,10 @@
 
     <!-- Real-Time Date and Time -->
     <div id="real" class="d-flex border-top p-3">
-        <div class="me-3">Aktuální datum:</div>
-        <span id="real-time-date" class="me-3">19.11.2024</span>
-        <div class="me-3">Aktuální čas:</div>
-        <span id="real-time-clock">00:00:00</span>
+        <div class="me-3">Aktuální datum<br><span id="real-time-date" class="me-3">19.11.2024</span></div>
+        
+        <div class="me-3">Aktuální čas<br><span id="real-time-clock">00:00:00</span></div>
+        
         <div class="week-navigation">
             <button id="prev-week" class="btn btn-secondary">Další týden</button>
             <button id="next-week" class="btn btn-secondary">Předchozí týden</button>
