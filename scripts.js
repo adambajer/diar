@@ -1353,3 +1353,22 @@ function highlightSelectedWeek(currentStartOfWeek) {
         }
     });
 }
+document.addEventListener("DOMContentLoaded", () => {
+    // Select all elements with the class .cell-mic
+    const micIcons = document.querySelectorAll(".cell-mic");
+
+    // Add an event listener for each .cell-mic
+    micIcons.forEach((micIcon) => {
+        micIcon.addEventListener("click", () => {
+            const noteTextElement = micIcon.closest("td").querySelector(".note-text");
+            if (!noteTextElement) {
+                console.error("No note-text element found for this mic.");
+                return;
+            }
+
+            console.log("Microphone icon clicked. Starting transcription...");
+            startTranscription(noteTextElement);
+        });
+    });
+});
+
