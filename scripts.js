@@ -12,43 +12,47 @@ const firebaseConfig = {
     appId: "YOUR_APP_ID_HERE"
 };
 
-// Inicializace Firebase
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Získání reference na databázi
+// Get a reference to the database
 const database = firebase.database();
 
 // ========================
-// Globální Proměnné
+// Global Variables
 // ========================
 
-let baseDate = new Date(); // Sleduje aktuálně vybraný datum
+let baseDate = new Date(); // Tracks the currently selected date
 let currentStartOfWeek = null;
-let activeCell = null; // Aktuálně aktivní buňka pro navigaci klávesnicí
-let currentTranscribingCell = null; // Sleduje buňku, do které se přepisuje
-let recognition = null; // Instance SpeechRecognition
-
+let currentTranscribingCell = null; // Tracks the cell being transcribed into
+let recognition = null; // SpeechRecognition instance
 // ========================
-// Inicializace Plánovače při Načtení DOM
+// Global Variables for Swipe
+// ========================
+let touchStartX = null;
+let touchEndX = null;
+let isSwiping = false;
+// ========================
+// Initialize Planner on DOM Load
 // ========================
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("DOM načteno. Inicializuji plánovač...");
-    
-    // Načtení posledního vybraného data z local storage
+    console.log("DOM loaded. Initializing planner...");
+
+    // Load the last selected date from local storage
     const savedDateStr = localStorage.getItem("selectedDate");
     if (savedDateStr) {
         const savedDate = new Date(savedDateStr);
         if (!isNaN(savedDate)) {
             baseDate = savedDate;
-            console.log(`Načteno uložené datum: ${baseDate}`);
+            console.log(`Loaded saved date: ${baseDate}`);
         } else {
-            console.warn("Uložené datum je neplatné. Používám aktuální datum.");
+            console.warn("Saved date is invalid. Using current date.");
         }
     } else {
-        console.log("Žádné uložené datum nenalezeno. Používám aktuální datum.");
+        console.log("No saved date found. Using current date.");
     }
 
-    setupClock(); // Inicializace reálného času
+    setupClock(); // Initialize real-time clock
     updateYearAndMonthDisplay();
 
     renderPlanner();
@@ -57,57 +61,60 @@ document.addEventListener("DOMContentLoaded", () => {
     renderDayNumbersRow();
     addMonthNavigationListeners();
     setupYearCalendarButton();
-    setupWebSpeechAPI(); // Inicializace Web Speech API pro přepis hlasu
- //   renderMonthHeader(); // Nový funkce pro vykreslení měsíců
+    setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
+    setupSwipeListeners(); // Initialize swipe listeners   
+     setupDragScrolling();
+     setupKeyboardNavigation();
+     setupWeekSlider();
+
 });
- 
 
 // ========================
-// Vykreslení Řádku s Dny Měsíce
+// Render Day Numbers Row
 // ========================
 
 function renderDayNumbersRow() {
     const dayNumbersContainer = document.getElementById("day-numbers");
-    dayNumbersContainer.innerHTML = ""; // Vyčištění existujícího řádku
+    dayNumbersContainer.innerHTML = ""; // Clear existing row
 
     const currentYear = baseDate.getFullYear();
     const currentMonth = baseDate.getMonth();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
     const row = document.createElement("div");
-    row.className = "day-numbers-row"; 
+    row.className = "day-numbers-row";
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
 
         const dayCell = document.createElement("div");
         dayCell.innerText = day;
-        dayCell.className = "day-cell";   
+        dayCell.className = "day-cell";
 
-        // Zvýraznění nedělí v červené
+        // Highlight Sundays in red
         if (date.getDay() === 0) {
             dayCell.style.color = "red";
         }
 
-        // Klikací event pro navigaci na vybraný den
+        // Click event to navigate to the selected day
         dayCell.addEventListener("click", () => {
-            console.log(`Kliknuto na den: ${day}`);
+            console.log(`Clicked on day: ${day}`);
             baseDate = date;
             renderPlanner();
             renderMiniCalendar();
             renderYearCalendarModal();
             updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+            saveSelectedDateToLocalStorage(baseDate); // Save to local storage
         });
 
-        // Zvýraznění aktuálního dne
+        // Highlight the current day
         const today = new Date();
         if (
             date.getDate() === today.getDate() &&
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear()
         ) {
-            dayCell.style.backgroundColor = "#e0f7fa"; // Světle modrá
+            dayCell.style.backgroundColor = "#e0f7fa"; // Light blue
         }
 
         row.appendChild(dayCell);
@@ -117,15 +124,21 @@ function renderDayNumbersRow() {
 }
 
 // ========================
-// Vykreslení Týdenního Plánovače
+// Render Weekly Planner
 // ========================
-
 async function renderPlanner() {
     console.log("Rendering planner...");
-    
+
     // Calculate start and end of the week
     currentStartOfWeek = getStartOfWeek(baseDate);
     const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
+
+    // Update slider position
+    const slider = document.getElementById('week-slider');
+    if (slider) {
+        const currentWeekNumber = getWeekNumber(baseDate);
+        slider.value = currentWeekNumber - 1;
+    }
 
     // Render headers and time slots for the correct week
     renderHeaders(currentStartOfWeek);
@@ -147,12 +160,30 @@ async function renderPlanner() {
     }
 }
 
+// ========================
+// Populate Planner with Notes
+// ========================
+function populatePlannerWithNotes(notes) {
+    console.log("Populating planner with loaded notes...");
+    for (const [dayKey, hours] of Object.entries(notes)) {
+        const dayIndex = parseInt(dayKey.replace("day", ""), 10);
+        for (const [hourKey, noteText] of Object.entries(hours)) {
+            const hourIndex = parseInt(hourKey.replace("hour", ""), 10);
+            const cell = document.querySelector(`td[data-day="${dayIndex}"][data-hour="${hourIndex}"] .note-text`);
+            if (cell) {
+                cell.innerText = sanitizeInput(noteText);
+                console.log(`Note for day ${dayIndex}, hour ${hourIndex} set to: "${noteText}"`);
+            }
+        }
+    }
+}
+
 // Render Day Headers (Day Names and Real Dates)
 function renderHeaders(startOfWeek) {
     const dayHeaders = document.getElementById("day-headers");
-    dayHeaders.innerHTML = ""; // Vyčištění existujících hlaviček
+    dayHeaders.innerHTML = ""; // Clear existing headers
 
-    console.log("Vykresluji hlavičky dnů...");
+    console.log("Rendering day headers...");
 
     for (let i = 0; i < 7; i++) {
         const dayDate = addDays(startOfWeek, i);
@@ -160,16 +191,13 @@ function renderHeaders(startOfWeek) {
         th.className = "day-header";
         th.innerHTML = `
             <div class="day-name">${dayDate.toLocaleString('cs-CZ', { weekday: 'long' })}</div>
-            <div class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'long', day: 'numeric' })}">${dayDate.toLocaleDateString('cs-CZ', {  day: 'numeric',month: 'numeric',  })}</div>
+            <div class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'long', day: 'numeric' })}">${dayDate.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' })}</div>
         `;
         dayHeaders.appendChild(th);
     }
 }
-  
- 
-// ========================
-// Optimized Table Rendering
-// ========================
+
+// Render Time Slots
 function renderTimeSlots(startOfWeek) {
     const tbody = document.getElementById("time-slots");
     tbody.innerHTML = ""; // Clear existing slots
@@ -186,22 +214,6 @@ function renderTimeSlots(startOfWeek) {
         }
 
         tbody.appendChild(row);
-    }
-}
-
-// Vykreslení Poznámek do Plánovače
-function populatePlannerWithNotes(notes) {
-    console.log("Vkládám načtené poznámky do plánovače...");
-    for (const [dayKey, hours] of Object.entries(notes)) {
-        const dayIndex = parseInt(dayKey.replace("day", ""), 10);
-        for (const [hourKey, noteText] of Object.entries(hours)) {
-            const hourIndex = parseInt(hourKey.replace("hour", ""), 10);
-            const cell = document.querySelector(`td[data-day="${dayIndex}"][data-hour="${hourIndex}"] .note-text`);
-            if (cell) {
-                cell.innerText = sanitizeInput(noteText);
-                console.log(`Poznámka pro den ${dayIndex}, hodina ${hourIndex} nastavena na: "${noteText}"`);
-            }
-        }
     }
 }
 
@@ -223,6 +235,7 @@ function createTimeSlotCell(day, hour, startOfWeek) {
 
     return cell;
 }
+
 // Create spinner for loading indication
 function createSpinner() {
     const spinner = document.createElement("div");
@@ -272,14 +285,8 @@ function createMicIcon(noteText) {
     micIcon.title = "Voice transcription";
     micIcon.setAttribute("aria-label", "Start voice transcription");
 
-    let hoverTimer = null;
-
-    micIcon.addEventListener("mouseenter", () => {
-        hoverTimer = setTimeout(() => startTranscription(noteText), 2000); // Start transcription after 2 seconds
-    });
-
-    micIcon.addEventListener("mouseleave", () => {
-        if (hoverTimer) clearTimeout(hoverTimer); // Cancel transcription on mouse leave
+    micIcon.addEventListener("click", () => {
+        startTranscription(noteText);
     });
 
     return micIcon;
@@ -300,11 +307,11 @@ const handleNoteInput = debounce((event, day, hour) => {
 }, 500);
 
 // ========================
-// Mini Kalendář
+// Mini Calendar
 // ========================
 function renderMiniCalendar() {
     const container = document.getElementById("mini-calendar-container");
-    container.innerHTML = ""; // Vyčištění existujícího kalendáře
+    container.innerHTML = ""; // Clear existing calendar
 
     const currentYear = baseDate.getFullYear();
     const currentMonth = baseDate.getMonth();
@@ -316,44 +323,43 @@ function renderMiniCalendar() {
     row.style.flexWrap = "wrap";
     row.style.justifyContent = "space-around";
 
-    // Vytvoření denních buněk
+    // Create day cells
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
 
         const dayCell = document.createElement("div");
         dayCell.innerText = day;
         dayCell.className = "day-cell";
-        dayCell.style.padding = "10px"; 
+        dayCell.style.padding = "10px";
         dayCell.style.textAlign = "center";
-        dayCell.style.flex = "1"; // Rovnoměrné rozdělení
+        dayCell.style.flex = "1";
         dayCell.style.cursor = "pointer";
         dayCell.style.position = "relative";
 
-        // Zvýraznění nedělí v červené
+        // Highlight Sundays in red
         if (date.getDay() === 0) {
             dayCell.style.color = "red";
         }
 
-        // Přidání click eventu
+        // Add click event
         dayCell.addEventListener("click", () => {
-            console.log(`Kliknuto na mini kalendář: den ${day}`);
+            console.log(`Clicked on mini calendar: day ${day}`);
             baseDate = date;
             renderPlanner();
             renderMiniCalendar();
             renderYearCalendarModal();
-            renderDayNumbersRow(); // Vykreslení řádku s dny
             updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(date); // Uložení do local storage
+            saveSelectedDateToLocalStorage(date); // Save to local storage
         });
 
-        // Zvýraznění aktuálního dne
+        // Highlight the current day
         const today = new Date();
         if (
             date.getDate() === today.getDate() &&
             date.getMonth() === today.getMonth() &&
             date.getFullYear() === today.getFullYear()
         ) {
-            dayCell.style.backgroundColor = "#e0f7fa"; // Světle modrá
+            dayCell.style.backgroundColor = "#e0f7fa"; // Light blue
         }
 
         row.appendChild(dayCell);
@@ -363,11 +369,11 @@ function renderMiniCalendar() {
 }
 
 // ========================
-// Roční Kalendář Modal
+// Year Calendar Modal
 // ========================
 function renderYearCalendarModal() {
     const container = document.querySelector(".year-calendar-modal");
-    container.innerHTML = ""; // Vyčištění existujícího ročního kalendáře
+    container.innerHTML = ""; // Clear existing year calendar
 
     const currentYear = baseDate.getFullYear();
     document.getElementById("selected-year").innerText = currentYear;
@@ -390,7 +396,7 @@ function renderYearCalendarModal() {
         const tbody = document.createElement("tbody");
         let row = document.createElement("tr");
 
-        // Prázdné buňky pro dny před prvním dnem měsíce
+        // Empty cells for days before the first day of the month
         for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
             row.appendChild(document.createElement("td"));
         }
@@ -402,28 +408,27 @@ function renderYearCalendarModal() {
             const cell = document.createElement("td");
             cell.innerText = day;
 
-            // Zvýraznění nedělí
+            // Highlight Sundays
             if (date.getDay() === 0) {
                 cell.style.color = "red";
             }
 
-            // Zvýraznění, pokud je den ve vybraném týdnu
+            // Highlight if the day is in the currently selected week
             if (isDateInCurrentSelectedWeek(date)) {
                 cell.classList.add("selected-week");
-                console.log(`Buňka ročního kalendáře pro den ${day}, měsíc ${month + 1} je ve vybraném týdnu.`);
+                console.log(`Year calendar cell for day ${day}, month ${month + 1} is in the selected week.`);
             }
 
-            // Přidání click eventu
+            // Add click event
             cell.addEventListener("click", () => {
-                console.log(`Kliknuto na roční kalendář: den ${day}, měsíc ${month + 1}`);
+                console.log(`Clicked on year calendar: day ${day}, month ${month + 1}`);
                 baseDate = date;
                 renderPlanner();
                 renderMiniCalendar();
                 renderYearCalendarModal();
-                renderDayNumbersRow(); // Vykreslení řádku s dny
                 updateYearAndMonthDisplay();
-                saveSelectedDateToLocalStorage(date); // Uložení do local storage
-                // Zavření modalu po výběru data
+                saveSelectedDateToLocalStorage(date); // Save to local storage
+                // Close the modal after selecting a date
                 const modal = bootstrap.Modal.getInstance(document.getElementById("yearCalendarModal"));
                 modal.hide();
             });
@@ -444,10 +449,10 @@ function renderYearCalendarModal() {
 }
 
 // ========================
-// Firebase Operace
+// Firebase Operations
 // ========================
 
-// Uložení Poznámky do Firebase
+// Save Note to Firebase
 async function saveNoteToFirebase(date, time, text) {
     const dateObj = new Date(date);
     const weekStart = getStartOfWeek(dateObj);
@@ -458,16 +463,16 @@ async function saveNoteToFirebase(date, time, text) {
 
     return noteRef.set(text)
         .then(() => {
-            console.log(`Poznámka úspěšně uložena pro ${date} v ${time}.`);
+            console.log(`Note successfully saved for ${date} at ${time}.`);
             showToast("Poznámka úspěšně uložena.", 'success');
         })
         .catch(error => {
-            console.error(`Chyba při ukládání poznámky pro ${date} v ${time}:`, error);
+            console.error(`Error saving note for ${date} at ${time}:`, error);
             showToast("Nepodařilo se uložit poznámku. Prosím, zkuste to znovu.", 'error');
         });
 }
 
-// Smazání Poznámky z Firebase
+// Delete Note from Firebase
 async function deleteNoteFromFirebase(date, time) {
     const dateObj = new Date(date);
     const weekStart = getStartOfWeek(dateObj);
@@ -478,16 +483,16 @@ async function deleteNoteFromFirebase(date, time) {
 
     return noteRef.remove()
         .then(() => {
-            console.log(`Poznámka úspěšně smazána pro ${date} v ${time}.`);
+            console.log(`Note successfully deleted for ${date} at ${time}.`);
             showToast("Poznámka úspěšně smazána.", 'success');
         })
         .catch(error => {
-            console.error(`Chyba při mazání poznámky pro ${date} v ${time}:`, error);
+            console.error(`Error deleting note for ${date} at ${time}:`, error);
             showToast("Nepodařilo se smazat poznámku.", 'error');
         });
 }
 
-// Načtení konkrétní Poznámky z Firebase
+// Fetch Specific Note from Firebase
 function fetchNoteFromFirebase(date, time) {
     const dateObj = new Date(date);
     const weekStart = getStartOfWeek(dateObj);
@@ -501,13 +506,13 @@ function fetchNoteFromFirebase(date, time) {
     return noteRef.once('value')
         .then(snapshot => snapshot.val())
         .catch(error => {
-            console.error(`Chyba při načítání poznámky pro ${date} v ${time}:`, error);
+            console.error(`Error fetching note for ${date} at ${time}:`, error);
             showToast("Nepodařilo se načíst poznámku.", 'error');
             return null;
         });
 }
 
-// Načtení všech Poznámek pro konkrétní týden z Firebase
+// Fetch All Notes for a Specific Week from Firebase
 function fetchNotesForWeekFromFirebase(weekStartDate) {
     const startOfWeek = getStartOfWeek(new Date(weekStartDate));
     const weekNumber = getWeekNumber(startOfWeek);
@@ -517,23 +522,23 @@ function fetchNotesForWeekFromFirebase(weekStartDate) {
     return weekRef.once('value')
         .then(snapshot => snapshot.val())
         .catch(error => {
-            console.error("Chyba při načítání poznámek z Firebase:", error);
+            console.error("Error fetching notes from Firebase:", error);
             showToast("Nepodařilo se načíst poznámky z Firebase.", 'error');
             return null;
         });
 }
 
 // ========================
-// Nástroje a Pomocné Funkce
+// Utilities and Helper Functions
 // ========================
 
-// Získání Začátku Týdne (Pondělí)
+// Get Start of the Week (Monday)
 function getStartOfWeek(date) {
     const result = new Date(date);
-    const day = result.getDay(); // 0 = Neděle, 1 = Pondělí, ..., 6 = Sobota
-    const diff = (day === 0 ? -6 : 1) - day; // Úprava, aby pondělí bylo začátkem týdne
+    const day = result.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const diff = (day === 0 ? -6 : 1) - day; // Adjust so that Monday is the start of the week
     result.setDate(result.getDate() + diff);
-    result.setHours(0, 0, 0, 0); // Resetování času
+    result.setHours(0, 0, 0, 0); // Reset time
     return result;
 }
 
@@ -545,14 +550,14 @@ function getEndOfWeek(startOfWeek) {
     return result;
 }
 
-// Přidání Dnů k Datu
+// Add Days to a Date
 function addDays(date, days) {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
     return result;
 }
 
-// Formátování Datumu podle Specifikovaného Formátu
+// Format Date according to Specified Format
 function format(date, formatStr) {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -561,11 +566,11 @@ function format(date, formatStr) {
     if (formatStr === 'yyyy-MM-dd') {
         return `${year}-${month}-${day}`;
     }
-    // Přidejte další formáty podle potřeby
+    // Add more formats as needed
     return date.toString();
 }
 
-// Získání Čísla Týdne pro Datum
+// Get Week Number for a Date
 function getWeekNumber(date) {
     const startOfWeek = getStartOfWeek(new Date(date));
     const startOfYear = new Date(startOfWeek.getFullYear(), 0, 1);
@@ -575,7 +580,7 @@ function getWeekNumber(date) {
     return weekNumber;
 }
 
-// Získání Názvu Měsíce v Češtině
+// Get Month Name in Czech
 function getMonthName(date) {
     const monthNamesCzech = [
         "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
@@ -584,26 +589,26 @@ function getMonthName(date) {
     return monthNamesCzech[date.getMonth()];
 }
 
-// Získání Indexu Dne z Objektu Datumu relativně k Začátku Týdne
+// Get Day Index from Date relative to the Start of the Week
 function getDayFromDate(date) {
     const startOfWeek = getStartOfWeek(baseDate);
     const dayDiff = Math.floor((new Date(date) - startOfWeek) / (24 * 60 * 60 * 1000));
     return dayDiff;
 }
 
-// Získání Hodiny z Řetězce Času
+// Get Hour from Time String
 function getHourFromTime(timeString) {
     return parseInt(timeString.split(':')[0], 10);
 }
 
-// Kontrola, zda Datum je v Aktuálně Vybraném Týdnu
+// Check if Date is in the Currently Selected Week
 function isDateInCurrentSelectedWeek(date) {
     const startOfWeek = getStartOfWeek(baseDate);
     const endOfWeek = addDays(startOfWeek, 7);
     return date >= startOfWeek && date < endOfWeek;
 }
 
-// Sanitize Input pro Prevence XSS
+// Sanitize Input to Prevent XSS
 function sanitizeInput(str) {
     if (!str) return '';
     const temp = document.createElement('div');
@@ -611,184 +616,134 @@ function sanitizeInput(str) {
     return temp.innerHTML;
 }
 
-// Formátování Hodiny
+// Format Hour
 function formatHour(hour) {
     return hour.toString().padStart(2, '0') + ':00';
 }
 
 // ========================
-// Navigace a Event Listenery
+// Navigation and Event Listeners
 // ========================
 
-// Přidání Event Listenerů pro Navigaci Měsíců
+// Add Event Listeners for Month Navigation
 function addMonthNavigationListeners() {
     document.getElementById("prev-month").addEventListener("click", () => {
-        console.log("Kliknuto na předchozí měsíc.");
+        console.log("Clicked on previous month.");
         baseDate.setMonth(baseDate.getMonth() - 1);
         renderPlanner();
         renderMiniCalendar();
         renderYearCalendarModal();
-        renderDayNumbersRow(); // Vykreslení řádku s dny
         updateYearAndMonthDisplay();
-        saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+        saveSelectedDateToLocalStorage(baseDate); // Save to local storage
     });
 
     document.getElementById("next-month").addEventListener("click", () => {
-        console.log("Kliknuto na následující měsíc.");
+        console.log("Clicked on next month.");
         baseDate.setMonth(baseDate.getMonth() + 1);
         renderPlanner();
         renderMiniCalendar();
         renderYearCalendarModal();
-        renderDayNumbersRow(); // Vykreslení řádku s dny
         updateYearAndMonthDisplay();
-        saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+        saveSelectedDateToLocalStorage(baseDate); // Save to local storage
     });
 }
 
-// Nastavení Buttonu pro Otevření Ročního Kalendáře
+// Set up Button for Opening Year Calendar
 function setupYearCalendarButton() {
     document.getElementById("open-year-calendar").addEventListener("click", () => {
-        console.log("Kliknuto na tlačítko pro otevření ročního kalendáře.");
+        console.log("Clicked on button to open year calendar.");
         renderYearCalendarModal();
         new bootstrap.Modal(document.getElementById("yearCalendarModal")).show();
     });
 }
 
-// Obsluha Klávesové Navigace v Plánovači
-function handleKeyDown(event, day, hour) {
-    const key = event.key;
+// ========================
+// Function to Save Selected Date to Local Storage
+// ========================
 
-    let targetDay = day;
-    let targetHour = hour;
-
-    switch (key) {
-        case 'ArrowUp':
-            targetHour = hour > 7 ? hour - 1 : hour;
-            event.preventDefault();
-            console.log(`Navigace nahoru na den ${targetDay}, hodina ${targetHour}.`);
-            break;
-        case 'ArrowDown':
-            targetHour = hour < 20 ? hour + 1 : hour;
-            event.preventDefault();
-            console.log(`Navigace dolů na den ${targetDay}, hodina ${targetHour}.`);
-            break;
-        case 'ArrowLeft':
-            targetDay = day > 0 ? day - 1 : day;
-            event.preventDefault();
-            console.log(`Navigace doleva na den ${targetDay}, hodina ${targetHour}.`);
-            break;
-        case 'ArrowRight':
-            targetDay = day < 6 ? day + 1 : day;
-            event.preventDefault();
-            console.log(`Navigace doprava na den ${targetDay}, hodina ${targetHour}.`);
-            break;
-        case 'Enter':
-            targetHour = hour < 20 ? hour + 1 : hour;
-            event.preventDefault();
-            console.log(`Navigace Enter na den ${targetDay}, hodina ${targetHour}.`);
-            break;
-        default:
-            return; // Nepodniká nic pro jiné klávesy
-    }
-
-    // Zabránění přechodu focusu mimo mřížku
-    if (targetDay < 0 || targetDay > 6 || targetHour < 7 || targetHour > 20) {
-        console.warn(`Pokus o navigaci mimo mřížku: den ${targetDay}, hodina ${targetHour}.`);
-        return;
-    }
-
-    // Najdi cílovou buňku a fokusuj její noteTextElement
-    const targetCell = document.querySelector(`td[data-day="${targetDay}"][data-hour="${targetHour}"] .note-text`);
-    if (targetCell) {
-        // Odstranění aktivní třídy ze všech buněk
-        document.querySelectorAll('.note-text.active').forEach(el => el.classList.remove("active"));
-
-        // Přidání aktivní třídy do cílové buňky
-        targetCell.classList.add("active");
-
-        targetCell.focus();
-        console.log(`Fokus přesunut na den ${targetDay}, hodina ${targetHour}.`);
-    }
+function saveSelectedDateToLocalStorage(date) {
+    const dateStr = date.toISOString();
+    localStorage.setItem("selectedDate", dateStr);
+    console.log(`Selected date saved to local storage: ${dateStr}`);
 }
 
 // ========================
-// Funkce pro Zpracování Poznámek
+// Handle Note Input and Save
 // ========================
 
-// Debounce Funkce pro Omezení Frekvence Volání Funkce
+// Debounce Function to Limit Frequency of Function Calls
 function debounce(func, wait) {
     let timeout;
-    return function(...args) {
+    return function (...args) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
- 
-// Uložení Poznámky Přímo při Blur Eventu
+
+// Save Note Directly on Blur Event
 async function saveNoteDirectly(event, day, hour) {
     const noteText = event.target.innerText.trim();
-    console.log(`Ukládám poznámku při opuštění pole pro den ${day}, hodina ${hour}: "${noteText}"`);
+    console.log(`Saving note on blur for day ${day}, hour ${hour}: "${noteText}"`);
 
     const dateObj = addDays(currentStartOfWeek, day);
     const date = format(dateObj, 'yyyy-MM-dd');
     const time = formatHour(hour);
 
     if (!noteText) {
-        // Pokud nechcete mazat prázdné poznámky, jednoduše přerušte funkci
-        console.log(`Poznámka pro den ${day}, hodina ${hour} je prázdná. Neprovádím žádnou akci.`);
-        saveSelectedDateToLocalStorage(dateObj); // Uložení do local storage
+        console.log(`Note for day ${day}, hour ${hour} is empty. Not performing any action.`);
+        saveSelectedDateToLocalStorage(dateObj); // Save to local storage
         return;
     }
 
-    console.log(`Ukládám poznámku pro ${date} v ${time}: "${noteText}"`);
+    console.log(`Saving note for ${date} at ${time}: "${noteText}"`);
     await saveNoteToFirebase(date, time, noteText);
-    saveSelectedDateToLocalStorage(dateObj); // Uložení do local storage
+    saveSelectedDateToLocalStorage(dateObj); // Save to local storage
 }
 
-// Načtení a Zobrazení Poznámky pro Konkrétní Buňku
+// Load and Display Note for Specific Cell
 async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinner) {
     const dateObj = addDays(startOfWeek, day);
     const date = format(dateObj, 'yyyy-MM-dd');
     const time = formatHour(hour);
 
-    console.log(`Načítám poznámku pro den ${day}, hodina ${hour} (${date} ${time})`);
+    console.log(`Fetching note for day ${day}, hour ${hour} (${date} ${time})`);
 
-    // Zobrazení spinneru
+    // Show spinner
     spinner.style.display = "block";
 
     const noteText = await fetchNoteFromFirebase(date, time);
     noteTextElement.innerText = sanitizeInput(noteText || '');
 
-    // Skrytí spinneru po načtení
+    // Hide spinner after loading
     spinner.style.display = "none";
 
-    console.log(`Načtena poznámka pro ${date} v ${time}: "${noteText}"`);
+    console.log(`Loaded note for ${date} at ${time}: "${noteText}"`);
 }
 
 // ========================
-// Integrace Web Speech API pro Přepis
+// Set Up Web Speech API for Transcription
 // ========================
 function setupWebSpeechAPI() {
-    console.log("Inicializuji Web Speech API pro přepis hlasu.");
+    console.log("Initializing Web Speech API for voice transcription.");
 
-    // Kontrola podpory prohlížečem
+    // Check browser support
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
         showToast("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.", 'error');
-        console.error("Web Speech API není podporováno ve vašem prohlížeči.");
+        console.error("Web Speech API is not supported in your browser.");
         return;
     }
 
     recognition = new SpeechRecognition();
-    recognition.lang = 'cs-CZ'; // Nastavení jazyka na češtinu
+    recognition.lang = 'cs-CZ'; // Set language to Czech
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    // Obsluha výsledků přepisu hlasu
+    // Handle voice transcription results
     recognition.addEventListener('result', (event) => {
-        console.log("Přepis hlasu dokončen. Zpracovávám výsledky.");
+        console.log("Voice transcription completed. Processing results.");
         const transcript = event.results[0][0].transcript.trim();
-        console.log(`Transkript: "${transcript}"`);
+        console.log(`Transcript: "${transcript}"`);
         if (currentTranscribingCell) {
             currentTranscribingCell.innerText = transcript;
             const day = parseInt(currentTranscribingCell.getAttribute('data-day'), 10);
@@ -796,7 +751,7 @@ function setupWebSpeechAPI() {
             const dateObj = addDays(currentStartOfWeek, day);
             const date = format(dateObj, 'yyyy-MM-dd');
             const time = formatHour(hour);
-            console.log(`Ukládám přepis pro den ${day}, hodina ${hour}: "${transcript}"`);
+            console.log(`Saving transcription for day ${day}, hour ${hour}: "${transcript}"`);
             saveNoteToFirebase(date, time, transcript)
                 .then(() => {
                     showToast(`Poznámka přidána: "${transcript}"`, 'success');
@@ -804,21 +759,19 @@ function setupWebSpeechAPI() {
                 .catch((error) => {
                     showToast("Chyba při ukládání poznámky.", 'error');
                 });
-            saveSelectedDateToLocalStorage(dateObj); // Uložení do local storage
-            stopTranscription(); // Vyčištění aktuální transkripční buňky
+            saveSelectedDateToLocalStorage(dateObj); // Save to local storage
+            stopTranscription(); // Clear current transcription cell
         } else {
-            console.warn("Aktivní buňka pro přepis nebyla nalezena.");
+            console.warn("Active cell for transcription not found.");
         }
     });
 
-    // Obsluha události 'speechend' bez volání stopTranscription
     recognition.addEventListener('speechend', () => {
-        console.log("Přepis hlasu skončil (speechend).");
-        // Nepřesouvat 'stopTranscription' zde, aby 'result' mohl zpracovat transkript
+        console.log("Voice transcription ended (speechend).");
     });
 
     recognition.addEventListener('error', (event) => {
-        console.error(`Chyba přepisu hlasu (${event.error}):`, event);
+        console.error(`Voice transcription error (${event.error}):`, event);
         showToast(`Chyba přepisu hlasu: ${event.error}. Prosím, zkuste to znovu.`, 'error');
         if (currentTranscribingCell) {
             stopTranscription();
@@ -827,13 +780,13 @@ function setupWebSpeechAPI() {
 }
 
 // ========================
-// Správa Přepisu Hlasu
+// Manage Voice Transcription
 // ========================
 function startTranscription(noteTextElement) {
-    console.log("Spouštím přepis hlasu.");
+    console.log("Starting voice transcription.");
     if (currentTranscribingCell) {
         showToast("Již probíhá přepis.", 'error');
-        console.warn("Pokus o zahájení přepisu, zatímco již běží jiný přepis.");
+        console.warn("Attempt to start transcription while another transcription is in progress.");
         return;
     }
 
@@ -841,94 +794,67 @@ function startTranscription(noteTextElement) {
     const micIcon = noteTextElement.parentElement.querySelector('.cell-mic');
     micIcon.classList.add('active');
 
-    // Přidání třídy 'recording' k buňce
+    // Add 'recording' class to the cell
     const cell = noteTextElement.closest('td');
     cell.classList.add('recording');
 
     try {
         recognition.start();
-        console.log("Přepis hlasu zahájen.");
+        console.log("Voice transcription started.");
         showToast("Začíná přepis hlasu. Prosím, mluvte nyní.", 'success');
     } catch (error) {
-        console.error("Chyba při spuštění přepisu hlasu:", error);
+        console.error("Error starting voice transcription:", error);
         showToast("Nepodařilo se spustit přepis hlasu.", 'error');
     }
 }
 
 function stopTranscription() {
-    console.log("Zastavuji přepis hlasu.");
+    console.log("Stopping voice transcription.");
     if (recognition && currentTranscribingCell) {
         recognition.stop();
         const micIcon = currentTranscribingCell.parentElement.querySelector('.cell-mic');
         micIcon.classList.remove('active');
 
-        // Odebrání třídy 'recording' z buňky
+        // Remove 'recording' class from the cell
         const cell = currentTranscribingCell.closest('td');
         cell.classList.remove('recording');
 
-        console.log("Přepis hlasu zastaven.");
+        console.log("Voice transcription stopped.");
         currentTranscribingCell = null;
     } else {
-        console.warn("Pokoušíte se zastavit přepis, ale žádný přepis neběží.");
+        console.warn("Attempting to stop transcription, but no transcription is running.");
     }
 }
 
 // ========================
-// Funkce pro Smazání Poznámky
-// ========================
-
-function clearNote(noteTextElement, day, hour) {
-    if (confirm("Opravdu chcete smazat tuto poznámku?")) {
-        console.log(`Smažu poznámku pro den ${day}, hodina ${hour}.`);
-        noteTextElement.innerText = '';
-        const dateObj = addDays(currentStartOfWeek, day);
-        const date = format(dateObj, 'yyyy-MM-dd');
-        const time = formatHour(hour);
-        deleteNoteFromFirebase(date, time)
-            .then(() => {
-                showToast("Poznámka byla úspěšně smazána.", 'success');
-            })
-            .catch((error) => {
-                showToast("Chyba při mazání poznámky.", 'error');
-            });
-    }
-}
-
-// ========================
-// Funkce pro Toast Notifikace
+// Function for Toast Notifications
 // ========================
 
 function showToast(message, type = 'success') {
     const toastEl = document.getElementById('notification-toast');
     if (!toastEl) {
-        console.error("Element s ID 'notification-toast' nebyl nalezen.");
+        console.error("Element with ID 'notification-toast' not found.");
         return;
     }
     const toastBody = toastEl.querySelector('#toast-body');
-    const toastTitle = toastEl.querySelector('#toast-title');
-    const toastHeader = toastEl.querySelector('.toast-header');
 
     toastBody.innerText = message;
 
-    // Resetovat HTML obsah pro ikonky
-    toastBody.innerHTML = ''; // Vyčištění předchozího obsahu
+    // Clear previous content
+    toastBody.innerHTML = '';
 
-    // Přidat ikonu na základě typu
+    // Add icon based on type
+    const icon = document.createElement('i');
     if (type === 'success') {
-        const icon = document.createElement('i');
         icon.className = "bi bi-check-circle-fill text-success me-2";
-        toastBody.appendChild(icon);
     } else if (type === 'error') {
-        const icon = document.createElement('i');
         icon.className = "bi bi-exclamation-triangle-fill text-danger me-2";
-        toastBody.appendChild(icon);
     } else {
-        const icon = document.createElement('i');
         icon.className = "bi bi-info-circle-fill text-info me-2";
-        toastBody.appendChild(icon);
     }
+    toastBody.appendChild(icon);
 
-    // Přidat text
+    // Add message text
     const messageSpan = document.createElement('span');
     messageSpan.innerText = message;
     toastBody.appendChild(messageSpan);
@@ -938,18 +864,18 @@ function showToast(message, type = 'success') {
 }
 
 // ========================
-// Reálný Čas a Datum
+// Real-Time Clock and Date
 // ========================
 function setupClock() {
     const clockElement = document.getElementById("real-time-clock");
     const dateElement = document.getElementById("real-time-date");
-    
+
     if (!clockElement || !dateElement) {
         console.error("Clock or date elements not found!");
         return;
     }
 
-    console.log("Inicializuji reálný čas...");
+    console.log("Initializing real-time clock...");
 
     function updateClock() {
         const now = new Date();
@@ -964,50 +890,45 @@ function setupClock() {
         dateElement.innerText = `${day}.${month}.${year}`;
     }
 
-    updateClock(); // Počáteční volání
-    setInterval(updateClock, 1000); // Aktualizace každou sekundu
+    updateClock(); // Initial call
+    setInterval(updateClock, 1000); // Update every second
 }
 
 // ========================
-// Funkce pro Aktualizaci Zobrazení
+// Functions to Update Display
 // ========================
 
-// Aktualizace Zobrazení Roku a Měsíce
+// Update Year and Month Display
 function updateYearAndMonthDisplay() {
     const currentYearElement = document.getElementById("current-year");
     const currentMonthNameElement = document.getElementById("current-month-name");
- 
-    console.log("Aktualizuji zobrazení roku a měsíce...");
+
+    console.log("Updating year and month display...");
     console.log("currentYearElement:", currentYearElement);
     console.log("currentMonthNameElement:", currentMonthNameElement);
- 
+
     if (currentYearElement) {
         const currentYear = baseDate.getFullYear();
         currentYearElement.innerText = currentYear;
-        console.log(`Nastaven aktuální rok na ${currentYear}`);
+        console.log(`Set current year to ${currentYear}`);
     } else {
-        console.error("Element s ID 'current-year' nebyl nalezen.");
+        console.error("Element with ID 'current-year' not found.");
     }
 
     if (currentMonthNameElement) {
         const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
         currentMonthNameElement.innerText = currentMonthName.toUpperCase();
-        console.log(`Nastaven aktuální měsíc na ${currentMonthName.toUpperCase()}`);
+        console.log(`Set current month to ${currentMonthName.toUpperCase()}`);
     } else {
-        console.error("Element s ID 'current-month-name' nebyl nalezen.");
+        console.error("Element with ID 'current-month-name' not found.");
     }
-
-     
 }
 
-// Aktualizace Zobrazení Dnešního Data
- 
-
-// Aktualizace Zobrazení Čísla Vybraného Týdne
+// Update Selected Week Number Display
 function updateSelectedWeekNumber(startOfWeek) {
     const selectedWeekNumberElement = document.getElementById("selected-week-number");
     if (!selectedWeekNumberElement) {
-        console.error("Element s ID 'selected-week-number' nebyl nalezen.");
+        console.error("Element with ID 'selected-week-number' not found.");
         return;
     }
     const weekNumber = getWeekNumber(startOfWeek);
@@ -1015,305 +936,71 @@ function updateSelectedWeekNumber(startOfWeek) {
 }
 
 // ========================
-// Další Navigační Funkce
+// Event Listeners for Swipe and Scroll
 // ========================
+function setupSwipeListeners() {
+    const plannerContainer = document.querySelector(".planner-table-container");
 
-// Navigace na Konkrétní Datum
-function goToSpecificDate(dateStr) {
-    console.log(`Navigace na konkrétní datum: ${dateStr}`);
-    baseDate = new Date(dateStr);
-    currentStartOfWeek = getStartOfWeek(baseDate); // Aktualizace týdne na základě vybraného data
-    renderPlanner(); // Přerenderování plánovače s aktualizovanými daty
+    // Check if touch events are supported
+    if ('ontouchstart' in window || navigator.maxTouchPoints) {
+        // Touch event listeners
+        plannerContainer.addEventListener('touchstart', function (event) {
+            touchStartX = event.changedTouches[0].clientX;
+            isSwiping = true;
+        }, false);
+
+        plannerContainer.addEventListener('touchmove', function (event) {
+            if (!isSwiping) return;
+            touchEndX = event.changedTouches[0].clientX;
+        }, false);
+
+        plannerContainer.addEventListener('touchend', function (event) {
+            if (!isSwiping) return;
+            handleSwipeGesture();
+            isSwiping = false;
+        }, false);
+    }
+}
+ 
+
+function handleSwipeGesture() {
+    if (touchStartX === null || touchEndX === null) return;
+    const deltaX = touchEndX - touchStartX;
+    const threshold = 50; // Adjust as necessary
+    if (deltaX > threshold) {
+        moveToPreviousWeek();
+    } else if (deltaX < -threshold) {
+        moveToNextWeek();
+    }
+    touchStartX = null;
+    touchEndX = null;
+}
+
+function moveToNextWeek() {
+    baseDate.setDate(baseDate.getDate() + 7);
+    renderPlanner();
     renderMiniCalendar();
     renderYearCalendarModal();
-    renderDayNumbersRow(); // Vykreslení řádku s dny
     updateYearAndMonthDisplay();
-    saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
+    saveSelectedDateToLocalStorage(baseDate);
+}
+
+function moveToPreviousWeek() {
+    baseDate.setDate(baseDate.getDate() - 7);
+    renderPlanner();
+    renderMiniCalendar();
+    renderYearCalendarModal();
+    updateYearAndMonthDisplay();
+    saveSelectedDateToLocalStorage(baseDate);
 }
 
 // ========================
-// Funkce pro Local Storage
-// ========================
-
-// Uložení Vybraného Data do Local Storage
-function saveSelectedDateToLocalStorage(date) {
-    const dateStr = date.toISOString();
-    localStorage.setItem("selectedDate", dateStr);
-    console.log(`Vybraný datum uložen do local storage: ${dateStr}`);
-}
-// ========================
-// Integrace Web Speech API pro Přepis
-// ========================
-function setupWebSpeechAPI() {
-    console.log("Inicializuji Web Speech API pro přepis hlasu.");
-
-    // Kontrola podpory prohlížečem
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        showToast("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.", 'error');
-        console.error("Web Speech API není podporováno ve vašem prohlížeči.");
-        return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'cs-CZ'; // Nastavení jazyka na češtinu
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    // Obsluha výsledků přepisu hlasu
-    recognition.addEventListener('result', (event) => {
-        console.log("Přepis hlasu dokončen. Zpracovávám výsledky.");
-        const transcript = event.results[0][0].transcript.trim();
-        console.log(`Transkript: "${transcript}"`);
-        if (currentTranscribingCell) {
-            currentTranscribingCell.innerText = transcript;
-            const day = parseInt(currentTranscribingCell.getAttribute('data-day'), 10);
-            const hour = parseInt(currentTranscribingCell.getAttribute('data-hour'), 10);
-            const dateObj = addDays(currentStartOfWeek, day);
-            const date = format(dateObj, 'yyyy-MM-dd');
-            const time = formatHour(hour);
-            console.log(`Ukládám přepis pro den ${day}, hodina ${hour}: "${transcript}"`);
-            saveNoteToFirebase(date, time, transcript)
-                .then(() => {
-                    showToast(`Poznámka přidána: "${transcript}"`, 'success');
-                })
-                .catch((error) => {
-                    showToast("Chyba při ukládání poznámky.", 'error');
-                });
-            saveSelectedDateToLocalStorage(dateObj); // Uložení do local storage
-            stopTranscription(); // Vyčištění aktuální transkripční buňky
-        } else {
-            console.warn("Aktivní buňka pro přepis nebyla nalezena.");
-        }
-    });
-
-    // Obsluha události 'speechend' bez volání stopTranscription
-    recognition.addEventListener('speechend', () => {
-        console.log("Přepis hlasu skončil (speechend).");
-        // Nepřesouvat 'stopTranscription' zde, aby 'result' mohl zpracovat transkript
-    });
-
-    recognition.addEventListener('error', (event) => {
-        console.error(`Chyba přepisu hlasu (${event.error}):`, event);
-        showToast(`Chyba přepisu hlasu: ${event.error}. Prosím, zkuste to znovu.`, 'error');
-        if (currentTranscribingCell) {
-            stopTranscription();
-        }
-    });
-}
-
-// ========================
-// Správa Přepisu Hlasu
-// ========================
-function startTranscription(noteTextElement) {
-    console.log("Spouštím přepis hlasu.");
-    if (currentTranscribingCell) {
-        showToast("Již probíhá přepis.", 'error');
-        console.warn("Pokus o zahájení přepisu, zatímco již běží jiný přepis.");
-        return;
-    }
-
-    currentTranscribingCell = noteTextElement;
-    const micIcon = noteTextElement.parentElement.querySelector('.cell-mic');
-    micIcon.classList.add('active');
-
-    // Přidání třídy 'recording' k buňce
-    const cell = noteTextElement.closest('td');
-    cell.classList.add('recording');
-
-    try {
-        recognition.start();
-        console.log("Přepis hlasu zahájen.");
-        showToast("Začíná přepis hlasu. Prosím, mluvte nyní.", 'success');
-    } catch (error) {
-        console.error("Chyba při spuštění přepisu hlasu:", error);
-        showToast("Nepodařilo se spustit přepis hlasu.", 'error');
-    }
-}
-
-function stopTranscription() {
-    console.log("Zastavuji přepis hlasu.");
-    if (recognition && currentTranscribingCell) {
-        recognition.stop();
-        const micIcon = currentTranscribingCell.parentElement.querySelector('.cell-mic');
-        micIcon.classList.remove('active');
-
-        // Odebrání třídy 'recording' z buňky
-        const cell = currentTranscribingCell.closest('td');
-        cell.classList.remove('recording');
-
-        console.log("Přepis hlasu zastaven.");
-        currentTranscribingCell = null;
-    } else {
-        console.warn("Pokoušíte se zastavit přepis, ale žádný přepis neběží.");
-    }
-}
-
-// Přidání hover efektu pro zobrazení mini kalendáře
-function attachMonthHoverEffect() {
-    const monthCells = document.querySelectorAll(".month-cell");
-
-    monthCells.forEach((monthCell) => {
-        monthCell.addEventListener("mouseenter", () => {
-            const monthIndex = parseInt(monthCell.dataset.month, 10);
-            renderMiniCalendarForMonth(baseDate.getFullYear(), monthIndex);
-        });
-
-        monthCell.addEventListener("mouseleave", () => {
-            const miniCalendarContainer = document.getElementById("mini-calendar-container");
-            miniCalendarContainer.style.display = "none"; // Skrytí mini kalendáře
-        });
-    });
-}
-
-// Úprava renderMonthHeader pro přidání hover efektu
-function renderMonthHeader() {
-    const yearHeaderContainer = document.getElementById("year-header");
-    yearHeaderContainer.innerHTML = ""; // Vyčištění existujícího headeru
-
-    const currentYear = baseDate.getFullYear();
-
-    // Vytvoření tabulky pro měsíce
-    const yearTable = document.createElement("table");
-    yearTable.className = "table year-header-table text-center";
-    yearTable.style.width = "100%";
-    yearTable.style.position = "relative"; // Pro absolutní pozicování mini kalendáře
-
-    const monthRow = document.createElement("tr");
-
-    // Názvy měsíců v češtině
-    const monthNames = [
-        "LEDEN", "ÚNOR", "BŘEZEN", "DUBEN", "KVĚTEN", "ČERVEN",
-        "ČERVENEC", "SRPEN", "ZÁŘÍ", "ŘÍJEN", "LISTOPAD", "PROSINEC"
-    ];
-
-    monthNames.forEach((monthName, index) => {
-        const monthCell = document.createElement("td");
-        monthCell.innerText = monthName;
-        monthCell.className = "month-cell";
-        monthCell.dataset.month = index; // Uložení indexu měsíce
-
-        // Klikací event pro navigaci na vybraný měsíc
-        monthCell.addEventListener("click", () => {
-      
-           
-            monthCell.classList.add("active");
-            console.log(`Kliknuto na měsíc: ${monthName}`);
-            baseDate = new Date(currentYear, index, 1);
-            renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal();
-            renderDayNumbersRow(); // Vykreslení řádku s dny
-            updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(baseDate); // Uložení do local storage
-        });
-
-        monthRow.appendChild(monthCell);
-    });
-
-    yearTable.appendChild(monthRow);
-    yearHeaderContainer.appendChild(yearTable);
-
-    // Vykreslení řádku s dny
-    renderDayNumbersRow();
-
-    // Přidání hover efektu pro zobrazení mini kalendáře
-    attachMonthHoverEffect();
-}
-
-// Přidání Event Listenerů pro zavření mini kalendáře při kliknutí mimo něj
-document.addEventListener("click", (event) => {
-    const miniCalendarContainer = document.getElementById("mini-calendar-container");
-    const yearHeader = document.getElementById("year-header");
-
-    if (!yearHeader.contains(event.target) && !miniCalendarContainer.contains(event.target)) {
-        miniCalendarContainer.style.display = "none";
-    }
-});
-
-// Přidání event listenerů po vykreslení headeru
-document.addEventListener("DOMContentLoaded", () => {
-  //  renderMonthHeader();
-});
-
-// ========================
-// Úprava renderMiniCalendarForMonth pro správné zobrazování
-// ========================
-function renderMiniCalendarForMonth(year, month) {
-    const miniCalendarContainer = document.getElementById("mini-calendar-container");
-    miniCalendarContainer.innerHTML = ""; // Clear previous mini calendar
-
-    const firstDay = new Date(year, month, 1);
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const row = document.createElement("div");
-    row.style.display = "flex";
-    row.style.flexWrap = "wrap";
-    row.style.justifyContent = "space-around";
-    row.style.backgroundColor = "#fff";
-    row.style.padding = "10px";
-    row.style.border = "1px solid #ccc";
-    row.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
-    row.style.position = "absolute";
-    row.style.top = "100%";
-    row.style.left = "0";
-    row.style.zIndex = "1000";
-
-    // Vytvoření denních buněk
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-
-        const dayCell = document.createElement("div");
-        dayCell.innerText = day;
-        dayCell.className = "day-cell";
-        dayCell.style.padding = "5px";
-        dayCell.style.border = "1px solid #ccc";
-        dayCell.style.textAlign = "center";
-        dayCell.style.flex = "1 0 14%"; // Přibližně 7 buněk na řádek
-        dayCell.style.cursor = "pointer";
-
-        // Zvýraznění nedělí v červené
-        if (date.getDay() === 0) {
-            dayCell.style.color = "red";
-        }
-
-        // Přidání click eventu
-        dayCell.addEventListener("click", () => {
-            console.log(`Kliknuto na mini kalendář: den ${day}`);
-            baseDate = date;
-            renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal();
-            renderDayNumbersRow(); // Vykreslení řádku s dny
-            updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(date); // Uložení do local storage
-            miniCalendarContainer.style.display = "none"; // Skrytí mini kalendáře po výběru
-        });
-
-        // Zvýraznění aktuálního dne
-        const today = new Date();
-        if (
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear()
-        ) {
-            dayCell.style.backgroundColor = "#e0f7fa"; // Světle modrá
-        }
-
-        row.appendChild(dayCell);
-    }
-
-    miniCalendarContainer.appendChild(row);
-    miniCalendarContainer.style.display = "block"; // Zobrazení mini kalendáře
-}
-
-// ========================
-// Zvýraznění Vybraného Týdne v Kalendářích
+// Highlight Selected Week in Calendars
 // ========================
 function highlightSelectedWeek(currentStartOfWeek) {
-    console.log("Zvýrazňuji vybraný týden v kalendářích.");
+    console.log("Highlighting selected week in calendars.");
 
-    // Zvýraznění v Mini Kalendáři
+    // Highlight in Mini Calendar
     const miniCalendarCells = document.querySelectorAll("#day-numbers .day-cell");
     miniCalendarCells.forEach(cell => {
         const day = parseInt(cell.innerText, 10);
@@ -1323,20 +1010,20 @@ function highlightSelectedWeek(currentStartOfWeek) {
         if (isDateInCurrentSelectedWeek(cellDate)) {
             cell.classList.add("selected-week");
             cell.style.backgroundColor = "#d1e7dd"; // Light green
-            console.log(`Buňka mini kalendáře pro den ${day} je ve vybraném týdnu.`);
+            console.log(`Mini calendar cell for day ${day} is in the selected week.`);
         } else {
             cell.classList.remove("selected-week");
             cell.style.backgroundColor = ""; // Reset background
         }
     });
 
-    // Zvýraznění v Ročním Kalendáři Modal
+    // Highlight in Year Calendar Modal
     const yearCalendarCells = document.querySelectorAll(".year-calendar-modal .day-cell");
     yearCalendarCells.forEach(cell => {
         const day = parseInt(cell.innerText, 10);
         if (isNaN(day)) return;
 
-        const monthHeader = cell.closest(".month-container-modal").querySelector("h5");
+        const monthHeader = cell.closest(".month-container-modal").querySelector("div.text-center");
         if (!monthHeader) return;
 
         const monthName = monthHeader.textContent.trim();
@@ -1346,29 +1033,114 @@ function highlightSelectedWeek(currentStartOfWeek) {
         if (isDateInCurrentSelectedWeek(cellDate)) {
             cell.classList.add("selected-week");
             cell.style.backgroundColor = "#d1e7dd"; // Light green
-            console.log(`Buňka ročního kalendáře pro den ${day}, měsíc ${monthIndex + 1} je ve vybraném týdnu.`);
+            console.log(`Year calendar cell for day ${day}, month ${monthIndex + 1} is in the selected week.`);
         } else {
             cell.classList.remove("selected-week");
             cell.style.backgroundColor = ""; // Reset background
         }
     });
 }
-document.addEventListener("DOMContentLoaded", () => {
-    // Select all elements with the class .cell-mic
-    const micIcons = document.querySelectorAll(".cell-mic");
+function setupDragScrolling() {
+    const plannerContainer = document.querySelector(".planner-table-container");
+    let isDown = false;
+    let startX;
+    let scrollLeft;
 
-    // Add an event listener for each .cell-mic
-    micIcons.forEach((micIcon) => {
-        micIcon.addEventListener("click", () => {
-            const noteTextElement = micIcon.closest("td").querySelector(".note-text");
-            if (!noteTextElement) {
-                console.error("No note-text element found for this mic.");
-                return;
-            }
-
-            console.log("Microphone icon clicked. Starting transcription...");
-            startTranscription(noteTextElement);
-        });
+    plannerContainer.addEventListener('mousedown', (e) => {
+        isDown = true;
+        plannerContainer.classList.add('active');
+        startX = e.pageX - plannerContainer.offsetLeft;
+        scrollLeft = plannerContainer.scrollLeft;
     });
-});
 
+    plannerContainer.addEventListener('mouseleave', () => {
+        isDown = false;
+        plannerContainer.classList.remove('active');
+    });
+
+    plannerContainer.addEventListener('mouseup', () => {
+        isDown = false;
+        plannerContainer.classList.remove('active');
+    });
+
+    plannerContainer.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - plannerContainer.offsetLeft;
+        const walk = (x - startX) * 1; // The multiplier can adjust the scroll speed
+        plannerContainer.scrollLeft = scrollLeft - walk;
+    });
+}
+function setupKeyboardNavigation() {
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowRight') {
+            moveToNextWeek();
+        } else if (event.key === 'ArrowLeft') {
+            moveToPreviousWeek();
+        }
+    });
+}
+function setupWeekNavigationButtons() {
+    document.getElementById("prev-week").addEventListener("click", () => {
+        moveToPreviousWeek();
+    });
+
+    document.getElementById("next-week").addEventListener("click", () => {
+        moveToNextWeek();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Existing initialization code...
+    setupWeekNavigationButtons();
+});
+// ========================
+// Slider Initialization and Event Handling
+// ========================
+function setupWeekSlider() {
+    const slider = document.getElementById('week-slider');
+
+    // Calculate the total number of weeks in the year
+    const totalWeeks = getWeeksInYear(baseDate.getFullYear());
+    slider.max = totalWeeks - 1; // Zero-based index
+    slider.value = getWeekNumber(baseDate) - 1; // Set slider to current week
+
+    // Update planner when slider value changes
+    slider.addEventListener('input', () => {
+        const selectedWeek = parseInt(slider.value, 10) + 1;
+        navigateToWeek(selectedWeek);
+    });
+}
+
+// Function to get the total number of weeks in a year
+function getWeeksInYear(year) {
+    const d = new Date(year, 11, 31);
+    const week = getWeekNumber(d);
+    return week;
+}
+
+// Function to navigate to a specific week number
+function navigateToWeek(weekNumber) {
+    const year = baseDate.getFullYear();
+    // Get the first day of the week
+    const firstDayOfYear = new Date(year, 0, 1);
+    const daysOffset = (weekNumber - 1) * 7;
+    const newDate = new Date(firstDayOfYear.getTime() + daysOffset * 86400000);
+
+    // Adjust to the correct week day
+    baseDate = getStartOfWeek(newDate);
+
+    renderPlanner();
+    renderMiniCalendar();
+    renderYearCalendarModal();
+    updateYearAndMonthDisplay();
+    saveSelectedDateToLocalStorage(baseDate);
+
+    console.log(`Navigated to week ${weekNumber} of ${year}`);
+}
+
+// Call setupWeekSlider after DOM content is loaded
+document.addEventListener("DOMContentLoaded", () => {
+    // Existing initialization code...
+    setupWeekSlider();
+});

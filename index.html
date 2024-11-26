@@ -6,13 +6,13 @@
     <title>Týdenní Plánovač</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap"
-        rel="stylesheet">
-    <!-- Include Bootstrap CSS -->
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Include Bootstrap Icons -->
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Include Custom CSS -->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
     <!-- Favicon and Other Icons -->
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
@@ -26,53 +26,49 @@
     <!-- Top Header -->
     <div class="top-header border-bottom">
         <!-- Left Section (Year Header, Navigation, Labels) -->
-        <div class="left-hed">
-            <div class="ms-2">
-
-
-                <i id="prev-month" class="bi bi-arrow-left-square"></i>
+        <div class="d-inline-block">
+                 <i id="prev-month" class="bi bi-arrow-left-square"></i>
                 <i id="next-month" class="bi bi-arrow-right-square"></i>
-                <span id="current-month-name">LISTOPAD</span><br>
-
-            </div>
-            <div class=" ">
-                <span id="selected-week-number" class="">Týden 46</span>
-
-            </div>
-
-            <div><i id="open-year-calendar" class="bi bi-calendar3"></i>
+                <span id="current-month-name">LISTOPAD</span> <span id="selected-week-number" class="">Týden 46</span>
+                <i id="open-year-calendar" class="bi bi-calendar3"></i>
                 <span id="current-year" class="me-2">2024</span>
-            </div>
-
+           
         </div>
         <div class="year-header-container" id="year-header"></div>
-
     </div>
-    <!-- Right Section (Real-Time Info) -->
 
-
-    <!-- Row for Day Numbers -->
+    <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
 
     <!-- Weekly Planner -->
-    <div class="">
-        <div class="planner-table-container">
-            <table class="table table-bordered planner-table">
-                <thead>
-                    <tr id="day-headers">
-                        <!-- Day Headers will be injected here -->
-                    </tr>
-                </thead>
-                <tbody id="time-slots">
-                    <!-- Time Slots will be injected here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <div class="planner-table-container">
+        <div class="week-view">
 
+        <table class="table table-bordered planner-table">
+            <thead>
+                <tr id="day-headers">
+                    <!-- Day Headers will be injected here -->
+                </tr>
+            </thead>
+            <tbody id="time-slots">
+                <!-- Time Slots will be injected here -->
+            </tbody>
+        </table>
+        </div>
+      
+    </div>
+<!-- Slider Container -->
+<div class="week-slider-container">
+    <input type="range" id="week-slider" min="0" max="52" value="0" step="1">
+</div>
+
+    <div class="week-navigation">
+        <button id="prev-week" class="btn btn-secondary">Další týden</button>
+        <button id="next-week" class="btn btn-secondary">Předchozí týden</button>
+    </div>
+    
     <!-- Year Calendar Modal -->
-    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
@@ -80,19 +76,20 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
                 </div>
                 <div class="modal-body year-calendar-modal">
-                    <!-- Selected Month Element -->
-                    <div id="selected-month" class="badge bg-info mb-3">Vybraný měsíc: LISTOPAD</div>
                     <!-- Year Calendar will be injected here -->
                 </div>
             </div>
         </div>
     </div>
-    <div id="real" class="">
-        <div class="border-right p-3">Aktuální datum:</div>
-        <span class="border-right p-3" id="real-time-date">19.11.2024</span>
-        <div class="border-right p-3">Aktuální čas:</div>
-        <span class="p-3" id="real-time-clock">00:00:00</span>
+
+    <!-- Real-Time Date and Time -->
+    <div id="real" class="d-flex border-top p-3">
+        <div class="me-3">Aktuální datum:</div>
+        <span id="real-time-date" class="me-3">19.11.2024</span>
+        <div class="me-3">Aktuální čas:</div>
+        <span id="real-time-clock">00:00:00</span>
     </div>
+
     <!-- Mini Calendar Container -->
     <div id="mini-calendar-container" class="mini-calendar-container"></div>
 
@@ -107,12 +104,10 @@
 
     <!-- Bootstrap JS and dependencies (Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-    <!-- Include Custom JavaScript -->
+    <!-- Custom JavaScript -->
     <script src="scripts.js"></script>
 </body>
 
