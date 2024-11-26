@@ -30,7 +30,7 @@
                  <i id="prev-month" class="bi bi-arrow-left-square"></i>
                 <i id="next-month" class="bi bi-arrow-right-square"></i>
                 <span id="current-month-name">LISTOPAD</span> <span id="selected-week-number" class="">Týden 46</span>
-                <i id="open-year-calendar" class="bi bi-calendar3"></i>
+                <i id="open-year-calendar" class="ms-2 bi bi-calendar3"></i>
                 <span id="current-year" class="me-2">2024</span>
            
         </div>
@@ -62,11 +62,7 @@
     <input type="range" id="week-slider" min="0" max="52" value="0" step="1">
 </div>
 
-    <div class="week-navigation">
-        <button id="prev-week" class="btn btn-secondary">Další týden</button>
-        <button id="next-week" class="btn btn-secondary">Předchozí týden</button>
-    </div>
-    
+   
     <!-- Year Calendar Modal -->
     <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -87,7 +83,12 @@
         <div class="me-3">Aktuální datum:</div>
         <span id="real-time-date" class="me-3">19.11.2024</span>
         <div class="me-3">Aktuální čas:</div>
-        <span id="real-time-clock">00:00:00</span>
+        <span id="real-time-clock">00:00:00</span> 
+        <div class="week-navigation">
+            <button id="prev-week" class="btn btn-secondary">Další týden</button>
+            <button id="next-week" class="btn btn-secondary">Předchozí týden</button>
+        </div>
+        
     </div>
 
     <!-- Mini Calendar Container -->

@@ -16,6 +16,8 @@
     flex-wrap: nowrap;
     justify-content: space-between;
     align-items: center;
+    background-color: #f9f9f9;
+    padding: 1vw;
 }
 .left-hed {
     display: flex;
@@ -272,10 +274,7 @@
     .current-month-name {
         font-size: 1.2rem;
     }
-    #real {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+  
 }
 /* ========================
    Transition Styles
@@ -322,4 +321,13 @@
     height: 20px;
     border-radius: 50%;
     cursor: pointer;
+}
+#real {
+   
+    flex-direction: row;
+    align-items: flex-start;
+    display: flex !important
+;
+    align-items: center;
+    justify-content: space-between;
 }
