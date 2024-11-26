@@ -335,4 +335,6 @@ table tr td:hover{
 ; 
     flex-direction: row;
     justify-content: flex-start;
-}.table>:not(caption)>*>* { padding: 0px;}
+}.table>:not(caption)>*>* { padding: 0px;} #day-headers th {
+    width: 14%;
+}

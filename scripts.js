@@ -166,93 +166,23 @@ function renderHeaders(startOfWeek) {
     }
 }
   
-// Render Time Slots for Each Day
+ 
+// ========================
+// Optimized Table Rendering
+// ========================
 function renderTimeSlots(startOfWeek) {
     const tbody = document.getElementById("time-slots");
-    tbody.innerHTML = ""; // Vyčištění existujících časových slotů
+    tbody.innerHTML = ""; // Clear existing slots
 
-    const startHour = 7;
-    const endHour = 20;
-
-    console.log("Vykresluji časové sloty...");
+    const startHour = 7; // Start hour for time slots
+    const endHour = 20; // End hour for time slots
 
     for (let hour = startHour; hour <= endHour; hour++) {
         const row = document.createElement("tr");
 
         for (let day = 0; day < 7; day++) {
-            const cell = document.createElement("td");
-            cell.className = "time-slot";
-            cell.setAttribute('data-day', day);
-            cell.setAttribute('data-hour', hour);
-
-            // Spinner Element
-            const spinner = document.createElement("div");
-            spinner.className = "spinner-border spinner-border-sm text-success";
-            spinner.style.display = "none"; // Skrytí spinneru inicialně
-            cell.appendChild(spinner);
-
-            // Vytvoření kontejneru pro text poznámky a mic ikonu
-            const noteContainer = document.createElement("div");
-            noteContainer.className = "note-text-container";
-
-            // Vytvoření časové značky
-            const timeLabel = document.createElement("div");
-            timeLabel.className = "time-label";
-            timeLabel.innerText = formatHour(hour);
-            noteContainer.appendChild(timeLabel);
-
-            // Vytvoření editovatelného textového prvku poznámky
-            const noteTextElement = document.createElement("div");
-            noteTextElement.className = "note-text";
-            noteTextElement.contentEditable = true;
-            noteTextElement.setAttribute('data-day', day);
-            noteTextElement.setAttribute('data-hour', hour);
-            noteTextElement.setAttribute('tabindex', 0); // Zpřístupnění pro fokus
-
-            // Přidání event listenerů pro ukládání poznámek
-            noteTextElement.addEventListener('input', (event) => handleNoteInput(event, day, hour));
-            noteTextElement.addEventListener('blur', (event) => saveNoteDirectly(event, day, hour));
-
-            // Přidání keydown event listeneru pro navigaci klávesnicí
-            noteTextElement.addEventListener('keydown', (event) => handleKeyDown(event, day, hour));
-
-            // Vytvoření mikrofonové ikony
-            const micIcon = document.createElement("i");
-            micIcon.className = "bi bi-mic-fill cell-mic";
-            micIcon.title = "Přepis hlasu";
-            micIcon.setAttribute('aria-label', 'Přepis hlasu');
-            micIcon.setAttribute('role', 'button');
-
-            // Implementace Přepisu Hlasu při Hoveru na Celou Buňku
-            let hoverTimer = null;
-
-            micIcon.addEventListener('mouseenter', () => {
-                console.log(`Najeď na buňku pro den ${day}, hodina ${hour}. Spouštím 2 sekundový timer.`);
-                hoverTimer = setTimeout(() => {
-                    console.log(`Timer uplynul. Spouštím přepis pro den ${day}, hodina ${hour}.`);
-                    startTranscription(noteTextElement);
-                }, 2000); // 2 sekundy
-            });
-
-            micIcon.addEventListener('mouseleave', () => {
-                if (hoverTimer) {
-                    clearTimeout(hoverTimer);
-                    console.log(`Timer pro den ${day}, hodina ${hour} byl zrušen.`);
-                    hoverTimer = null;
-                }
-            });
-
-            // Přidání mikrofonové ikony do kontejneru
-            noteContainer.appendChild(noteTextElement);
-            noteContainer.appendChild(micIcon);
-
-            // Přidání kontejneru do buňky
-            cell.appendChild(noteContainer);
-
+            const cell = createTimeSlotCell(day, hour, startOfWeek);
             row.appendChild(cell);
-
-            // Načtení a zobrazení existujících poznámek
-            fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinner);
         }
 
         tbody.appendChild(row);
@@ -274,6 +204,100 @@ function populatePlannerWithNotes(notes) {
         }
     }
 }
+
+// Create a single time slot cell
+function createTimeSlotCell(day, hour, startOfWeek) {
+    const cell = document.createElement("td");
+    cell.className = "time-slot";
+    cell.dataset.day = day;
+    cell.dataset.hour = hour;
+
+    const spinner = createSpinner();
+    const noteContainer = createNoteContainer(day, hour, startOfWeek, spinner);
+
+    cell.appendChild(spinner);
+    cell.appendChild(noteContainer);
+
+    // Load and display notes
+    fetchNoteForCell(noteContainer.querySelector(".note-text"), day, hour, startOfWeek, spinner);
+
+    return cell;
+}
+// Create spinner for loading indication
+function createSpinner() {
+    const spinner = document.createElement("div");
+    spinner.className = "spinner-border spinner-border-sm text-success";
+    spinner.style.display = "none"; // Hide spinner initially
+    return spinner;
+}
+
+// Create the note container
+function createNoteContainer(day, hour, startOfWeek, spinner) {
+    const container = document.createElement("div");
+    container.className = "note-text-container";
+
+    const timeLabel = document.createElement("div");
+    timeLabel.className = "time-label";
+    timeLabel.innerText = formatHour(hour);
+
+    const noteText = createNoteTextElement(day, hour, spinner);
+
+    const micIcon = createMicIcon(noteText);
+
+    container.appendChild(timeLabel);
+    container.appendChild(noteText);
+    container.appendChild(micIcon);
+
+    return container;
+}
+
+// Create the note text element
+function createNoteTextElement(day, hour, spinner) {
+    const noteText = document.createElement("div");
+    noteText.className = "note-text";
+    noteText.contentEditable = true;
+    noteText.dataset.day = day;
+    noteText.dataset.hour = hour;
+
+    noteText.addEventListener("input", debounce((event) => handleNoteInput(event, day, hour), 500));
+    noteText.addEventListener("blur", (event) => saveNoteDirectly(event, day, hour));
+
+    return noteText;
+}
+
+// Create the microphone icon
+function createMicIcon(noteText) {
+    const micIcon = document.createElement("i");
+    micIcon.className = "bi bi-mic-fill cell-mic";
+    micIcon.title = "Voice transcription";
+    micIcon.setAttribute("aria-label", "Start voice transcription");
+
+    let hoverTimer = null;
+
+    micIcon.addEventListener("mouseenter", () => {
+        hoverTimer = setTimeout(() => startTranscription(noteText), 2000); // Start transcription after 2 seconds
+    });
+
+    micIcon.addEventListener("mouseleave", () => {
+        if (hoverTimer) clearTimeout(hoverTimer); // Cancel transcription on mouse leave
+    });
+
+    return micIcon;
+}
+
+// ========================
+// Simplified Note Input Handling
+// ========================
+const handleNoteInput = debounce((event, day, hour) => {
+    const noteText = event.target.innerText.trim();
+    const dateObj = addDays(currentStartOfWeek, day);
+    const date = format(dateObj, "yyyy-MM-dd");
+    const time = formatHour(hour);
+
+    if (!noteText) return; // Skip saving if note is empty
+
+    saveNoteToFirebase(date, time, noteText);
+}, 500);
 
 // ========================
 // Mini Kalendář
@@ -699,27 +723,7 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
-
-// Zpracování Vstupu Poznámky s Debounce
-const handleNoteInput = debounce((event, day, hour) => {
-    const noteText = event.target.innerText.trim();
-    console.log(`Zpracovávám vstup pro den ${day}, hodina ${hour}: "${noteText}"`);
-
-    const dateObj = addDays(currentStartOfWeek, day);
-    const date = format(dateObj, 'yyyy-MM-dd');
-    const time = formatHour(hour);
-
-    if (noteText === '') {
-        // Pokud nechcete mazat prázdné poznámky, jednoduše přerušte funkci
-        console.log(`Poznámka pro den ${day}, hodina ${hour} je prázdná. Neprovádím žádnou akci.`);
-        return;
-    }
-
-    console.log(`Ukládám poznámku pro ${date} v ${time}: "${noteText}"`);
-    saveNoteToFirebase(date, time, noteText);
-    saveSelectedDateToLocalStorage(dateObj); // Uložení do local storage
-}, 500);
-
+ 
 // Uložení Poznámky Přímo při Blur Eventu
 async function saveNoteDirectly(event, day, hour) {
     const noteText = event.target.innerText.trim();
