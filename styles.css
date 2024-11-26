@@ -133,6 +133,7 @@
    ======================== */
 .planner-table th, .planner-table td {
   
+    width: 14.3%;
 }.left-hed div {
     border-left: 1px solid #eaeaea; 
 }
@@ -330,13 +331,9 @@ table tr td:hover{
 }.year-header-table {
     margin-bottom: 0px;
 }
-#real-time-date { 
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-}
-#real-time-clock {
-    bottom: 20px;
-    right: 20px;
-    position: absolute; 
+#real { 
+    display: flex
+; 
+    flex-direction: row;
+    justify-content: flex-start;
 }

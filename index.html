@@ -24,10 +24,10 @@
 
 <body>
     <!-- Top Header -->
-    <div class="top-header shadow-sm">
+    <div class="top-header border-bottom">
         <!-- Left Section (Year Header, Navigation, Labels) -->
         <div class="left-hed">
-            <div class=" ">
+            <div class="ms-2">
 
 
                 <i id="prev-month" class="bi bi-arrow-left-square"></i>
@@ -35,13 +35,13 @@
                 <span id="current-month-name">LISTOPAD</span><br>
 
             </div>
-            <div    class=" ">
+            <div class=" ">
                 <span id="selected-week-number" class="">Týden 46</span>
 
             </div>
 
-            <div>
-                <span id="current-year" class="me-2">2024</span> <i id="open-year-calendar" class="bi bi-calendar3"></i>
+            <div><i id="open-year-calendar" class="bi bi-calendar3"></i>
+                <span id="current-year" class="me-2">2024</span>
             </div>
 
         </div>
@@ -87,10 +87,12 @@
             </div>
         </div>
     </div>
-
-    <span id="real-time-date" class="me-2">19.11.2024</span>
-    <span id="real-time-clock">00:00:00</span>
-
+    <div id="real" class="">
+        <div class="border-right p-3">Aktuální datum:</div>
+        <span class="border-right p-3" id="real-time-date">19.11.2024</span>
+        <div class="border-right p-3">Aktuální čas:</div>
+        <span class="p-3" id="real-time-clock">00:00:00</span>
+    </div>
     <!-- Mini Calendar Container -->
     <div id="mini-calendar-container" class="mini-calendar-container"></div>
 

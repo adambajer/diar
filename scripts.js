@@ -356,7 +356,7 @@ function renderYearCalendarModal() {
         const monthContainer = document.createElement("div");
         monthContainer.className = "month-container-modal";
 
-        const monthLabel = document.createElement("h5");
+        const monthLabel = document.createElement("div");
         monthLabel.innerText = monthName.toUpperCase();
         monthLabel.className = "text-center";
 
