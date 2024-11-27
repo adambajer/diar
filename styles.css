@@ -364,10 +364,9 @@
 .custom-slider-container {
     position: relative;
     width: 100%;
-    overflow-x: scroll;
-    padding: 20px 0;
+    overflow-x: scroll; 
     box-sizing: border-box;
-    background-color: #f9f9f9;
+    background-color: #f9f9f9; 
 }
 
 /* Hide scrollbar for WebKit browsers */
@@ -379,12 +378,10 @@
 #custom-slider {
    
     position: relative;
-    display: flex
-;
-    height: 50px;
-    align-items: flex-end;
-    margin: 0 10px;
+    display: flex ;
+    align-items: flex-end; 
     justify-content: center;
+    margin: 50px;
 }
 
 /* Slider Ticks */
@@ -393,7 +390,7 @@
     flex: 0 0 0.25vw;
     height: 20px;
     background-color: #ccc;
- 
+ border-right: 1px solid black;
     cursor: pointer;
 }
 
@@ -411,9 +408,9 @@
 }
 
 /* Tooltip Styles */
-.custom-slider-tooltip {
+.custom-slider-tooltip { 
     position: absolute;
-    top: 0px;
+    top: 70px;
     left: 0;
     background-color: #333;
     color: #fff;

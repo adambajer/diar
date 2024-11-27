@@ -1006,8 +1006,7 @@ function moveToNextWeek() {
         newPlanner.classList.add('planner-slide-wrapper');
         isAnimating = false;
     }, { once: true });
-
-    updateAfterWeekChange();
+ 
 }
 
 function moveToPreviousWeek() {
@@ -1042,8 +1041,7 @@ function moveToPreviousWeek() {
         newPlanner.classList.add('planner-slide-wrapper');
         isAnimating = false;
     }, { once: true });
-
-    updateAfterWeekChange();
+ 
 }
 
 // ========================
