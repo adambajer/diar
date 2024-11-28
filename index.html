@@ -23,24 +23,21 @@
 </head>
 
 <body>
-    <!-- Top Header -->
-    <div class="top-header border-bottom">
-        <!-- Left Section (Year Header, Navigation, Labels) -->
-        <div class="d-inline-block">
-            <i id="prev-month" class="bi bi-arrow-left-square"></i>
-            <i id="next-month" class="bi bi-arrow-right-square"></i>
-            <span id="current-month-name" class="ms-2 border-left">LISTOPAD</span> <span id="selected-week-number"
-                class="ms-2">Týden 46</span>
-            <i id="open-year-calendar" class="ms-2 bi bi-calendar3"></i>
-            <span id="current-year" class="ms-2">2024</span>
-
-        </div>
-        <div class="year-header-container" id="year-header"></div>
+     <!-- Slider Container -->
+<!-- Custom Slider Container -->
+<div class="custom-slider-container">
+    <div id="custom-slider">
+        <!-- Ticks will be generated dynamically -->
     </div>
+    <div id="custom-slider-tooltip" class="custom-slider-tooltip">Date</div>
+</div>
 
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
+        <div class="year-calendar-modal">
+            <!-- Year Calendar will be injected here -->
+        </div>
         <div class="planner-slide-wrapper">
             <!-- Weekly Planner -->
             <div class="planner-table-container">
@@ -61,31 +58,8 @@
             </div>
         </div>
     </div>
-    <!-- Slider Container -->
-<!-- Custom Slider Container -->
-<div class="custom-slider-container">
-    <div id="custom-slider">
-        <!-- Ticks will be generated dynamically -->
-    </div>
-    <div id="custom-slider-tooltip" class="custom-slider-tooltip">Date</div>
-</div>
 
-
-    <!-- Year Calendar Modal -->
-    <div class="modal fade" id="yearCalendarModal" tabindex="-1" aria-labelledby="yearCalendarModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Kalendář pro <span id="selected-year">2024</span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
-                </div>
-                <div class="modal-body year-calendar-modal">
-                    <!-- Year Calendar will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
+ 
 
     <!-- Real-Time Date and Time -->
     <div id="real" class="d-flex border-top p-3">
@@ -94,8 +68,9 @@
         <div class="me-3">Aktuální čas<br><span id="real-time-clock">00:00:00</span></div>
         
         <div class="week-navigation">
-            <button id="prev-week" class="btn btn-secondary">Předchozí týden</button>
-            <button id="next-week" class="btn btn-secondary">Další týden</button>
+            <i id="prev-week" class="bi bi-arrow-left-square"></i>
+            <i id="next-week" class="bi bi-arrow-right-square"></i>
+ 
         </div>
 
     </div>

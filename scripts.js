@@ -21,19 +21,17 @@ const database = firebase.database();
 // ========================
 // Global Variables
 // ========================
-// Global Variables for Animation
 let isAnimating = false;
-
 let baseDate = new Date(); // Tracks the currently selected date
 let currentStartOfWeek = null;
 let currentTranscribingCell = null; // Tracks the cell being transcribed into
 let recognition = null; // SpeechRecognition instance
-// ========================
-// Global Variables for Swipe
-// ========================
+
+// Swipe Variables
 let touchStartX = null;
 let touchEndX = null;
 let isSwiping = false;
+
 // ========================
 // Initialize Planner on DOM Load
 // ========================
@@ -54,79 +52,124 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("No saved date found. Using current date.");
     }
 
-    setupClock(); // Initialize real-time clock
-    updateYearAndMonthDisplay();
+    setupClock(); 
     renderPlanner();
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
     renderMiniCalendar();
-    renderYearCalendarModal();
-    renderDayNumbersRow();
-    addMonthNavigationListeners();
-    setupYearCalendarButton();
+    renderYearCalendarModal();   
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
-    
-     setupDragScrolling();
-     setupKeyboardNavigation(); 
-     generateSliderTicks();
-    setupCustomSlider();
 
+    setupDragScrolling();
+    setupKeyboardNavigation();
+    generateSliderTicks();
+    setupCustomSlider();
+    setupWeekNavigationButtons();
 });
+
+// ========================
+// Utility and Helper Functions
+// ========================
+
+// Add Days to a Date
+function addDays(date, days) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+// Format Date according to Specified Format
+function format(date, formatStr) {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+
+    if (formatStr === 'yyyy-MM-dd') {
+        return `${year}-${month}-${day}`;
+    }
+    // Add more formats as needed
+    return date.toString();
+}
+
+// Get Week Number for a Date
+function getWeekNumber(date) {
+    const startOfWeek = getStartOfWeek(new Date(date));
+    const startOfYear = new Date(startOfWeek.getFullYear(), 0, 1);
+    const diffInTime = startOfWeek - startOfYear;
+    const diffInDays = Math.floor(diffInTime / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((diffInDays + startOfYear.getDay() + 1) / 7);
+    return weekNumber;
+}
+
+// Get Month Name in Czech
+function getMonthName(date) {
+    const monthNamesCzech = [
+        "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
+        "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
+    ];
+    return monthNamesCzech[date.getMonth()];
+}
+
+// Get Start of the Week (Monday)
+function getStartOfWeek(date) {
+    const result = new Date(date);
+    const day = result.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const diff = (day === 0 ? -6 : 1) - day; // Adjust so that Monday is the start of the week
+    result.setDate(result.getDate() + diff);
+    result.setHours(0, 0, 0, 0); // Reset time
+    return result;
+}
+
+// Get End of the Week (Sunday)
+function getEndOfWeek(startOfWeek) {
+    const result = new Date(startOfWeek);
+    result.setDate(result.getDate() + 6);
+    result.setHours(23, 59, 59, 999); // Set time to the end of the day
+    return result;
+}
+
+// Get Day Index from Date relative to the Start of the Week
+function getDayFromDate(date) {
+    const startOfWeek = getStartOfWeek(baseDate);
+    const dayDiff = Math.floor((new Date(date) - startOfWeek) / (24 * 60 * 60 * 1000));
+    return dayDiff;
+}
+
+// Get Hour from Time String
+function getHourFromTime(timeString) {
+    return parseInt(timeString.split(':')[0], 10);
+}
+
+// Check if Date is in the Currently Selected Week
+function isDateInCurrentSelectedWeek(date) {
+    const startOfWeek = getStartOfWeek(baseDate);
+    const endOfWeek = addDays(startOfWeek, 7);
+    return date >= startOfWeek && date < endOfWeek;
+}
+
+// Sanitize Input to Prevent XSS
+function sanitizeInput(str) {
+    if (!str) return '';
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
+
+// Format Hour
+function formatHour(hour) {
+    return hour.toString().padStart(2, '0') + ':00';
+}
+
+// ========================
+// Function to Determine if a Year is a Leap Year
+// ========================
+function isLeapYear(year) {
+    return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+}
 
 // ========================
 // Render Day Numbers Row
 // ========================
-
-function renderDayNumbersRow() {
-    const dayNumbersContainer = document.getElementById("day-numbers");
-    dayNumbersContainer.innerHTML = ""; // Clear existing row
-
-    const currentYear = baseDate.getFullYear();
-    const currentMonth = baseDate.getMonth();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    const row = document.createElement("div");
-    row.className = "day-numbers-row";
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(currentYear, currentMonth, day);
-
-        const dayCell = document.createElement("div");
-        dayCell.innerText = day;
-        dayCell.className = "day-cell";
-
-        // Highlight Sundays in red
-        if (date.getDay() === 0) {
-            dayCell.style.color = "red";
-        }
-
-        // Click event to navigate to the selected day
-        dayCell.addEventListener("click", () => {
-            console.log(`Clicked on day: ${day}`);
-            baseDate = date;
-            renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal();
-            updateYearAndMonthDisplay();
-            saveSelectedDateToLocalStorage(baseDate); // Save to local storage   // Existing initialization code...
-            generateSliderTicks();
-            setupCustomSlider();
-        });
-
-        // Highlight the current day
-        const today = new Date();
-        if (
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear()
-        ) {
-            dayCell.style.backgroundColor = "#e0f7fa"; // Light blue
-        }
-
-        row.appendChild(dayCell);
-    }
-
-    dayNumbersContainer.appendChild(row);
-}
+ 
 
 // ========================
 // Render Weekly Planner
@@ -151,8 +194,7 @@ async function renderPlanner() {
 
     // Highlight the selected week and update the week number display
     highlightSelectedWeek(currentStartOfWeek);
-    updateSelectedWeekNumber(currentStartOfWeek);
-
+ 
     // Fetch and display notes for the week
     const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
     console.log(`Fetching notes for the week starting: ${weekStartDate}`);
@@ -183,9 +225,15 @@ function populatePlannerWithNotes(notes) {
     }
 }
 
+// ========================
 // Render Day Headers (Day Names and Real Dates)
+// ========================
 function renderHeaders(startOfWeek) {
     const dayHeaders = document.getElementById("day-headers");
+    if (!dayHeaders) {
+        console.error("Element with ID 'day-headers' not found.");
+        return;
+    }
     dayHeaders.innerHTML = ""; // Clear existing headers
 
     console.log("Rendering day headers...");
@@ -202,9 +250,15 @@ function renderHeaders(startOfWeek) {
     }
 }
 
+// ========================
 // Render Time Slots
+// ========================
 function renderTimeSlots(startOfWeek) {
     const tbody = document.getElementById("time-slots");
+    if (!tbody) {
+        console.error("Element with ID 'time-slots' not found.");
+        return;
+    }
     tbody.innerHTML = ""; // Clear existing slots
 
     const startHour = 7; // Start hour for time slots
@@ -303,7 +357,7 @@ function createMicIcon(noteText) {
 const handleNoteInput = debounce((event, day, hour) => {
     const noteText = event.target.innerText.trim();
     const dateObj = addDays(currentStartOfWeek, day);
-    const date = format(dateObj, "yyyy-MM-dd");
+    const date = format(dateObj, 'yyyy-MM-dd');
     const time = formatHour(hour);
 
     if (!noteText) return; // Skip saving if note is empty
@@ -316,6 +370,10 @@ const handleNoteInput = debounce((event, day, hour) => {
 // ========================
 function renderMiniCalendar() {
     const container = document.getElementById("mini-calendar-container");
+    if (!container) {
+        console.error("Element with ID 'mini-calendar-container' not found.");
+        return;
+    }
     container.innerHTML = ""; // Clear existing calendar
 
     const currentYear = baseDate.getFullYear();
@@ -352,9 +410,10 @@ function renderMiniCalendar() {
             baseDate = date;
             renderPlanner();
             renderMiniCalendar();
-            renderYearCalendarModal();
-            updateYearAndMonthDisplay();
+            renderYearCalendarModal(); 
             saveSelectedDateToLocalStorage(date); // Save to local storage
+            generateSliderTicks();
+            setupCustomSlider();
         });
 
         // Highlight the current day
@@ -371,30 +430,42 @@ function renderMiniCalendar() {
     }
 
     container.appendChild(row);
-}
-
-// ========================
-// Year Calendar Modal
-// ========================
-function renderYearCalendarModal() {
+}function renderYearCalendarModal() {
     const container = document.querySelector(".year-calendar-modal");
+    if (!container) {
+        console.error("Element with class 'year-calendar-modal' not found.");
+        return;
+    }
     container.innerHTML = ""; // Clear existing year calendar
 
     const currentYear = baseDate.getFullYear();
-    document.getElementById("selected-year").innerText = currentYear;
+    const selectedMonth = baseDate.getMonth();
+
+    const selectedYearElement = document.getElementById("selected-year");
+    if (selectedYearElement) {
+        selectedYearElement.innerText = currentYear;
+    } else {
+        console.error("Element with ID 'selected-year' not found.");
+    }
 
     for (let month = 0; month < 12; month++) {
         const firstDay = new Date(currentYear, month, 1);
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
-        const monthName = firstDay.toLocaleString('cs-CZ', { month: 'long' });
+        const monthName = firstDay.toLocaleString("cs-CZ", { month: "long" });
 
+        // Create month container
         const monthContainer = document.createElement("div");
         monthContainer.className = "month-container-modal";
+        if (month === selectedMonth) {
+            monthContainer.classList.add("selected-month");
+        }
 
+        // Create month label
         const monthLabel = document.createElement("div");
         monthLabel.innerText = monthName.toUpperCase();
-        monthLabel.className = "text-center";
+        monthLabel.className = "text-center month-label";
 
+        // Create table for days (hidden by default for unselected months)
         const table = document.createElement("table");
         table.className = "table table-bordered table-sm text-center";
 
@@ -406,10 +477,9 @@ function renderYearCalendarModal() {
             row.appendChild(document.createElement("td"));
         }
 
+        // Add cells for each day of the month
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(currentYear, month, day);
-            const dateStr = format(date, 'yyyy-MM-dd');
-
             const cell = document.createElement("td");
             cell.innerText = day;
 
@@ -418,28 +488,30 @@ function renderYearCalendarModal() {
                 cell.style.color = "red";
             }
 
-            // Highlight if the day is in the currently selected week
+            // Highlight the selected week
             if (isDateInCurrentSelectedWeek(date)) {
                 cell.classList.add("selected-week");
-                console.log(`Year calendar cell for day ${day}, month ${month + 1} is in the selected week.`);
+                cell.style.backgroundColor = "#d1e7dd"; // Light green
             }
 
-            // Add click event
+            // Add click event to select a date
             cell.addEventListener("click", () => {
-                console.log(`Clicked on year calendar: day ${day}, month ${month + 1}`);
                 baseDate = date;
                 renderPlanner();
                 renderMiniCalendar();
                 renderYearCalendarModal();
-                updateYearAndMonthDisplay();
-                saveSelectedDateToLocalStorage(date); // Save to local storage
-                // Close the modal after selecting a date
-                const modal = bootstrap.Modal.getInstance(document.getElementById("yearCalendarModal"));
-                modal.hide();
+                saveSelectedDateToLocalStorage(date);
+
+                // Close the modal if Bootstrap modal is active
+                const modal = bootstrap.Modal.getInstance(
+                    document.getElementById("yearCalendarModal")
+                );
+                if (modal) modal.hide();
             });
 
             row.appendChild(cell);
 
+            // Start a new row if the current day is Sunday or the last day of the month
             if (date.getDay() === 0 || day === daysInMonth) {
                 tbody.appendChild(row);
                 row = document.createElement("tr");
@@ -447,11 +519,23 @@ function renderYearCalendarModal() {
         }
 
         table.appendChild(tbody);
+        table.style.display = month === selectedMonth ? "table" : "none"; // Show only the selected month by default
+
+        // Toggle visibility on click
+        monthLabel.addEventListener("click", () => {
+            const isVisible = table.style.display === "table";
+            document
+                .querySelectorAll(".month-container-modal table")
+                .forEach((tbl) => (tbl.style.display = "none")); // Hide all tables
+            if (!isVisible) table.style.display = "table"; // Show clicked table
+        });
+
         monthContainer.appendChild(monthLabel);
         monthContainer.appendChild(table);
         container.appendChild(monthContainer);
     }
 }
+
 
 // ========================
 // Firebase Operations
@@ -534,138 +618,28 @@ function fetchNotesForWeekFromFirebase(weekStartDate) {
 }
 
 // ========================
-// Utilities and Helper Functions
+// Functions to Update Display
 // ========================
-
-// Get Start of the Week (Monday)
-function getStartOfWeek(date) {
-    const result = new Date(date);
-    const day = result.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const diff = (day === 0 ? -6 : 1) - day; // Adjust so that Monday is the start of the week
-    result.setDate(result.getDate() + diff);
-    result.setHours(0, 0, 0, 0); // Reset time
-    return result;
-}
-
-// Get the end of the week (Sunday)
-function getEndOfWeek(startOfWeek) {
-    const result = new Date(startOfWeek);
-    result.setDate(result.getDate() + 6);
-    result.setHours(23, 59, 59, 999); // Set time to the end of the day
-    return result;
-}
-
-// Add Days to a Date
-function addDays(date, days) {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-}
-
-// Format Date according to Specified Format
-function format(date, formatStr) {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-
-    if (formatStr === 'yyyy-MM-dd') {
-        return `${year}-${month}-${day}`;
+ 
+// Update Selected Week Number Display
+function updateSelectedWeekNumber(startOfWeek) {
+    const selectedWeekNumberElement = document.getElementById("selected-week-number");
+    if (!selectedWeekNumberElement) {
+        console.error("Element with ID 'selected-week-number' not found.");
+        return;
     }
-    // Add more formats as needed
-    return date.toString();
-}
-
-// Get Week Number for a Date
-function getWeekNumber(date) {
-    const startOfWeek = getStartOfWeek(new Date(date));
-    const startOfYear = new Date(startOfWeek.getFullYear(), 0, 1);
-    const diffInTime = startOfWeek - startOfYear;
-    const diffInDays = Math.floor(diffInTime / (24 * 60 * 60 * 1000));
-    const weekNumber = Math.ceil((diffInDays + startOfYear.getDay() + 1) / 7);
-    return weekNumber;
-}
-
-// Get Month Name in Czech
-function getMonthName(date) {
-    const monthNamesCzech = [
-        "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
-        "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
-    ];
-    return monthNamesCzech[date.getMonth()];
-}
-
-// Get Day Index from Date relative to the Start of the Week
-function getDayFromDate(date) {
-    const startOfWeek = getStartOfWeek(baseDate);
-    const dayDiff = Math.floor((new Date(date) - startOfWeek) / (24 * 60 * 60 * 1000));
-    return dayDiff;
-}
-
-// Get Hour from Time String
-function getHourFromTime(timeString) {
-    return parseInt(timeString.split(':')[0], 10);
-}
-
-// Check if Date is in the Currently Selected Week
-function isDateInCurrentSelectedWeek(date) {
-    const startOfWeek = getStartOfWeek(baseDate);
-    const endOfWeek = addDays(startOfWeek, 7);
-    return date >= startOfWeek && date < endOfWeek;
-}
-
-// Sanitize Input to Prevent XSS
-function sanitizeInput(str) {
-    if (!str) return '';
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-}
-
-// Format Hour
-function formatHour(hour) {
-    return hour.toString().padStart(2, '0') + ':00';
+    const weekNumber = getWeekNumber(startOfWeek);
+    selectedWeekNumberElement.innerText = `${weekNumber}. TÝDEN`;
 }
 
 // ========================
 // Navigation and Event Listeners
 // ========================
-
-// Add Event Listeners for Month Navigation
-function addMonthNavigationListeners() {
-    document.getElementById("prev-month").addEventListener("click", () => {
-        console.log("Clicked on previous month.");
-        baseDate.setMonth(baseDate.getMonth() - 1);
-        renderPlanner();
-        renderMiniCalendar();
-        renderYearCalendarModal();
-        updateYearAndMonthDisplay();
-        saveSelectedDateToLocalStorage(baseDate); // Save to local storage
-    });
-
-    document.getElementById("next-month").addEventListener("click", () => {
-        console.log("Clicked on next month.");
-        baseDate.setMonth(baseDate.getMonth() + 1);
-        renderPlanner();
-        renderMiniCalendar();
-        renderYearCalendarModal();
-        updateYearAndMonthDisplay();
-        saveSelectedDateToLocalStorage(baseDate); // Save to local storage
-    });
-}
-
-// Set up Button for Opening Year Calendar
-function setupYearCalendarButton() {
-    document.getElementById("open-year-calendar").addEventListener("click", () => {
-        console.log("Clicked on button to open year calendar.");
-        renderYearCalendarModal();
-        new bootstrap.Modal(document.getElementById("yearCalendarModal")).show();
-    });
-}
+ 
 
 // ========================
 // Function to Save Selected Date to Local Storage
 // ========================
-
 function saveSelectedDateToLocalStorage(date) {
     const dateStr = date.toISOString();
     localStorage.setItem("selectedDate", dateStr);
@@ -680,8 +654,9 @@ function saveSelectedDateToLocalStorage(date) {
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
+        const context = this;
         clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
+        timeout = setTimeout(() => func.apply(context, args), wait);
     };
 }
 
@@ -843,8 +818,6 @@ function showToast(message, type = 'success') {
     }
     const toastBody = toastEl.querySelector('#toast-body');
 
-    toastBody.innerText = message;
-
     // Clear previous content
     toastBody.innerHTML = '';
 
@@ -900,171 +873,6 @@ function setupClock() {
 }
 
 // ========================
-// Functions to Update Display
-// ========================
-
-// Update Year and Month Display
-function updateYearAndMonthDisplay() {
-    const currentYearElement = document.getElementById("current-year");
-    const currentMonthNameElement = document.getElementById("current-month-name");
-
-    console.log("Updating year and month display...");
-    console.log("currentYearElement:", currentYearElement);
-    console.log("currentMonthNameElement:", currentMonthNameElement);
-
-    if (currentYearElement) {
-        const currentYear = baseDate.getFullYear();
-        currentYearElement.innerText = currentYear;
-        console.log(`Set current year to ${currentYear}`);
-    } else {
-        console.error("Element with ID 'current-year' not found.");
-    }
-
-    if (currentMonthNameElement) {
-        const currentMonthName = baseDate.toLocaleString('cs-CZ', { month: 'long' });
-        currentMonthNameElement.innerText = currentMonthName.toUpperCase();
-        console.log(`Set current month to ${currentMonthName.toUpperCase()}`);
-    } else {
-        console.error("Element with ID 'current-month-name' not found.");
-    }
-}
-// Define handler functions outside to allow removal
-function handleTouchStart(event) {
-    touchStartX = event.changedTouches[0].clientX;
-    isSwiping = true;
-}
-
-function handleTouchMove(event) {
-    if (!isSwiping) return;
-    touchEndX = event.changedTouches[0].clientX;
-}
-
-function handleTouchEnd(event) {
-    if (!isSwiping) return;
-    handleSwipeGesture();
-    isSwiping = false;
-}
-
-function setupSwipeListeners() {
-    const plannerContainer = document.querySelector(".planner-table-container");
-
-    if (!plannerContainer) {
-        console.error("Planner table container not found for swipe listeners.");
-        return;
-    }
-
-    // Remove existing listeners to prevent duplicate handlers
-    plannerContainer.removeEventListener('touchstart', handleTouchStart);
-    plannerContainer.removeEventListener('touchmove', handleTouchMove);
-    plannerContainer.removeEventListener('touchend', handleTouchEnd);
-
-    // Check if touch events are supported
-    if ('ontouchstart' in window || navigator.maxTouchPoints) {
-        // Attach new listeners
-        plannerContainer.addEventListener('touchstart', handleTouchStart, false);
-        plannerContainer.addEventListener('touchmove', handleTouchMove, false);
-        plannerContainer.addEventListener('touchend', handleTouchEnd, false);
-    }
-}
-
-function moveToNextWeek() {
-    if (isAnimating) return; // Prevent overlapping animations
-    isAnimating = true;
-
-    const slideWrapper = document.querySelector('.planner-slide-wrapper');
-
-    // Clone the current planner to create the next week's planner
-    const newPlanner = slideWrapper.cloneNode(true);
-    baseDate.setDate(baseDate.getDate() + 7);
-    renderPlanner(newPlanner.querySelector('.planner-table-container'));
-
-    // Append the new planner to the slide wrapper
-    slideWrapper.parentNode.appendChild(newPlanner);
-
-    // Animate the slide
-    slideWrapper.style.transform = 'translateX(-100%)';
-
-    // After animation ends, clean up
-    slideWrapper.addEventListener('transitionend', () => {
-        slideWrapper.parentNode.removeChild(slideWrapper);
-        newPlanner.classList.remove('planner-slide-wrapper');
-        newPlanner.style.transform = '';
-        newPlanner.classList.add('planner-slide-wrapper');
-        isAnimating = false;
-
-        // Re-attach swipe listeners to the new planner
-        setupSwipeListeners();
-    }, { once: true });
-
-    updateAfterWeekChange();
-}
-
-function moveToPreviousWeek() {
-    if (isAnimating) return; // Prevent overlapping animations
-    isAnimating = true;
-
-    const slideWrapper = document.querySelector('.planner-slide-wrapper');
-
-    // Clone the current planner to create the previous week's planner
-    const newPlanner = slideWrapper.cloneNode(true);
-    baseDate.setDate(baseDate.getDate() - 7);
-    renderPlanner(newPlanner.querySelector('.planner-table-container'));
-
-    // Insert the new planner before the current one
-    slideWrapper.parentNode.insertBefore(newPlanner, slideWrapper);
-
-    // Set initial position for sliding in
-    newPlanner.style.transform = 'translateX(-100%)';
-
-    // Trigger reflow to ensure the transform is applied
-    newPlanner.offsetHeight; // eslint-disable-line no-unused-expressions
-
-    // Animate the slide
-    newPlanner.style.transform = 'translateX(0)';
-    slideWrapper.style.transform = 'translateX(100%)';
-
-    // After animation ends, clean up
-    newPlanner.addEventListener('transitionend', () => {
-        slideWrapper.parentNode.removeChild(slideWrapper);
-        newPlanner.classList.remove('planner-slide-wrapper');
-        newPlanner.style.transform = '';
-        newPlanner.classList.add('planner-slide-wrapper');
-        isAnimating = false;
-
-        // Re-attach swipe listeners to the new planner
-        setupSwipeListeners();
-    }, { once: true });
-
-    updateAfterWeekChange();
-}
- 
-
-// Update Selected Week Number Display
-function updateSelectedWeekNumber(startOfWeek) {
-    const selectedWeekNumberElement = document.getElementById("selected-week-number");
-    if (!selectedWeekNumberElement) {
-        console.error("Element with ID 'selected-week-number' not found.");
-        return;
-    }
-    const weekNumber = getWeekNumber(startOfWeek);
-    selectedWeekNumberElement.innerText = `${weekNumber}. TÝDEN`;
-} 
-
-
-function handleSwipeGesture() {
-    if (touchStartX === null || touchEndX === null) return;
-    const deltaX = touchEndX - touchStartX;
-    const threshold = 50; // Adjust as necessary
-    if (deltaX > threshold) {
-        moveToPreviousWeek();
-    } else if (deltaX < -threshold) {
-        moveToNextWeek();
-    }
-    touchStartX = null;
-    touchEndX = null;
-} 
-
-// ========================
 // Highlight Selected Week in Calendars
 // ========================
 function highlightSelectedWeek(currentStartOfWeek) {
@@ -1110,8 +918,95 @@ function highlightSelectedWeek(currentStartOfWeek) {
         }
     });
 }
+
+// ========================
+// Navigation Buttons Initialization
+// ========================
+function setupWeekNavigationButtons() {
+    const prevWeekBtn = document.getElementById("prev-week");
+    const nextWeekBtn = document.getElementById("next-week");
+
+    if (prevWeekBtn) {
+        prevWeekBtn.addEventListener("click", () => {
+            moveToPreviousWeek();
+        });
+    } else {
+        console.error("Element with ID 'prev-week' not found.");
+    }
+
+    if (nextWeekBtn) {
+        nextWeekBtn.addEventListener("click", () => {
+            moveToNextWeek();
+        });
+    } else {
+        console.error("Element with ID 'next-week' not found.");
+    }
+}
+
+// ========================
+// Swipe Handling Functions
+// ========================
+function setupSwipeListeners() {
+    const plannerContainer = document.querySelector(".planner-table-container");
+
+    if (!plannerContainer) {
+        console.error("Planner table container not found for swipe listeners.");
+        return;
+    }
+
+    // Remove existing listeners to prevent duplicate handlers
+    plannerContainer.removeEventListener('touchstart', handleTouchStart);
+    plannerContainer.removeEventListener('touchmove', handleTouchMove);
+    plannerContainer.removeEventListener('touchend', handleTouchEnd);
+
+    // Check if touch events are supported
+    if ('ontouchstart' in window || navigator.maxTouchPoints) {
+        // Attach new listeners
+        plannerContainer.addEventListener('touchstart', handleTouchStart, false);
+        plannerContainer.addEventListener('touchmove', handleTouchMove, false);
+        plannerContainer.addEventListener('touchend', handleTouchEnd, false);
+    }
+}
+
+function handleTouchStart(event) {
+    touchStartX = event.changedTouches[0].clientX;
+    isSwiping = true;
+}
+
+function handleTouchMove(event) {
+    if (!isSwiping) return;
+    touchEndX = event.changedTouches[0].clientX;
+}
+
+function handleTouchEnd(event) {
+    if (!isSwiping) return;
+    handleSwipeGesture();
+    isSwiping = false;
+}
+
+function handleSwipeGesture() {
+    if (touchStartX === null || touchEndX === null) return;
+    const deltaX = touchEndX - touchStartX;
+    const threshold = 50; // Adjust as necessary
+    if (deltaX > threshold) {
+        moveToPreviousWeek();
+    } else if (deltaX < -threshold) {
+        moveToNextWeek();
+    }
+    touchStartX = null;
+    touchEndX = null;
+}
+
+// ========================
+// Drag Scrolling and Keyboard Navigation
+// ========================
 function setupDragScrolling() {
     const plannerContainer = document.querySelector(".planner-table-container");
+    if (!plannerContainer) {
+        console.error("Planner table container not found for drag scrolling.");
+        return;
+    }
+
     let isDown = false;
     let startX;
     let scrollLeft;
@@ -1141,6 +1036,7 @@ function setupDragScrolling() {
         plannerContainer.scrollLeft = scrollLeft - walk;
     });
 }
+
 function setupKeyboardNavigation() {
     document.addEventListener('keydown', function(event) {
         if (event.key === 'ArrowRight') {
@@ -1150,43 +1046,49 @@ function setupKeyboardNavigation() {
         }
     });
 }
-function setupWeekNavigationButtons() {
-    document.getElementById("prev-week").addEventListener("click", () => {
-        moveToPreviousWeek();
-    });
 
-    document.getElementById("next-week").addEventListener("click", () => {
-        moveToNextWeek();
-    });
-}
- 
+// ========================
+// Week Navigation Functions
+// ========================
+function moveToNextWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
 
-// Function to navigate to a specific week number
-function navigateToWeek(weekNumber) {
-    const year = baseDate.getFullYear();
-    // Get the first day of the week
-    const firstDayOfYear = new Date(year, 0, 1);
-    const daysOffset = (weekNumber - 1) * 7;
-    const newDate = new Date(firstDayOfYear.getTime() + daysOffset * 86400000);
-
-    // Adjust to the correct week day
-    baseDate = getStartOfWeek(newDate);
-
+    // Update baseDate to next week
+    baseDate = addDays(baseDate, 7);
     renderPlanner();
-    renderMiniCalendar();
-    renderYearCalendarModal();
-    updateYearAndMonthDisplay();
-    saveSelectedDateToLocalStorage(baseDate);
 
-    console.log(`Navigated to week ${weekNumber} of ${year}`);
+    // After rendering is done, re-attach swipe listeners
+    setTimeout(() => {
+        setupSwipeListeners();
+        isAnimating = false;
+    }, 500); // Match with CSS transition duration (adjust if needed)
 }
-// Existing JavaScript code
+
+function moveToPreviousWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    // Update baseDate to previous week
+    baseDate = addDays(baseDate, -7);
+    renderPlanner();
+
+    // After rendering is done, re-attach swipe listeners
+    setTimeout(() => {
+        setupSwipeListeners();
+        isAnimating = false;
+    }, 500); // Match with CSS transition duration (adjust if needed)
+}
 
 // ========================
 // Custom Slider Initialization and Event Handling
 // ========================
 function generateSliderTicks() {
     const slider = document.getElementById('custom-slider');
+    if (!slider) {
+        console.error("Element with ID 'custom-slider' not found.");
+        return;
+    }
     const currentYear = baseDate.getFullYear();
     const daysInYear = isLeapYear(currentYear) ? 366 : 365;
 
@@ -1215,6 +1117,11 @@ function setupCustomSlider() {
     const slider = document.getElementById('custom-slider');
     const tooltip = document.getElementById('custom-slider-tooltip');
 
+    if (!slider || !tooltip) {
+        console.error("Slider or tooltip elements not found.");
+        return;
+    }
+
     slider.addEventListener('mousemove', (event) => {
         if (event.target.classList.contains('slider-tick')) {
             const day = parseInt(event.target.dataset.day, 10);
@@ -1230,7 +1137,7 @@ function setupCustomSlider() {
             const tickRect = event.target.getBoundingClientRect();
             const left = tickRect.left + tickRect.width / 2 - tooltipRect.width / 2;
 
-            tooltip.style.left = `${left}px`; 
+            tooltip.style.left = `${left}px`;
 
             // Show tooltip
             tooltip.style.opacity = '1';
@@ -1255,15 +1162,13 @@ function setupCustomSlider() {
             baseDate = selectedDate;
             renderPlanner();
             renderMiniCalendar();
-            renderYearCalendarModal();
-            updateYearAndMonthDisplay();
+            renderYearCalendarModal(); 
             saveSelectedDateToLocalStorage(baseDate);
+            generateSliderTicks();
+            setupCustomSlider();
         }
     });
 }
-
-// Call generateSliderTicks and setupCustomSlider after DOM content is loaded
- 
 
 // Function to determine if a year is a leap year
 function isLeapYear(year) {
@@ -1275,5 +1180,4 @@ function getDateFromDay(year, day) {
     const date = new Date(year, 0); // January 1st
     return new Date(date.setDate(day));
 }
-
-// Existing JavaScript code
+ 
