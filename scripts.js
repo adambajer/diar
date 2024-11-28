@@ -56,15 +56,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupClock(); // Initialize real-time clock
     updateYearAndMonthDisplay();
-
     renderPlanner();
+    setupSwipeListeners(); // Attach swipe listeners to the initial planner
     renderMiniCalendar();
     renderYearCalendarModal();
     renderDayNumbersRow();
     addMonthNavigationListeners();
     setupYearCalendarButton();
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
-    setupSwipeListeners(); // Initialize swipe listeners   
+    
      setupDragScrolling();
      setupKeyboardNavigation(); 
      generateSliderTicks();
@@ -928,57 +928,43 @@ function updateYearAndMonthDisplay() {
         console.error("Element with ID 'current-month-name' not found.");
     }
 }
-
-// Update Selected Week Number Display
-function updateSelectedWeekNumber(startOfWeek) {
-    const selectedWeekNumberElement = document.getElementById("selected-week-number");
-    if (!selectedWeekNumberElement) {
-        console.error("Element with ID 'selected-week-number' not found.");
-        return;
-    }
-    const weekNumber = getWeekNumber(startOfWeek);
-    selectedWeekNumberElement.innerText = `${weekNumber}. TÝDEN`;
+// Define handler functions outside to allow removal
+function handleTouchStart(event) {
+    touchStartX = event.changedTouches[0].clientX;
+    isSwiping = true;
 }
 
-// ========================
-// Event Listeners for Swipe and Scroll
-// ========================
+function handleTouchMove(event) {
+    if (!isSwiping) return;
+    touchEndX = event.changedTouches[0].clientX;
+}
+
+function handleTouchEnd(event) {
+    if (!isSwiping) return;
+    handleSwipeGesture();
+    isSwiping = false;
+}
+
 function setupSwipeListeners() {
     const plannerContainer = document.querySelector(".planner-table-container");
 
+    if (!plannerContainer) {
+        console.error("Planner table container not found for swipe listeners.");
+        return;
+    }
+
+    // Remove existing listeners to prevent duplicate handlers
+    plannerContainer.removeEventListener('touchstart', handleTouchStart);
+    plannerContainer.removeEventListener('touchmove', handleTouchMove);
+    plannerContainer.removeEventListener('touchend', handleTouchEnd);
+
     // Check if touch events are supported
     if ('ontouchstart' in window || navigator.maxTouchPoints) {
-        // Touch event listeners
-        plannerContainer.addEventListener('touchstart', function (event) {
-            touchStartX = event.changedTouches[0].clientX;
-            isSwiping = true;
-        }, false);
-
-        plannerContainer.addEventListener('touchmove', function (event) {
-            if (!isSwiping) return;
-            touchEndX = event.changedTouches[0].clientX;
-        }, false);
-
-        plannerContainer.addEventListener('touchend', function (event) {
-            if (!isSwiping) return;
-            handleSwipeGesture();
-            isSwiping = false;
-        }, false);
+        // Attach new listeners
+        plannerContainer.addEventListener('touchstart', handleTouchStart, false);
+        plannerContainer.addEventListener('touchmove', handleTouchMove, false);
+        plannerContainer.addEventListener('touchend', handleTouchEnd, false);
     }
-}
- 
-
-function handleSwipeGesture() {
-    if (touchStartX === null || touchEndX === null) return;
-    const deltaX = touchEndX - touchStartX;
-    const threshold = 50; // Adjust as necessary
-    if (deltaX > threshold) {
-        moveToPreviousWeek();
-    } else if (deltaX < -threshold) {
-        moveToNextWeek();
-    }
-    touchStartX = null;
-    touchEndX = null;
 }
 
 function moveToNextWeek() {
@@ -1005,8 +991,12 @@ function moveToNextWeek() {
         newPlanner.style.transform = '';
         newPlanner.classList.add('planner-slide-wrapper');
         isAnimating = false;
+
+        // Re-attach swipe listeners to the new planner
+        setupSwipeListeners();
     }, { once: true });
- 
+
+    updateAfterWeekChange();
 }
 
 function moveToPreviousWeek() {
@@ -1040,9 +1030,39 @@ function moveToPreviousWeek() {
         newPlanner.style.transform = '';
         newPlanner.classList.add('planner-slide-wrapper');
         isAnimating = false;
+
+        // Re-attach swipe listeners to the new planner
+        setupSwipeListeners();
     }, { once: true });
- 
+
+    updateAfterWeekChange();
 }
+ 
+
+// Update Selected Week Number Display
+function updateSelectedWeekNumber(startOfWeek) {
+    const selectedWeekNumberElement = document.getElementById("selected-week-number");
+    if (!selectedWeekNumberElement) {
+        console.error("Element with ID 'selected-week-number' not found.");
+        return;
+    }
+    const weekNumber = getWeekNumber(startOfWeek);
+    selectedWeekNumberElement.innerText = `${weekNumber}. TÝDEN`;
+} 
+
+
+function handleSwipeGesture() {
+    if (touchStartX === null || touchEndX === null) return;
+    const deltaX = touchEndX - touchStartX;
+    const threshold = 50; // Adjust as necessary
+    if (deltaX > threshold) {
+        moveToPreviousWeek();
+    } else if (deltaX < -threshold) {
+        moveToNextWeek();
+    }
+    touchStartX = null;
+    touchEndX = null;
+} 
 
 // ========================
 // Highlight Selected Week in Calendars
