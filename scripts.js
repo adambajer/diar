@@ -60,9 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
 
     setupDragScrolling();
-    setupKeyboardNavigation();
-    generateSliderTicks();
-    setupCustomSlider();
+    setupKeyboardNavigation(); 
     setupWeekNavigationButtons();
 });
 
@@ -181,12 +179,7 @@ async function renderPlanner() {
     currentStartOfWeek = getStartOfWeek(baseDate);
     const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
 
-    // Update slider position
-    const slider = document.getElementById('week-slider');
-    if (slider) {
-        const currentWeekNumber = getWeekNumber(baseDate);
-        slider.value = currentWeekNumber - 1;
-    }
+   
 
     // Render headers and time slots for the correct week
     renderHeaders(currentStartOfWeek);
@@ -412,8 +405,7 @@ function renderMiniCalendar() {
             renderMiniCalendar();
             renderYearCalendarModal(); 
             saveSelectedDateToLocalStorage(date); // Save to local storage
-            generateSliderTicks();
-            setupCustomSlider();
+       
         });
 
         // Highlight the current day
@@ -1057,8 +1049,9 @@ function moveToNextWeek() {
     // Update baseDate to next week
     baseDate = addDays(baseDate, 7);
     renderPlanner();
-
-    // After rendering is done, re-attach swipe listeners
+    renderMiniCalendar();
+    renderYearCalendarModal(); 
+     // After rendering is done, re-attach swipe listeners
     setTimeout(() => {
         setupSwipeListeners();
         isAnimating = false;
@@ -1072,104 +1065,16 @@ function moveToPreviousWeek() {
     // Update baseDate to previous week
     baseDate = addDays(baseDate, -7);
     renderPlanner();
-
+            renderMiniCalendar();
+            renderYearCalendarModal(); 
+ 
     // After rendering is done, re-attach swipe listeners
     setTimeout(() => {
         setupSwipeListeners();
         isAnimating = false;
     }, 500); // Match with CSS transition duration (adjust if needed)
 }
-
-// ========================
-// Custom Slider Initialization and Event Handling
-// ========================
-function generateSliderTicks() {
-    const slider = document.getElementById('custom-slider');
-    if (!slider) {
-        console.error("Element with ID 'custom-slider' not found.");
-        return;
-    }
-    const currentYear = baseDate.getFullYear();
-    const daysInYear = isLeapYear(currentYear) ? 366 : 365;
-
-    // Clear existing ticks
-    slider.innerHTML = '';
-
-    for (let day = 1; day <= daysInYear; day++) {
-        const tick = document.createElement('div');
-        tick.className = 'slider-tick';
-        tick.dataset.day = day;
-
-        // Add month labels on the first day of each month
-        const date = getDateFromDay(currentYear, day);
-        if (date.getDate() === 1) {
-            const monthLabel = document.createElement('span');
-            monthLabel.className = 'month-label';
-            monthLabel.innerText = date.toLocaleString('cs-CZ', { month: 'short' });
-            tick.appendChild(monthLabel);
-        }
-
-        slider.appendChild(tick);
-    }
-}
-
-function setupCustomSlider() {
-    const slider = document.getElementById('custom-slider');
-    const tooltip = document.getElementById('custom-slider-tooltip');
-
-    if (!slider || !tooltip) {
-        console.error("Slider or tooltip elements not found.");
-        return;
-    }
-
-    slider.addEventListener('mousemove', (event) => {
-        if (event.target.classList.contains('slider-tick')) {
-            const day = parseInt(event.target.dataset.day, 10);
-            const currentYear = baseDate.getFullYear();
-            const date = getDateFromDay(currentYear, day);
-
-            // Update tooltip text
-            tooltip.innerText = date.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            // Position tooltip
-            const sliderRect = slider.getBoundingClientRect();
-            const tooltipRect = tooltip.getBoundingClientRect();
-            const tickRect = event.target.getBoundingClientRect();
-            const left = tickRect.left + tickRect.width / 2 - tooltipRect.width / 2;
-
-            tooltip.style.left = `${left}px`;
-
-            // Show tooltip
-            tooltip.style.opacity = '1';
-        } else {
-            // Hide tooltip if not hovering over a tick
-            tooltip.style.opacity = '0';
-        }
-    });
-
-    slider.addEventListener('mouseout', () => {
-        // Hide tooltip when mouse leaves the slider
-        tooltip.style.opacity = '0';
-    });
-
-    // Navigate to date on click
-    slider.addEventListener('click', (event) => {
-        if (event.target.classList.contains('slider-tick')) {
-            const day = parseInt(event.target.dataset.day, 10);
-            const currentYear = baseDate.getFullYear();
-            const selectedDate = getDateFromDay(currentYear, day);
-
-            baseDate = selectedDate;
-            renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal(); 
-            saveSelectedDateToLocalStorage(baseDate);
-            generateSliderTicks();
-            setupCustomSlider();
-        }
-    });
-}
-
+ 
 // Function to determine if a year is a leap year
 function isLeapYear(year) {
     return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
