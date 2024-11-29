@@ -1107,12 +1107,7 @@ function setupKeyboardNavigation() {
             }
         }
     });
-
-    // Initialize by selecting the first cell
-    document.addEventListener("DOMContentLoaded", () => {
-        const firstCell = document.querySelector('td[data-day="0"][data-hour="7"]');
-        if (firstCell) highlightCell(firstCell);
-    });
+ 
 }
 
 // ========================
