@@ -2,9 +2,10 @@
     "name": "Diář",
     "short_name": "Diar",
     "start_url": "/",
-    "display": "standalone",
+    "display": "fullscreen", 
     "background_color": "#ffffff",
     "theme_color": "#0f5132",
+    "orientation": "portrait-primary", 
     "icons": [
         {
             "src": "/web-app-manifest-192x192.png",
