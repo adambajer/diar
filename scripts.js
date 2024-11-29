@@ -61,31 +61,31 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("No saved date found. Using current date.");
     }
 
-    setupClock(); 
+    setupClock();
     renderPlanner();
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
     renderMiniCalendar();
-    renderYearCalendarModal();   
+    renderYearCalendarModal();
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
 
     setupDragScrolling();
-    setupKeyboardNavigation(); 
+    setupKeyboardNavigation();
     setupWeekNavigationButtons();
-    
-document.getElementById("go-to-today").addEventListener("click", () => {
-    // Set the baseDate to the current date
-    baseDate = new Date();
-    
-    // Re-render the planner, mini-calendar, and year calendar modal
-    renderPlanner();
-    renderMiniCalendar();
-    renderYearCalendarModal();
-    
-    // Save the current date to local storage
-    saveSelectedDateToLocalStorage(baseDate);
 
-    console.log("Switched to today's date:", baseDate);
-});
+    document.getElementById("go-to-today").addEventListener("click", () => {
+        // Set the baseDate to the current date
+        baseDate = new Date();
+
+        // Re-render the planner, mini-calendar, and year calendar modal
+        renderPlanner();
+        renderMiniCalendar();
+        renderYearCalendarModal();
+
+        // Save the current date to local storage
+        saveSelectedDateToLocalStorage(baseDate);
+
+        console.log("Switched to today's date:", baseDate);
+    });
 
 });
 
@@ -192,7 +192,7 @@ function isLeapYear(year) {
 // ========================
 // Render Day Numbers Row
 // ========================
- 
+
 
 // ========================
 // Render Weekly Planner
@@ -204,7 +204,7 @@ async function renderPlanner() {
     currentStartOfWeek = getStartOfWeek(baseDate);
     const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
 
-   
+
 
     // Render headers and time slots for the correct week
     renderHeaders(currentStartOfWeek);
@@ -212,7 +212,7 @@ async function renderPlanner() {
 
     // Highlight the selected week and update the week number display
     highlightSelectedWeek(currentStartOfWeek);
- 
+
     // Fetch and display notes for the week
     const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
     console.log(`Fetching notes for the week starting: ${weekStartDate}`);
@@ -261,8 +261,11 @@ function renderHeaders(startOfWeek) {
         const th = document.createElement("th");
         th.className = "day-header";
         th.innerHTML = `
-            <div class="day-name">${dayDate.toLocaleString('cs-CZ', { weekday: 'long' })}</div>
+            <div class="d-inline-flex">
+            <div class="day-name me-2">${dayDate.toLocaleString('cs-CZ', { weekday: 'short' })}</div>
             <div class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'long', day: 'numeric' })}">${dayDate.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' })}</div>
+            
+            </div>
         `;
         dayHeaders.appendChild(th);
     }
@@ -428,9 +431,9 @@ function renderMiniCalendar() {
             baseDate = date;
             renderPlanner();
             renderMiniCalendar();
-            renderYearCalendarModal(); 
+            renderYearCalendarModal();
             saveSelectedDateToLocalStorage(date); // Save to local storage
-       
+
         });
 
         // Highlight the current day
@@ -447,7 +450,7 @@ function renderMiniCalendar() {
     }
 
     container.appendChild(row);
-}function renderYearCalendarModal() {
+} function renderYearCalendarModal() {
     const container = document.querySelector(".year-calendar-modal");
     if (!container) {
         console.error("Element with class 'year-calendar-modal' not found.");
@@ -460,10 +463,15 @@ function renderMiniCalendar() {
     const selectedMonth = baseDate.getMonth();
 
     // Add year as the main header
-    const yearHeader = document.createElement("div");
+    let yearHeader = document.querySelector(".year-header");
     yearHeader.innerText = currentYear;
-    yearHeader.className = "year-header text-center my-3 fw-bold";
-    container.appendChild(yearHeader);
+    let monthHeader = document.querySelector(".month-header");
+    // Update the week-header with the current selected week number
+    const weekHeader = document.querySelector(".week-header");
+    if (weekHeader) {
+        const selectedWeekNumber = getWeekNumber(baseDate);
+        weekHeader.innerText = `${selectedWeekNumber} týden`;
+    }
 
     for (let month = 0; month < 12; month++) {
         const firstDay = new Date(currentYear, month, 1);
@@ -472,15 +480,16 @@ function renderMiniCalendar() {
 
         // Create month container
         const monthContainer = document.createElement("div");
-        monthContainer.className = "month-container-modal mb-3";
+        monthContainer.className = "month-container-modal";
         if (month === selectedMonth) {
+            monthHeader.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
             monthContainer.classList.add("selected-month");
         }
 
         // Create month label (aligned to the left)
         const monthLabel = document.createElement("div");
         monthLabel.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
-        monthLabel.className = "text-start ps-3 month-label fw-bold";
+        monthLabel.className = "text-start month-label p-1";
 
         // Create table for days (hidden by default for unselected months)
         const table = document.createElement("table");
@@ -636,7 +645,7 @@ function fetchNotesForWeekFromFirebase(weekStartDate) {
 // ========================
 // Functions to Update Display
 // ========================
- 
+
 // Update Selected Week Number Display
 function updateSelectedWeekNumber(startOfWeek) {
     const selectedWeekNumberElement = document.getElementById("selected-week-number");
@@ -651,7 +660,7 @@ function updateSelectedWeekNumber(startOfWeek) {
 // ========================
 // Navigation and Event Listeners
 // ========================
- 
+
 
 // ========================
 // Function to Save Selected Date to Local Storage
@@ -1052,14 +1061,69 @@ function setupDragScrolling() {
         plannerContainer.scrollLeft = scrollLeft - walk;
     });
 }
-
 function setupKeyboardNavigation() {
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'ArrowRight') {
-            moveToNextWeek();
-        } else if (event.key === 'ArrowLeft') {
-            moveToPreviousWeek();
+    let currentCell = null; // Track the currently selected cell
+
+    // Highlight the selected cell
+    function highlightCell(cell) {
+        if (!cell) return;
+        clearHighlights();
+        cell.classList.add("selected-cell");
+        currentCell = cell;
+        cell.focus(); // Focus for accessibility
+    }
+
+    // Clear all highlights
+    function clearHighlights() {
+        document.querySelectorAll(".selected-cell").forEach(cell => {
+            cell.classList.remove("selected-cell");
+        });
+    }
+
+    // Get the next cell in the given direction
+    function getNextCell(direction) {
+        if (!currentCell) return null;
+
+        const day = parseInt(currentCell.dataset.day, 10);
+        const hour = parseInt(currentCell.dataset.hour, 10);
+
+        let nextDay = day;
+        let nextHour = hour;
+
+        switch (direction) {
+            case "ArrowRight":
+                nextDay = day + 1 < 7 ? day + 1 : 0; // Wrap to next week
+                break;
+            case "ArrowLeft":
+                nextDay = day - 1 >= 0 ? day - 1 : 6; // Wrap to previous week
+                break;
+            case "ArrowDown":
+                nextHour = hour + 1 <= 20 ? hour + 1 : 7; // Wrap to top
+                break;
+            case "ArrowUp":
+                nextHour = hour - 1 >= 7 ? hour - 1 : 20; // Wrap to bottom
+                break;
         }
+
+        return document.querySelector(`td[data-day="${nextDay}"][data-hour="${nextHour}"]`);
+    }
+
+    // Attach event listener for keydown events
+    document.addEventListener("keydown", function (event) {
+        const { key } = event;
+        if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(key)) {
+            event.preventDefault(); // Prevent default scrolling behavior
+            const nextCell = getNextCell(key);
+            if (nextCell) {
+                highlightCell(nextCell);
+            }
+        }
+    });
+
+    // Initialize by selecting the first cell
+    document.addEventListener("DOMContentLoaded", () => {
+        const firstCell = document.querySelector('td[data-day="0"][data-hour="7"]');
+        if (firstCell) highlightCell(firstCell);
     });
 }
 
@@ -1074,8 +1138,8 @@ function moveToNextWeek() {
     baseDate = addDays(baseDate, 7);
     renderPlanner();
     renderMiniCalendar();
-    renderYearCalendarModal(); 
-     // After rendering is done, re-attach swipe listeners
+    renderYearCalendarModal();
+    // After rendering is done, re-attach swipe listeners
     setTimeout(() => {
         setupSwipeListeners();
         isAnimating = false;
@@ -1089,16 +1153,16 @@ function moveToPreviousWeek() {
     // Update baseDate to previous week
     baseDate = addDays(baseDate, -7);
     renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal(); 
- 
+    renderMiniCalendar();
+    renderYearCalendarModal();
+
     // After rendering is done, re-attach swipe listeners
     setTimeout(() => {
         setupSwipeListeners();
         isAnimating = false;
     }, 500); // Match with CSS transition duration (adjust if needed)
 }
- 
+
 // Function to determine if a year is a leap year
 function isLeapYear(year) {
     return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);

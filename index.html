@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <title>Diář</title>
     <meta name="theme-color" content="#0f5132">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <!-- Google Fonts -->
@@ -20,7 +20,7 @@
     <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" href="favicon.ico" />
-     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
@@ -30,32 +30,32 @@
 </head>
 
 <body>
-     <!-- Real-Time Date and Time -->
-    <div id="real" class="d-flex border-top p-3">
-        
-     <!-- Button to toggle year calendar -->
-     <div
-     class="btn"
-     type="button"
-     data-bs-toggle="collapse"
-     data-bs-target=".year-calendar-modal"
-     aria-expanded="false"
-     aria-controls="year-calendar-modal"><i class="bi bi-list"></i>
-</div>
-        <div class="me-3" id="go-to-today">Aktuální datum<br><span id="real-time-date" class="me-3" >19.11.2024</span></div>
-        
-        <div class="me-3">Aktuální čas<br><span id="real-time-clock">00:00:00</span></div>
-        
-        <div class="week-navigation">
-            <i id="prev-week" class="bi bi-arrow-left-square"></i>
-            <i id="next-week" class="bi bi-arrow-right-square"></i>
- 
-        </div> 
+    <!-- Real-Time Date and Time -->
+    <div id="real" class="d-flex border-top shadow-sm">
+        <div class="d-inline-flex">
+            <!-- Button to toggle year calendar -->
+            <div type="button" data-bs-toggle="collapse" data-bs-target=".year-calendar-modal" aria-expanded="false"
+                aria-controls="year-calendar-modal" class="p-1 border-end"><i class="bi bi-list"></i>
+            </div>
+            <div class="year-header p-1 border-end border-start"></div>
+            <div class="month-header p-1 border-start"></div>
+            <div class="week-header p-1 border-start"></div>
+
+            <div id="prev-week" class="p-1 border-end border-start"><i class="bi bi-arrow-left"></i></div>
+            <div id="next-week" class="p-1 border-end"><i class="bi bi-arrow-right"></i></div>
+        </div>
+
+
+        <div class="me-3" id="go-to-today">
+            <span id="real-time-date" class="p-1 border-end border-start">19.11.2024</span>
+            <span id="real-time-clock" class="p-1">00:00:00</span>
+        </div>
+
     </div>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
-       
+
         <!-- Year Calendar Modal -->
         <div class="year-calendar-modal collapse" class="">
             <!-- Content of the Year Calendar -->
@@ -63,8 +63,8 @@
                 <!-- Your calendar rendering will go here -->
             </div>
         </div>
-        
-       
+
+
         <div class="planner-slide-wrapper">
             <!-- Weekly Planner -->
             <div class="planner-table-container">
@@ -86,7 +86,7 @@
         </div>
     </div>
 
- 
+
 
 
 
