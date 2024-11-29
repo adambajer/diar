@@ -99,8 +99,7 @@
 
 #day-headers th {
     font-size: 1.2rem; /* Larger font for visibility */
-    text-align: center;
-    background-color: #f5f5f5;
+    text-align: center; 
     padding: 10px;
 }
 
@@ -109,8 +108,7 @@
     font-size: 1rem;
 }
 
-#day-headers th.current-day {
-    background-color: #e0f7fa; /* Light blue for the current day */
+#day-headers th.current-day { 
     color: #007bff;
     border: 2px solid #007bff; /* Optional border for emphasis */
 }
@@ -342,8 +340,7 @@
     align-items: flex-start;
     display: flex !important
 ;
-    align-items: center;
-    background-color: #f9f9f9;
+    align-items: center; 
     justify-content: space-between;
 }/* Existing styles */
 

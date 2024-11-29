@@ -1085,4 +1085,17 @@ function getDateFromDay(year, day) {
     const date = new Date(year, 0); // January 1st
     return new Date(date.setDate(day));
 }
- 
+document.getElementById("go-to-today").addEventListener("click", () => {
+    // Set the baseDate to the current date
+    baseDate = new Date();
+    
+    // Re-render the planner, mini-calendar, and year calendar modal
+    renderPlanner();
+    renderMiniCalendar();
+    renderYearCalendarModal();
+    
+    // Save the current date to local storage
+    saveSelectedDateToLocalStorage(baseDate);
+
+    console.log("Switched to today's date:", baseDate);
+});
