@@ -11,7 +11,7 @@
    General Table Styles
    ======================== */
 .table {
-    width: 100%;
+    width: auto;
     table-layout: fixed;
     border-collapse: collapse;
     text-align: center;
