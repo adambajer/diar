@@ -30,7 +30,9 @@
 </head>
 
 <body>
- 
+     <!-- Real-Time Date and Time -->
+    <div id="real" class="d-flex border-top p-3">
+        
      <!-- Button to toggle year calendar -->
      <div
      class="btn"
@@ -38,10 +40,18 @@
      data-bs-toggle="collapse"
      data-bs-target=".year-calendar-modal"
      aria-expanded="false"
-     aria-controls="year-calendar-modal"
- >
-     M
+     aria-controls="year-calendar-modal"><i class="bi bi-list"></i>
 </div>
+        <div class="me-3" id="go-to-today">Aktuální datum<br><span id="real-time-date" class="me-3" >19.11.2024</span></div>
+        
+        <div class="me-3">Aktuální čas<br><span id="real-time-clock">00:00:00</span></div>
+        
+        <div class="week-navigation">
+            <i id="prev-week" class="bi bi-arrow-left-square"></i>
+            <i id="next-week" class="bi bi-arrow-right-square"></i>
+ 
+        </div> 
+    </div>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
@@ -78,18 +88,7 @@
 
  
 
-    <!-- Real-Time Date and Time -->
-    <div id="real" class="d-flex border-top p-3">
-        <div class="me-3" >Aktuální datum<br><span id="real-time-date" class="me-3" >19.11.2024</span></div>
-        
-        <div class="me-3">Aktuální čas<br><span id="real-time-clock">00:00:00</span></div>
-        <div id="go-to-today">Dnes</div>
-        <div class="week-navigation">
-            <i id="prev-week" class="bi bi-arrow-left-square"></i>
-            <i id="next-week" class="bi bi-arrow-right-square"></i>
- 
-        </div> 
-    </div>
+
 
     <!-- Mini Calendar Container -->
     <div id="mini-calendar-container" class="mini-calendar-container"></div>
