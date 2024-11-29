@@ -2,7 +2,7 @@
   "name": "Diář",
   "short_name": "Diar",
   "start_url": "/",
-  "display": "fullscreen", 
+  "display": "standalone", 
   "background_color": "#ffffff",
   "theme_color": "#0f5132",
   "orientation": "portrait-primary", 
