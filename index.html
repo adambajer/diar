@@ -36,24 +36,21 @@
 
 <body>
  
-
+     <!-- Button to toggle year calendar -->
+     <button
+     class="btn btn-secondary"
+     type="button"
+     data-bs-toggle="collapse"
+     data-bs-target=".year-calendar-modal"
+     aria-expanded="false"
+     aria-controls="year-calendar-modal"
+ >
+     M
+ </button>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
-        <div class="d-flex justify-content-end p-3">
-            <!-- Button to toggle year calendar -->
-            <button
-                class="btn btn-primary"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#year-calendar-modal"
-                aria-expanded="false"
-                aria-controls="year-calendar-modal"
-            >
-                Toggle Year Calendar
-            </button>
-        </div>
-        
+       
         <!-- Year Calendar Modal -->
         <div class="year-calendar-modal" class="collapse">
             <!-- Content of the Year Calendar -->
