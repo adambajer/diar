@@ -1049,81 +1049,56 @@ function setupDragScrolling() {
         plannerContainer.scrollLeft = scrollLeft - walk;
     });
 } function setupKeyboardNavigation() {
-    let currentCell = null;
+    let currentCell = document.querySelector(".time-slot"); // Default to the first cell
 
-    // Highlight the selected cell
-    function highlightCell(cell) {
-        if (!cell) {
-            console.warn("No cell to highlight.");
-            return;
-        }
-        clearHighlights();
-        cell.classList.add("selected-cell");
-        cell.focus(); // Focus for accessibility
-        currentCell = cell;
-        console.log("Highlighted cell:", cell);
+    // Highlight the initial cell
+    if (currentCell) {
+        currentCell.classList.add("selected-cell");
+        currentCell.focus();
     }
 
-    // Clear all highlights
-    function clearHighlights() {
-        document.querySelectorAll(".selected-cell").forEach(cell => {
-            cell.classList.remove("selected-cell");
-        });
-    }
-
-    // Get the next cell in the given direction
-    function getNextCell(direction) {
-        if (!currentCell) {
-            console.warn("No current cell.");
-            return null;
+    // Style for the selected cell
+    const css = `
+        .selected-cell {
+            outline: 2px solid blue; /* Highlight the focused cell */
+            background-color: #e0f7fa; /* Optional: Change background color */
         }
+    `;
+    const style = document.createElement("style");
+    style.appendChild(document.createTextNode(css));
+    document.head.appendChild(style);
 
+    document.addEventListener("keydown", function (event) {
+        if (!currentCell) return;
+
+        let nextCell = null;
         const day = parseInt(currentCell.dataset.day, 10);
         const hour = parseInt(currentCell.dataset.hour, 10);
 
-        let nextDay = day;
-        let nextHour = hour;
-
-        switch (direction) {
+        switch (event.key) {
             case "ArrowRight":
-                nextDay = day + 1 < 7 ? day + 1 : 0;
+                nextCell = document.querySelector(`td[data-day="${(day + 1) % 7}"][data-hour="${hour}"]`);
                 break;
             case "ArrowLeft":
-                nextDay = day - 1 >= 0 ? day - 1 : 6;
+                nextCell = document.querySelector(`td[data-day="${(day - 1 + 7) % 7}"][data-hour="${hour}"]`);
                 break;
             case "ArrowDown":
-                nextHour = hour + 1 <= 20 ? hour + 1 : 7;
+                nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour + 1 <= 20 ? hour + 1 : 7}"]`);
                 break;
             case "ArrowUp":
-                nextHour = hour - 1 >= 7 ? hour - 1 : 20;
+                nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour - 1 >= 7 ? hour - 1 : 20}"]`);
                 break;
+            default:
+                return; // Ignore other keys
         }
 
-        console.log(`Moving to: day=${nextDay}, hour=${nextHour}`);
-        return document.querySelector(`td[data-day="${nextDay}"][data-hour="${nextHour}"]`);
-    }
-
-    // Attach event listener for keydown events
-    document.addEventListener("keydown", function (event) {
-        const { key } = event;
-        if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(key)) {
+        // If a valid next cell exists, move focus
+        if (nextCell) {
             event.preventDefault(); // Prevent default scrolling behavior
-            const nextCell = getNextCell(key);
-            if (nextCell) {
-                highlightCell(nextCell);
-            } else {
-                console.warn("No next cell found.");
-            }
-        }
-    });
-
-    // Initialize with the first cell
-    document.addEventListener("DOMContentLoaded", () => {
-        const firstCell = document.querySelector('td[data-day="0"]');
-        if (firstCell) {
-            highlightCell(firstCell);
-        } else {
-            console.error("No initial cell found to highlight.");
+            currentCell.classList.remove("selected-cell"); // Remove highlight from the current cell
+            currentCell = nextCell; // Update to the new cell
+            currentCell.classList.add("selected-cell"); // Highlight the new cell
+            currentCell.focus(); // Set focus to the new cell
         }
     });
 }
