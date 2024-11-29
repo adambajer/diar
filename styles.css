@@ -175,7 +175,7 @@
     position: absolute;
     top: 10px;
     right: 5px;
-    cursor: pointer; 
+    cursor: pointer;
     font-size: 1rem;
     color: blue;
     opacity: 0;
@@ -356,33 +356,19 @@
 }
 
 /* Slide Wrapper */
+.planner-slide-wrapper {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    will-change: transform;    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    width: 100%;
+} 
 
 
-
-
-
-
-
-#day-headers th:last-child {
-    border-right: none;
+/* Planner Table Container */
+.planner-table-container {
+    flex: 0 0 100%;
+    width: 100%;
 }
-
-#day-headers th.current-day {
-    background-color: #e0f7fa;
-    color: #007bff;
-    border: 2px solid #007bff;
-}
-
-/* Time Slots Consistency */
-.planner-table td {
-    width: 14.2857%; /* Ensure consistency with header columns */
-    text-align: center;
-    vertical-align: top;
-    padding: 10px;
-    overflow-wrap: break-word; /* Prevent overflow */
-}
-
-/* Ensure Full Table Width */
 
 /* Existing styles */
 /* Select the 7th th element within the day headers row */
@@ -390,16 +376,67 @@
     color: red;
 }
 /* Existing CSS styles */
-l
-/* Planner Table Fix for Consistent Column Widths */
 
-
-.planner-table th, .planner-table td {
-    
-    vertical-align: top;
-    padding: 10px;
-    box-sizing: border-box; /* Consistent padding and borders */
-    border: 1px solid #ddd; /* Optional for visual clarity */
-    overflow-wrap: break-word; /* Prevent overflow */
+/* Custom Slider Container */
+.custom-slider-container {
+    position: relative;
+    width: 100%;
+    overflow-x: scroll; 
+    box-sizing: border-box;
+    background-color: #f9f9f9; 
 }
 
+/* Hide scrollbar for WebKit browsers */
+.custom-slider-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Custom Slider Track */
+#custom-slider {
+   
+    position: relative;
+    display: flex ;
+    align-items: flex-end; 
+    justify-content: center; 
+}
+
+/* Slider Ticks */
+.slider-tick {
+    position: relative;
+    flex: 0 0 0.25vw;
+    height: 20px;
+    background-color: #ccc; 
+    cursor: pointer;
+}
+
+.slider-tick:hover {
+    background-color: #007bff;
+}
+
+ 
+
+/* Tooltip Styles */
+.custom-slider-tooltip { 
+    position: fixed;
+    top: 70px;
+    left: 0;
+    background-color: #333;
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1000;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .slider-tick {
+        flex: 0 0 4px;
+    }
+}
+
+/* Existing CSS styles */
