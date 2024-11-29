@@ -454,8 +454,7 @@ font-weight: bold;}
     border: none;
 }
 .year-calendar-modal {
-    
-    height: 100vh;
+     
      position: relative; 
     z-index: 992;
 } .selected-cell {
@@ -466,8 +465,7 @@ font-weight: bold;}
 
 /* Sundays Highlight */
 td {
-    text-align: center;
-    vertical-align: middle;
+     vertical-align: middle;
 }
 
 td[style*="color: red"] {

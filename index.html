@@ -34,9 +34,10 @@
     <div id="real" class="d-flex border-top shadow-sm">
         <div class="d-inline-flex">
             <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuClickable" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
-                    Manual close
-                  </button>
+                <div class="dropdown-toggle p-1 border-end border-start" type="button" id="dropdownMenuClickable" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+                    <span class="year-header p-1"></span>
+              <span class="month-header p-1"></span>
+                </div>
                   <ul class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
                      
                     <div class="year-calendar-modal" class="">
@@ -50,11 +51,7 @@
          
                 </ul>
               </div>
-             
-                    <div class="year-header p-1 border-end border-start"></div>
-                    <div class="month-header p-1 border-start"></div>
-                    <div class="week-header p-1 border-start"></div>
-
+              <span class="week-header border-start p-1"></span>
                     <div id="prev-week" class="p-1 border-end border-start"><i class="bi bi-arrow-left"></i></div>
                     <div id="next-week" class="p-1 border-end"><i class="bi bi-arrow-right"></i></div>
         

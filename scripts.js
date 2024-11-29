@@ -423,7 +423,17 @@ function renderMiniCalendar() {
             saveSelectedDateToLocalStorage(date); // Save to local storage
 
         });
- 
+
+        // Highlight the current day
+        const today = new Date();
+        if (
+            date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear()
+        ) {
+            dayCell.style.backgroundColor = "#e0f7fa"; // Light blue
+        }
+
         row.appendChild(dayCell);
     }
 
@@ -438,7 +448,17 @@ function renderMiniCalendar() {
     container.innerHTML = ""; // Clear existing year calendar
 
     const currentYear = baseDate.getFullYear();
-    const selectedMonth = baseDate.getMonth();
+    const selectedMonth = baseDate.getMonth(); 
+    // Add year as the main header
+    let yearHeader = document.querySelector(".year-header");
+    yearHeader.innerText = currentYear;
+    let monthHeader = document.querySelector(".month-header");
+    // Update the week-header with the current selected week number
+    const weekHeader = document.querySelector(".week-header");
+    if (weekHeader) {
+        const selectedWeekNumber = getWeekNumber(baseDate);
+        weekHeader.innerText = `${selectedWeekNumber} týden`;
+    }
 
     // Create the accordion wrapper
     const accordion = document.createElement("div");
@@ -450,7 +470,9 @@ function renderMiniCalendar() {
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
         const monthName = firstDay.toLocaleString("cs-CZ", { month: "long" });
         const isSelectedMonth = month === selectedMonth;
-
+if (month == selectedMonth) {
+    monthHeader.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); 
+}
         // Accordion item
         const accordionItem = document.createElement("div");
         accordionItem.className = "accordion-item";
@@ -1051,10 +1073,10 @@ function setupDragScrolling() {
 } function setupKeyboardNavigation() {
     let currentCell = document.querySelector(".time-slot"); // Default to the first cell
 
-    // Highlight the initial cell
+    // Highlight the initial cell and focus its editable content
     if (currentCell) {
         currentCell.classList.add("selected-cell");
-        currentCell.focus();
+        focusEditableContent(currentCell);
     }
 
     // Style for the selected cell
@@ -1067,6 +1089,15 @@ function setupDragScrolling() {
     const style = document.createElement("style");
     style.appendChild(document.createTextNode(css));
     document.head.appendChild(style);
+
+    // Function to focus and start editing the content
+    function focusEditableContent(cell) {
+        const noteText = cell.querySelector(".note-text");
+        if (noteText) {
+            noteText.focus(); // Focus the contenteditable element
+            noteText.setAttribute("contenteditable", "true"); // Ensure it is editable
+        }
+    }
 
     document.addEventListener("keydown", function (event) {
         if (!currentCell) return;
@@ -1088,14 +1119,6 @@ function setupDragScrolling() {
             case "ArrowUp":
                 nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour - 1 >= 7 ? hour - 1 : 20}"]`);
                 break;
-            case "Enter":
-                // Trigger the editable behavior when pressing Enter
-                const noteText = currentCell.querySelector(".note-text");
-                if (noteText) {
-                    event.preventDefault(); // Prevent default Enter behavior
-                    noteText.focus(); // Focus on the editable content
-                }
-                return;
             default:
                 return; // Ignore other keys
         }
@@ -1106,18 +1129,20 @@ function setupDragScrolling() {
             currentCell.classList.remove("selected-cell"); // Remove highlight from the current cell
             currentCell = nextCell; // Update to the new cell
             currentCell.classList.add("selected-cell"); // Highlight the new cell
-            currentCell.focus(); // Set focus to the new cell
+            focusEditableContent(currentCell); // Focus on the editable content
         }
     });
 
     // Allow direct editing when a cell is clicked
     document.addEventListener("click", function (event) {
-        if (event.target.classList.contains("time-slot")) {
+        const cell = event.target.closest(".time-slot"); // Ensure we only target .time-slot
+        if (cell) {
             if (currentCell) {
                 currentCell.classList.remove("selected-cell");
             }
-            currentCell = event.target;
+            currentCell = cell;
             currentCell.classList.add("selected-cell");
+            focusEditableContent(currentCell); // Focus on the editable content
         }
     });
 }
