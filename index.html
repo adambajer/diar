@@ -17,12 +17,12 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
     <!-- Favicon and Other Icons -->
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
 
+    <link rel="manifest" href="site.webmanifest">
     <meta name="theme-color" content="#0f5132"> <!-- Matches the theme color in the manifest -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -30,15 +30,15 @@
     <meta name="apple-mobile-web-app-title" content="Diář">
     
     <!-- Icons for PWA -->
-    <link rel="icon" sizes="192x192" href="./web-app-manifest-192x192.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="./web-app-manifest-192x192.png">
+    <link rel="icon" sizes="192x192" href="web-app-manifest-192x192.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="web-app-manifest-192x192.png">
 </head>
 
 <body>
  
      <!-- Button to toggle year calendar -->
-     <button
-     class="btn btn-secondary"
+     <div
+     class="btn"
      type="button"
      data-bs-toggle="collapse"
      data-bs-target=".year-calendar-modal"
@@ -46,7 +46,7 @@
      aria-controls="year-calendar-modal"
  >
      M
- </button>
+</div>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
