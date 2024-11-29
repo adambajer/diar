@@ -1088,6 +1088,14 @@ function setupDragScrolling() {
             case "ArrowUp":
                 nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour - 1 >= 7 ? hour - 1 : 20}"]`);
                 break;
+            case "Enter":
+                // Trigger the editable behavior when pressing Enter
+                const noteText = currentCell.querySelector(".note-text");
+                if (noteText) {
+                    event.preventDefault(); // Prevent default Enter behavior
+                    noteText.focus(); // Focus on the editable content
+                }
+                return;
             default:
                 return; // Ignore other keys
         }
@@ -1101,8 +1109,18 @@ function setupDragScrolling() {
             currentCell.focus(); // Set focus to the new cell
         }
     });
-}
 
+    // Allow direct editing when a cell is clicked
+    document.addEventListener("click", function (event) {
+        if (event.target.classList.contains("time-slot")) {
+            if (currentCell) {
+                currentCell.classList.remove("selected-cell");
+            }
+            currentCell = event.target;
+            currentCell.classList.add("selected-cell");
+        }
+    });
+}
 
 // ========================
 // Week Navigation Functions
