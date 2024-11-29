@@ -1048,17 +1048,20 @@ function setupDragScrolling() {
         const walk = (x - startX) * 1; // The multiplier can adjust the scroll speed
         plannerContainer.scrollLeft = scrollLeft - walk;
     });
-}
-function setupKeyboardNavigation() {
-    let currentCell = null; // Track the currently selected cell
+} function setupKeyboardNavigation() {
+    let currentCell = null;
 
     // Highlight the selected cell
     function highlightCell(cell) {
-        if (!cell) return;
+        if (!cell) {
+            console.warn("No cell to highlight.");
+            return;
+        }
         clearHighlights();
         cell.classList.add("selected-cell");
-        currentCell = cell;
         cell.focus(); // Focus for accessibility
+        currentCell = cell;
+        console.log("Highlighted cell:", cell);
     }
 
     // Clear all highlights
@@ -1070,7 +1073,10 @@ function setupKeyboardNavigation() {
 
     // Get the next cell in the given direction
     function getNextCell(direction) {
-        if (!currentCell) return null;
+        if (!currentCell) {
+            console.warn("No current cell.");
+            return null;
+        }
 
         const day = parseInt(currentCell.dataset.day, 10);
         const hour = parseInt(currentCell.dataset.hour, 10);
@@ -1080,19 +1086,20 @@ function setupKeyboardNavigation() {
 
         switch (direction) {
             case "ArrowRight":
-                nextDay = day + 1 < 7 ? day + 1 : 0; // Wrap to next week
+                nextDay = day + 1 < 7 ? day + 1 : 0;
                 break;
             case "ArrowLeft":
-                nextDay = day - 1 >= 0 ? day - 1 : 6; // Wrap to previous week
+                nextDay = day - 1 >= 0 ? day - 1 : 6;
                 break;
             case "ArrowDown":
-                nextHour = hour + 1 <= 20 ? hour + 1 : 7; // Wrap to top
+                nextHour = hour + 1 <= 20 ? hour + 1 : 7;
                 break;
             case "ArrowUp":
-                nextHour = hour - 1 >= 7 ? hour - 1 : 20; // Wrap to bottom
+                nextHour = hour - 1 >= 7 ? hour - 1 : 20;
                 break;
         }
 
+        console.log(`Moving to: day=${nextDay}, hour=${nextHour}`);
         return document.querySelector(`td[data-day="${nextDay}"][data-hour="${nextHour}"]`);
     }
 
@@ -1104,11 +1111,23 @@ function setupKeyboardNavigation() {
             const nextCell = getNextCell(key);
             if (nextCell) {
                 highlightCell(nextCell);
+            } else {
+                console.warn("No next cell found.");
             }
         }
     });
- 
+
+    // Initialize with the first cell
+    document.addEventListener("DOMContentLoaded", () => {
+        const firstCell = document.querySelector('td[data-day="0"][data-hour="7"]');
+        if (firstCell) {
+            highlightCell(firstCell);
+        } else {
+            console.error("No initial cell found to highlight.");
+        }
+    });
 }
+
 
 // ========================
 // Week Navigation Functions

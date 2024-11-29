@@ -458,7 +458,11 @@ font-weight: bold;}
     height: 100vh;
      position: relative; 
     z-index: 992;
-} 
+} .selected-cell {
+    border: 2px solid blue;
+    outline: none;
+}
+
 
 /* Sundays Highlight */
 td {
