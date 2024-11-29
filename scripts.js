@@ -62,6 +62,22 @@ document.addEventListener("DOMContentLoaded", () => {
     setupDragScrolling();
     setupKeyboardNavigation(); 
     setupWeekNavigationButtons();
+    
+document.getElementById("go-to-today").addEventListener("click", () => {
+    // Set the baseDate to the current date
+    baseDate = new Date();
+    
+    // Re-render the planner, mini-calendar, and year calendar modal
+    renderPlanner();
+    renderMiniCalendar();
+    renderYearCalendarModal();
+    
+    // Save the current date to local storage
+    saveSelectedDateToLocalStorage(baseDate);
+
+    console.log("Switched to today's date:", baseDate);
+});
+
 });
 
 // ========================
@@ -433,13 +449,7 @@ function renderMiniCalendar() {
     const currentYear = baseDate.getFullYear();
     const selectedMonth = baseDate.getMonth();
 
-    const selectedYearElement = document.getElementById("selected-year");
-    if (selectedYearElement) {
-        selectedYearElement.innerText = currentYear;
-    } else {
-        console.error("Element with ID 'selected-year' not found.");
-    }
-
+  
     for (let month = 0; month < 12; month++) {
         const firstDay = new Date(currentYear, month, 1);
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
@@ -1085,17 +1095,3 @@ function getDateFromDay(year, day) {
     const date = new Date(year, 0); // January 1st
     return new Date(date.setDate(day));
 }
-document.getElementById("go-to-today").addEventListener("click", () => {
-    // Set the baseDate to the current date
-    baseDate = new Date();
-    
-    // Re-render the planner, mini-calendar, and year calendar modal
-    renderPlanner();
-    renderMiniCalendar();
-    renderYearCalendarModal();
-    
-    // Save the current date to local storage
-    saveSelectedDateToLocalStorage(baseDate);
-
-    console.log("Switched to today's date:", baseDate);
-});
