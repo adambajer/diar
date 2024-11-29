@@ -284,13 +284,12 @@ function renderTimeSlots(startOfWeek) {
         tbody.appendChild(row);
     }
 }
-
-// Create a single time slot cell
 function createTimeSlotCell(day, hour, startOfWeek) {
     const cell = document.createElement("td");
     cell.className = "time-slot";
     cell.dataset.day = day;
     cell.dataset.hour = hour;
+    cell.tabIndex = 0; // Enable focus for keyboard navigation
 
     const spinner = createSpinner();
     const noteContainer = createNoteContainer(day, hour, startOfWeek, spinner);
@@ -303,6 +302,7 @@ function createTimeSlotCell(day, hour, startOfWeek) {
 
     return cell;
 }
+
 
 // Create spinner for loading indication
 function createSpinner() {
@@ -1119,7 +1119,7 @@ function setupDragScrolling() {
 
     // Initialize with the first cell
     document.addEventListener("DOMContentLoaded", () => {
-        const firstCell = document.querySelector('td[data-day="0"][data-hour="7"]');
+        const firstCell = document.querySelector('td[data-day="0"]');
         if (firstCell) {
             highlightCell(firstCell);
         } else {
