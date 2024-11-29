@@ -453,12 +453,18 @@ function renderMiniCalendar() {
         console.error("Element with class 'year-calendar-modal' not found.");
         return;
     }
+
     container.innerHTML = ""; // Clear existing year calendar
 
     const currentYear = baseDate.getFullYear();
     const selectedMonth = baseDate.getMonth();
 
-  
+    // Add year as the main header
+    const yearHeader = document.createElement("div");
+    yearHeader.innerText = currentYear;
+    yearHeader.className = "year-header text-center my-3 fw-bold";
+    container.appendChild(yearHeader);
+
     for (let month = 0; month < 12; month++) {
         const firstDay = new Date(currentYear, month, 1);
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
@@ -466,15 +472,15 @@ function renderMiniCalendar() {
 
         // Create month container
         const monthContainer = document.createElement("div");
-        monthContainer.className = "month-container-modal";
+        monthContainer.className = "month-container-modal mb-3";
         if (month === selectedMonth) {
             monthContainer.classList.add("selected-month");
         }
 
-        // Create month label
+        // Create month label (aligned to the left)
         const monthLabel = document.createElement("div");
-        monthLabel.innerText = monthName.toUpperCase();
-        monthLabel.className = "text-center month-label";
+        monthLabel.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
+        monthLabel.className = "text-start ps-3 month-label fw-bold";
 
         // Create table for days (hidden by default for unselected months)
         const table = document.createElement("table");
@@ -546,7 +552,6 @@ function renderMiniCalendar() {
         container.appendChild(monthContainer);
     }
 }
-
 
 // ========================
 // Firebase Operations
