@@ -423,17 +423,7 @@ function renderMiniCalendar() {
             saveSelectedDateToLocalStorage(date); // Save to local storage
 
         });
-
-        // Highlight the current day
-        const today = new Date();
-        if (
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear()
-        ) {
-            dayCell.style.backgroundColor = "#e0f7fa"; // Light blue
-        }
-
+ 
         row.appendChild(dayCell);
     }
 
@@ -450,36 +440,51 @@ function renderMiniCalendar() {
     const currentYear = baseDate.getFullYear();
     const selectedMonth = baseDate.getMonth();
 
-    // Add year as the main header
-    let yearHeader = document.querySelector(".year-header");
-    yearHeader.innerText = currentYear;
-    let monthHeader = document.querySelector(".month-header");
-    // Update the week-header with the current selected week number
-    const weekHeader = document.querySelector(".week-header");
-    if (weekHeader) {
-        const selectedWeekNumber = getWeekNumber(baseDate);
-        weekHeader.innerText = `${selectedWeekNumber} týden`;
-    }
+    // Create the accordion wrapper
+    const accordion = document.createElement("div");
+    accordion.className = "accordion accordion-flush";
+    accordion.id = "yearCalendarAccordion";
 
     for (let month = 0; month < 12; month++) {
         const firstDay = new Date(currentYear, month, 1);
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
         const monthName = firstDay.toLocaleString("cs-CZ", { month: "long" });
+        const isSelectedMonth = month === selectedMonth;
 
-        // Create month container
-        const monthContainer = document.createElement("div");
-        monthContainer.className = "month-container-modal";
-        if (month === selectedMonth) {
-            monthHeader.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
-            monthContainer.classList.add("selected-month");
-        }
+        // Accordion item
+        const accordionItem = document.createElement("div");
+        accordionItem.className = "accordion-item";
 
-        // Create month label (aligned to the left)
-        const monthLabel = document.createElement("div");
-        monthLabel.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
-        monthLabel.className = "text-start month-label p-1";
+        // Accordion header
+        const headerId = `flush-heading${month}`;
+        const collapseId = `flush-collapse${month}`;
+        const accordionHeader = document.createElement("h2");
+        accordionHeader.className = "accordion-header";
+        accordionHeader.id = headerId;
 
-        // Create table for days (hidden by default for unselected months)
+        const accordionButton = document.createElement("button");
+        accordionButton.className = `accordion-button ${isSelectedMonth ? "" : "collapsed"}`;
+        accordionButton.type = "button";
+        accordionButton.setAttribute("data-bs-toggle", "collapse");
+        accordionButton.setAttribute("data-bs-target", `#${collapseId}`);
+        accordionButton.setAttribute("aria-expanded", isSelectedMonth ? "true" : "false");
+        accordionButton.setAttribute("aria-controls", collapseId);
+        accordionButton.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
+
+        accordionHeader.appendChild(accordionButton);
+        accordionItem.appendChild(accordionHeader);
+
+        // Accordion body (collapse content)
+        const accordionCollapse = document.createElement("div");
+        accordionCollapse.id = collapseId;
+        accordionCollapse.className = `accordion-collapse collapse ${isSelectedMonth ? "show" : ""}`;
+        accordionCollapse.setAttribute("aria-labelledby", headerId);
+        accordionCollapse.setAttribute("data-bs-parent", "#yearCalendarAccordion");
+
+        const accordionBody = document.createElement("div");
+        accordionBody.className = "accordion-body";
+
+        // Generate month table
         const table = document.createElement("table");
         table.className = "table table-bordered table-sm text-center";
 
@@ -533,22 +538,17 @@ function renderMiniCalendar() {
         }
 
         table.appendChild(tbody);
-        table.style.display = month === selectedMonth ? "table" : "none"; // Show only the selected month by default
+        accordionBody.appendChild(table);
+        accordionCollapse.appendChild(accordionBody);
+        accordionItem.appendChild(accordionCollapse);
 
-        // Toggle visibility on click
-        monthLabel.addEventListener("click", () => {
-            const isVisible = table.style.display === "table";
-            document
-                .querySelectorAll(".month-container-modal table")
-                .forEach((tbl) => (tbl.style.display = "none")); // Hide all tables
-            if (!isVisible) table.style.display = "table"; // Show clicked table
-        });
-
-        monthContainer.appendChild(monthLabel);
-        monthContainer.appendChild(table);
-        container.appendChild(monthContainer);
+        // Append the accordion item to the accordion
+        accordion.appendChild(accordionItem);
     }
+
+    container.appendChild(accordion);
 }
+
 
 // ========================
 // Firebase Operations

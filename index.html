@@ -34,11 +34,22 @@
     <div id="real" class="d-flex border-top shadow-sm">
         <div class="d-inline-flex">
             <div class="dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                    Dropdown button
-                </button>
-
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuClickable" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
+                    Manual close
+                  </button>
+                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
+                     
+                    <div class="year-calendar-modal" class="">
+                        <!-- Content of the Year Calendar -->
+                        <div class="year-calendar-modal-content">
+                            <!-- Your calendar rendering will go here -->
+                        </div>
+                    </div>
+               </li>
+                
+         
+                </ul>
+              </div>
              
                     <div class="year-header p-1 border-end border-start"></div>
                     <div class="month-header p-1 border-start"></div>
@@ -47,8 +58,7 @@
                     <div id="prev-week" class="p-1 border-end border-start"><i class="bi bi-arrow-left"></i></div>
                     <div id="next-week" class="p-1 border-end"><i class="bi bi-arrow-right"></i></div>
         
-            </div>
-        </div>
+         </div>
 
 
         <div class="me-3" id="go-to-today">
@@ -61,16 +71,7 @@
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
 
-        <ul class="dropdown-menu">
-        <!-- Year Calendar Modal -->
-        <div class="year-calendar-modal collapse" class="">
-            <!-- Content of the Year Calendar -->
-            <div class="year-calendar-modal-content">
-                <!-- Your calendar rendering will go here -->
-            </div>
-        </div>
-    </ul>
-
+ 
 
         <div class="planner-slide-wrapper">
             <!-- Weekly Planner -->
