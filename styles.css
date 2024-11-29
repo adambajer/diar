@@ -440,5 +440,42 @@
         flex: 0 0 4px;
     }
 }
+/* Modal Year Header */
+.year-header {
+    font-size: 1.5rem;
+    color: #333;
+}
 
+/* Month Label */
+.month-label {
+    cursor: pointer;
+    font-size: 1rem;
+    color: #007bff;
+}
+
+.month-label:hover {
+    text-decoration: underline;
+}
+
+/* Selected Month Highlight */
+.selected-month .month-label {
+    color: #dc3545; /* Highlight selected month in red */
+}
+
+/* Month Container */
+.month-container-modal {
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+/* Sundays Highlight */
+td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+td[style*="color: red"] {
+    font-weight: bold;
+}
 /* Existing CSS styles */
