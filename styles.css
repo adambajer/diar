@@ -72,7 +72,7 @@
 }
 .month-cell:hover, .month-cell.active {
     background-color: #f0f0f0;
-    color: #007bff;
+    color: #000000;
 }
 .selected-week {
     background-color: hsl(155, 100%, 92%) !important;
@@ -95,13 +95,13 @@
 }
 
 #day-headers th {
-     text-align: center; 
+     text-align: left; 
     font-weight: 300;
 }
 
 #day-headers th .day-date {
-     font-size: 1rem;
-}
+
+    font-size:4vw}
 
 #day-headers th.current-day { 
     color: #007bff;
@@ -136,6 +136,18 @@
    ======================== */
 .planner-table th.time-slot {
     width: 14.3%;
+    
+}.planner-table th.day-header {
+     border-right: 1px solid #aaa;
+}
+#day-headers th:nth-child(7) {
+border-right: 1px solid #eaeaea;
+}
+.planner-table td.time-slot:nth-child(7) {
+    border-right: 1px solid #eaeaea;
+}
+.planner-table td.time-slot {
+     border-right: 1px solid #aaa;
 }
 .left-hed div {
     border-left: 1px solid #eaeaea;
@@ -149,31 +161,26 @@
 .note-text {
     width: 100%;
     height: 100%;
-    padding-left: 5px;
+    padding-left:1vw;
     outline: none;
     overflow: auto;
-    font-size: 0.9rem;
+    font-size: 0.7vw;
 }
 .time-label {
     position: absolute;
-    color: #ddd;
-    font-size: 0.8rem;
-    opacity: 0;
-    z-index: 999;
-    right: 0;
-    top: -0.5vw;
-}
-.time-slot:hover .time-label {
-    opacity: 1;
-    z-index: 999;
-}
+    
+    font-size: 0.5vw;
+     z-index: 999;
+    left: 0;
+    top: 1vw;
+} 
 .cell-mic {
     position: absolute;
-    top: 10px;
+    top: 0.5vw;
     right: 5px;
     cursor: pointer;
     font-size: 1rem;
-    color: #ddd;
+    color: black;
     opacity: 0;
     transition: opacity 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
@@ -332,8 +339,7 @@
 }
 
 #real {
-    z-index: 999;
-
+    z-index: 999; 
     width: 100%;  
     flex-direction: row;
     align-items: flex-start;
@@ -458,8 +464,9 @@ font-weight: bold;}
      position: relative; 
     z-index: 992;
 } .selected-cell {
-    border: 2px solid blue;
-    outline: none;
+
+    background-color: hsl(155, 100%, 92%) !important;
+     
 }
 
 
@@ -472,3 +479,77 @@ td[style*="color: red"] {
     font-weight: bold;
 }
 /* Existing CSS styles */
+.holiday-name {  
+}
+.name-day { 
+} 
+.day-name {font-weight: bold;
+}
+.holiday {
+    background-color: #f8d7da; /* Světle červené pozadí pro státní svátky */
+}.weekend-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 5px;
+    text-align: center;
+    vertical-align: top;
+    border-left: 1px solid #ccc; /* Optional border for weekends */
+}
+
+.weekend-cell .saturday {
+    flex: 1; /* Top half for Saturday */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #ddd;
+    height: 50%;
+}
+
+.weekend-cell .sunday {
+    flex: 1; /* Bottom half for Sunday */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50%;
+}
+tr#day-headers {
+    border-bottom: 1px solid #aaa;
+}
+.accordion-button {
+    padding: 0.5vw;
+    padding-top: 0;
+    padding-bottom: 0;
+}.accordion-body { 
+    padding: 0;
+}.week-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.week-cell {
+    width: 40px;
+    height: 40px;
+    margin: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.week-cell:hover {
+    background-color: #e0e0e0;
+}
+
+.week-cell.selected {
+    
+    background-color: hsl(155, 100%, 92%) !important;
+    border-color: #0f5132;
+}
+
+.week-cell.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}

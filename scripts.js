@@ -51,14 +51,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupClock();
     renderPlanner();
+    renderWeekDropdown(); // Add this line to render the week dropdown
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
     renderMiniCalendar();
     renderYearCalendarModal();
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
 
     setupDragScrolling();
-    setupKeyboardNavigation();
-    setupWeekNavigationButtons();
+    setupKeyboardNavigation(); 
 
     document.getElementById("go-to-today").addEventListener("click", () => {
         // Set the baseDate to the current date
@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPlanner();
         renderMiniCalendar();
         renderYearCalendarModal();
+        renderWeekDropdown(); // Re-render the week dropdown
 
         // Save the current date to local storage
         saveSelectedDateToLocalStorage(baseDate);
@@ -76,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
+
 
 // ========================
 // Utility and Helper Functions
@@ -109,6 +111,18 @@ function getWeekNumber(date) {
     const diffInDays = Math.floor(diffInTime / (24 * 60 * 60 * 1000));
     const weekNumber = Math.ceil((diffInDays + startOfYear.getDay() + 1) / 7);
     return weekNumber;
+}
+function getWeekNumberISO(date) {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    const weekNumber = 1 + Math.ceil((firstThursday - target) / 604800000);
+    return [date.getFullYear(), weekNumber];
 }
 
 // Get Month Name in Czech
@@ -169,7 +183,9 @@ function sanitizeInput(str) {
 function formatHour(hour) {
     return hour.toString().padStart(2, '0') + ':00';
 }
-
+function formatHourShort(hour) {
+    return hour.toString().padStart(2, '0');
+}
 // ========================
 // Function to Determine if a Year is a Leap Year
 // ========================
@@ -192,14 +208,13 @@ async function renderPlanner() {
     currentStartOfWeek = getStartOfWeek(baseDate);
     const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
 
-
-
     // Render headers and time slots for the correct week
     renderHeaders(currentStartOfWeek);
     renderTimeSlots(currentStartOfWeek);
 
     // Highlight the selected week and update the week number display
     highlightSelectedWeek(currentStartOfWeek);
+    updateWeekHeader(); // Update week header text
 
     // Fetch and display notes for the week
     const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
@@ -212,6 +227,7 @@ async function renderPlanner() {
         console.log("No notes found for the current week.");
     }
 }
+
 
 // ========================
 // Populate Planner with Notes
@@ -230,10 +246,376 @@ function populatePlannerWithNotes(notes) {
         }
     }
 }
+const calendarData = {
+    "1.1.": { nameDay: "Nový rok", holiday: "Nový rok" },
+    "2.1.": { nameDay: "Karina", holiday: "" },
+    "3.1.": { nameDay: "Radmila", holiday: "" },
+    "4.1.": { nameDay: "Diana", holiday: "" },
+    "5.1.": { nameDay: "Dalimil", holiday: "" },
+    "6.1.": { nameDay: "Tři králové", holiday: "" },
+    "7.1.": { nameDay: "Vilma", holiday: "" },
+    "8.1.": { nameDay: "Čestmír", holiday: "" },
+    "9.1.": { nameDay: "Adéla", holiday: "" },
+    "10.1.": { nameDay: "Bohuslava", holiday: "" },
+    "11.1.": { nameDay: "Bohuslav", holiday: "" },
+    "12.1.": { nameDay: "Erika", holiday: "" },
+    "13.1.": { nameDay: "Alena", holiday: "" },
+    "14.1.": { nameDay: "Radovan", holiday: "" },
+    "15.1.": { nameDay: "Alice", holiday: "" },
+    "16.1.": { nameDay: "Cyril", holiday: "" },
+    "17.1.": { nameDay: "Drahomíra", holiday: "" },
+    "18.1.": { nameDay: "Viktor", holiday: "" },
+    "19.1.": { nameDay: "Doubravka", holiday: "" },
+    "20.1.": { nameDay: "Ilona", holiday: "" },
+    "21.1.": { nameDay: "Běla", holiday: "" },
+    "22.1.": { nameDay: "Zdeněk", holiday: "" },
+    "23.1.": { nameDay: "Zlata", holiday: "" },
+    "24.1.": { nameDay: "Milena", holiday: "" },
+    "25.1.": { nameDay: "Tomáš", holiday: "" },
+    "26.1.": { nameDay: "Petr", holiday: "" },
+    "27.1.": { nameDay: "Ingrid", holiday: "" },
+    "28.1.": { nameDay: "Otto", holiday: "" },
+    "29.1.": { nameDay: "Ladislav", holiday: "" },
+    "30.1.": { nameDay: "Robin", holiday: "" },
+    "31.1.": { nameDay: "Hanka", holiday: "" },
+    "1.2.": { nameDay: "Hynek", holiday: "" },
+    "2.2.": { nameDay: "Nela", holiday: "" },
+    "3.2.": { nameDay: "Blahoslav", holiday: "" },
+    "4.2.": { nameDay: "Veronika", holiday: "" },
+    "5.2.": { nameDay: "Agnesa", holiday: "" },
+    "6.2.": { nameDay: "Vanda", holiday: "" },
+    "7.2.": { nameDay: "Richard", holiday: "" },
+    "8.2.": { nameDay: "Kamil", holiday: "" },
+    "9.2.": { nameDay: "Apollonie", holiday: "" },
+    "10.2.": { nameDay: "Blažena", holiday: "" },
+    "11.2.": { nameDay: "Tereza", holiday: "" },
+    "12.2.": { nameDay: "Slavomír", holiday: "" },
+    "13.2.": { nameDay: "Apollónie", holiday: "" },
+    "14.2.": { nameDay: "Valentýn", holiday: "Den svatého Valentýna" },
+    "15.2.": { nameDay: "Květa", holiday: "" },
+    "16.2.": { nameDay: "Milan", holiday: "" },
+    "17.2.": { nameDay: "Vojtěch", holiday: "" },
+    "18.2.": { nameDay: "Gorazd", holiday: "" },
+    "19.2.": { nameDay: "Patrik", holiday: "" },
+    "20.2.": { nameDay: "Oldřich", holiday: "" },
+    "21.2.": { nameDay: "Lenka", holiday: "" },
+    "22.2.": { nameDay: "Marta", holiday: "" },
+    "23.2.": { nameDay: "Svatopluk", holiday: "" },
+    "24.2.": { nameDay: "Matěj", holiday: "" },
+    "25.2.": { nameDay: "Liliana", holiday: "" },
+    "26.2.": { nameDay: "Dorota", holiday: "" },
+    "27.2.": { nameDay: "Alexandra", holiday: "" },
+    "28.2.": { nameDay: "Lidmila", holiday: "" },
+    "29.2.": { nameDay: "", holiday: "" },
+    "1.3.": { nameDay: "Bedřich", holiday: "" },
+    "2.3.": { nameDay: "Angela", holiday: "" },
+    "3.3.": { nameDay: "Kamil", holiday: "" },
+    "4.3.": { nameDay: "Kazimír", holiday: "" },
+    "5.3.": { nameDay: "Ebenezer", holiday: "" },
+    "6.3.": { nameDay: "Rudolf", holiday: "" },
+    "7.3.": { nameDay: "Tomáš", holiday: "" },
+    "8.3.": { nameDay: "Gabriela", holiday: "Mezinárodní den žen" },
+    "9.3.": { nameDay: "Františka", holiday: "" },
+    "10.3.": { nameDay: "Viktor", holiday: "" },
+    "11.3.": { nameDay: "Anděla", holiday: "" },
+    "12.3.": { nameDay: "Řehoř", holiday: "" },
+    "13.3.": { nameDay: "Alena", holiday: "" },
+    "14.3.": { nameDay: "Vojtěch", holiday: "" },
+    "15.3.": { nameDay: "Ludmila", holiday: "" },
+    "16.3.": { nameDay: "Herbert", holiday: "" },
+    "17.3.": { nameDay: "Patrik", holiday: "" },
+    "18.3.": { nameDay: "Eduard", holiday: "" },
+    "19.3.": { nameDay: "Josef", holiday: "Den svatého Josefa" },
+    "20.3.": { nameDay: "Svět", holiday: "" },
+    "21.3.": { nameDay: "Radek", holiday: "" },
+    "22.3.": { nameDay: "Leoš", holiday: "" },
+    "23.3.": { nameDay: "Ferdinand", holiday: "" },
+    "24.3.": { nameDay: "Gabriela", holiday: "" },
+    "25.3.": { nameDay: "Marie", holiday: "" },
+    "26.3.": { nameDay: "Ester", holiday: "" },
+    "27.3.": { nameDay: "Dita", holiday: "" },
+    "28.3.": { nameDay: "Tereza", holiday: "" },
+    "29.3.": { nameDay: "Svatoján", holiday: "" },
+    "30.3.": { nameDay: "Rudolf", holiday: "" },
+    "31.3.": { nameDay: "Bohuslava", holiday: "" },
+    "1.4.": { nameDay: "Hugo", holiday: "" },
+    "2.4.": { nameDay: "Erik", holiday: "" },
+    "3.4.": { nameDay: "Richard", holiday: "" },
+    "4.4.": { nameDay: "Irena", holiday: "" },
+    "5.4.": { nameDay: "Adolf", holiday: "" },
+    "6.4.": { nameDay: "Hermína", holiday: "" },
+    "7.4.": { nameDay: "Jarmila", holiday: "" },
+    "8.4.": { nameDay: "Ema", holiday: "" },
+    "9.4.": { nameDay: "Dušan", holiday: "" },
+    "10.4.": { nameDay: "Benedikt", holiday: "" },
+    "11.4.": { nameDay: "Igor", holiday: "" },
+    "12.4.": { nameDay: "Julius", holiday: "" },
+    "13.4.": { nameDay: "Tomas", holiday: "" },
+    "14.4.": { nameDay: "Vojtěch", holiday: "" },
+    "15.4.": { nameDay: "Kamil", holiday: "" },
+    "16.4.": { nameDay: "Bohuslava", holiday: "" },
+    "17.4.": { nameDay: "Jan", holiday: "" },
+    "18.4.": { nameDay: "Valérie", holiday: "" },
+    "19.4.": { nameDay: "Hana", holiday: "" },
+    "20.4.": { nameDay: "Anastázie", holiday: "" },
+    "21.4.": { nameDay: "Radek", holiday: "" },
+    "22.4.": { nameDay: "Marek", holiday: "" },
+    "23.4.": { nameDay: "Vojtěch", holiday: "" },
+    "24.4.": { nameDay: "Jiří", holiday: "" },
+    "25.4.": { nameDay: "Marek", holiday: "" },
+    "26.4.": { nameDay: "Miloslav", holiday: "" },
+    "27.4.": { nameDay: "Jaroslav", holiday: "" },
+    "28.4.": { nameDay: "Václav", holiday: "" },
+    "29.4.": { nameDay: "Kateřina", holiday: "" },
+    "30.4.": { nameDay: "Petr", holiday: "" },
+    "1.5.": { nameDay: "Filip", holiday: "Svátek práce" },
+    "2.5.": { nameDay: "Zbyšek", holiday: "" },
+    "3.5.": { nameDay: "Miroslava", holiday: "" },
+    "4.5.": { nameDay: "Květoslav", holiday: "" },
+    "5.5.": { nameDay: "Marek", holiday: "" },
+    "6.5.": { nameDay: "Radoslav", holiday: "" },
+    "7.5.": { nameDay: "Stanislav", holiday: "" },
+    "8.5.": { nameDay: "Den vítězství", holiday: "Den vítězství" },
+    "9.5.": { nameDay: "Petr", holiday: "" },
+    "10.5.": { nameDay: "Dita", holiday: "" },
+    "11.5.": { nameDay: "Igor", holiday: "" },
+    "12.5.": { nameDay: "Pankrác", holiday: "" },
+    "13.5.": { nameDay: "Servác", holiday: "" },
+    "14.5.": { nameDay: "Bonifác", holiday: "" },
+    "15.5.": { nameDay: "Žofie", holiday: "" },
+    "16.5.": { nameDay: "Petr", holiday: "" },
+    "17.5.": { nameDay: "Aneta", holiday: "" },
+    "18.5.": { nameDay: "Nina", holiday: "" },
+    "19.5.": { nameDay: "Irena", holiday: "" },
+    "20.5.": { nameDay: "Zbyšek", holiday: "" },
+    "21.5.": { nameDay: "Monika", holiday: "" },
+    "22.5.": { nameDay: "Emil", holiday: "" },
+    "23.5.": { nameDay: "Jana", holiday: "" },
+    "24.5.": { nameDay: "Dirk", holiday: "" },
+    "25.5.": { nameDay: "Urban", holiday: "" },
+    "26.5.": { nameDay: "Vilém", holiday: "" },
+    "27.5.": { nameDay: "Valdemar", holiday: "" },
+    "28.5.": { nameDay: "Vilma", holiday: "" },
+    "29.5.": { nameDay: "Maxmilián", holiday: "" },
+    "30.5.": { nameDay: "Ferdinand", holiday: "" },
+    "31.5.": { nameDay: "Petra", holiday: "" },
+    "1.6.": { nameDay: "Laura", holiday: "" },
+    "2.6.": { nameDay: "Jarmila", holiday: "" },
+    "3.6.": { nameDay: "Tomáš", holiday: "" },
+    "4.6.": { nameDay: "Dalimil", holiday: "" },
+    "5.6.": { nameDay: "Dobroslava", holiday: "" },
+    "6.6.": { nameDay: "Norbert", holiday: "" },
+    "7.6.": { nameDay: "Rafael", holiday: "" },
+    "8.6.": { nameDay: "Medard", holiday: "" },
+    "9.6.": { nameDay: "Antonín", holiday: "" },
+    "10.6.": { nameDay: "Gita", holiday: "" },
+    "11.6.": { nameDay: "Brigita", holiday: "" },
+    "12.6.": { nameDay: "Alan", holiday: "" },
+    "13.6.": { nameDay: "Antonín", holiday: "" },
+    "14.6.": { nameDay: "Roland", holiday: "" },
+    "15.6.": { nameDay: "Vít", holiday: "" },
+    "16.6.": { nameDay: "Adolf", holiday: "" },
+    "17.6.": { nameDay: "Jaroslav", holiday: "" },
+    "18.6.": { nameDay: "Michaela", holiday: "" },
+    "19.6.": { nameDay: "Leo", holiday: "" },
+    "20.6.": { nameDay: "Květa", holiday: "" },
+    "21.6.": { nameDay: "Alois", holiday: "" },
+    "22.6.": { nameDay: "Paulína", holiday: "" },
+    "23.6.": { nameDay: "Zdeněk", holiday: "" },
+    "24.6.": { nameDay: "Jan", holiday: "Narozeniny sv. Jana Křtitele" },
+    "25.6.": { nameDay: "Václav", holiday: "" },
+    "26.6.": { nameDay: "Adéla", holiday: "" },
+    "27.6.": { nameDay: "Ladislav", holiday: "" },
+    "28.6.": { nameDay: "Lubomír", holiday: "" },
+    "29.6.": { nameDay: "Petr", holiday: "" },
+    "30.6.": { nameDay: "Štěpán", holiday: "" },
+    "1.7.": { nameDay: "Jaroslava", holiday: "" },
+    "2.7.": { nameDay: "Patrik", holiday: "" },
+    "3.7.": { nameDay: "Kamil", holiday: "" },
+    "4.7.": { nameDay: "Prokop", holiday: "" },
+    "5.7.": { nameDay: "Cyril a Metoděj", holiday: "Den slovanských věrozvěstů" },
+    "6.7.": { nameDay: "Jan Hus", holiday: "Den upálení mistra Jana Husa" },
+    "7.7.": { nameDay: "Libor", holiday: "" },
+    "8.7.": { nameDay: "Bohuslav", holiday: "" },
+    "9.7.": { nameDay: "Dušan", holiday: "" },
+    "10.7.": { nameDay: "Roland", holiday: "" },
+    "11.7.": { nameDay: "Olga", holiday: "" },
+    "12.7.": { nameDay: "Nataša", holiday: "" },
+    "13.7.": { nameDay: "Markéta", holiday: "" },
+    "14.7.": { nameDay: "Kamil", holiday: "" },
+    "15.7.": { nameDay: "Jáchym", holiday: "" },
+    "16.7.": { nameDay: "Lubomír", holiday: "" },
+    "17.7.": { nameDay: "Martina", holiday: "" },
+    "18.7.": { nameDay: "František", holiday: "" },
+    "19.7.": { nameDay: "Čeněk", holiday: "" },
+    "20.7.": { nameDay: "Ilona", holiday: "" },
+    "21.7.": { nameDay: "Vítězslav", holiday: "" },
+    "22.7.": { nameDay: "Magdaléna", holiday: "" },
+    "23.7.": { nameDay: "Libuše", holiday: "" },
+    "24.7.": { nameDay: "Kristýna", holiday: "" },
+    "25.7.": { nameDay: "Jakub", holiday: "" },
+    "26.7.": { nameDay: "Anna", holiday: "" },
+    "27.7.": { nameDay: "Viktor", holiday: "" },
+    "28.7.": { nameDay: "Karel", holiday: "" },
+    "29.7.": { nameDay: "Marta", holiday: "" },
+    "30.7.": { nameDay: "Ignác", holiday: "" },
+    "31.7.": { nameDay: "Luba", holiday: "" },
+    "1.8.": { nameDay: "Oskar", holiday: "" },
+    "2.8.": { nameDay: "Gustav", holiday: "" },
+    "3.8.": { nameDay: "Miriam", holiday: "" },
+    "4.8.": { nameDay: "Dominik", holiday: "" },
+    "5.8.": { nameDay: "Kryštof", holiday: "" },
+    "6.8.": { nameDay: "Jáchym", holiday: "" },
+    "7.8.": { nameDay: "Karel", holiday: "" },
+    "8.8.": { nameDay: "Alois", holiday: "" },
+    "9.8.": { nameDay: "Roman", holiday: "" },
+    "10.8.": { nameDay: "Vavřinec", holiday: "" },
+    "11.8.": { nameDay: "Zuzana", holiday: "" },
+    "12.8.": { nameDay: "Clara", holiday: "" },
+    "13.8.": { nameDay: "Alena", holiday: "" },
+    "14.8.": { nameDay: "Helena", holiday: "" },
+    "15.8.": { nameDay: "Marie", holiday: "Nanebevzetí Panny Marie" },
+    "16.8.": { nameDay: "Radoslav", holiday: "" },
+    "17.8.": { nameDay: "Kryštof", holiday: "" },
+    "18.8.": { nameDay: "Helena", holiday: "" },
+    "19.8.": { nameDay: "Ludmila", holiday: "" },
+    "20.8.": { nameDay: "Bernard", holiday: "" },
+    "21.8.": { nameDay: "Johana", holiday: "" },
+    "22.8.": { nameDay: "Bohuslav", holiday: "" },
+    "23.8.": { nameDay: "Ludmila", holiday: "" },
+    "24.8.": { nameDay: "Bartoloměj", holiday: "" },
+    "25.8.": { nameDay: "Radmila", holiday: "" },
+    "26.8.": { nameDay: "Lýdie", holiday: "" },
+    "27.8.": { nameDay: "Monika", holiday: "" },
+    "28.8.": { nameDay: "Augustýn", holiday: "" },
+    "29.8.": { nameDay: "Ludvík", holiday: "" },
+    "30.8.": { nameDay: "Felix", holiday: "" },
+    "31.8.": { nameDay: "Cyril", holiday: "" },
+    "1.9.": { nameDay: "Linda", holiday: "" },
+    "2.9.": { nameDay: "Adéla", holiday: "" },
+    "3.9.": { nameDay: "Radka", holiday: "" },
+    "4.9.": { nameDay: "Jindřich", holiday: "" },
+    "5.9.": { nameDay: "Karel", holiday: "" },
+    "6.9.": { nameDay: "Zuzana", holiday: "" },
+    "7.9.": { nameDay: "Regína", holiday: "" },
+    "8.9.": { nameDay: "Mária", holiday: "" },
+    "9.9.": { nameDay: "Adolf", holiday: "" },
+    "10.9.": { nameDay: "Irma", holiday: "" },
+    "11.9.": { nameDay: "Denis", holiday: "" },
+    "12.9.": { nameDay: "Marie", holiday: "" },
+    "13.9.": { nameDay: "Lucie", holiday: "" },
+    "14.9.": { nameDay: "Jozef", holiday: "" },
+    "15.9.": { nameDay: "Ludmila", holiday: "" },
+    "16.9.": { nameDay: "Ludmila", holiday: "" },
+    "17.9.": { nameDay: "Robert", holiday: "" },
+    "18.9.": { nameDay: "Kryštof", holiday: "" },
+    "19.9.": { nameDay: "Eliška", holiday: "" },
+    "20.9.": { nameDay: "Oleg", holiday: "" },
+    "21.9.": { nameDay: "Matouš", holiday: "" },
+    "22.9.": { nameDay: "Michela", holiday: "" },
+    "23.9.": { nameDay: "Berta", holiday: "" },
+    "24.9.": { nameDay: "Jaromír", holiday: "" },
+    "25.9.": { nameDay: "Zlata", holiday: "" },
+    "26.9.": { nameDay: "Andrea", holiday: "" },
+    "27.9.": { nameDay: "Jonáš", holiday: "" },
+    "28.9.": { nameDay: "Václav", holiday: "Den české státnosti" },
+    "29.9.": { nameDay: "Michal", holiday: "" },
+    "30.9.": { nameDay: "Jeroným", holiday: "" },
+    "1.10.": { nameDay: "Igor", holiday: "" },
+    "2.10.": { nameDay: "Olga", holiday: "" },
+    "3.10.": { nameDay: "Hedvika", holiday: "" },
+    "4.10.": { nameDay: "František", holiday: "" },
+    "5.10.": { nameDay: "Eliška", holiday: "" },
+    "6.10.": { nameDay: "Brigita", holiday: "" },
+    "7.10.": { nameDay: "Markéta", holiday: "" },
+    "8.10.": { nameDay: "Sváťa", holiday: "" },
+    "9.10.": { nameDay: "Štěpán", holiday: "" },
+    "10.10.": { nameDay: "Denis", holiday: "" },
+    "11.10.": { nameDay: "Michaela", holiday: "" },
+    "12.10.": { nameDay: "Boris", holiday: "" },
+    "13.10.": { nameDay: "Renata", holiday: "" },
+    "14.10.": { nameDay: "Tereza", holiday: "" },
+    "15.10.": { nameDay: "Hedvika", holiday: "" },
+    "16.10.": { nameDay: "Lukáš", holiday: "" },
+    "17.10.": { nameDay: "Hedvika", holiday: "" },
+    "18.10.": { nameDay: "Ladislav", holiday: "" },
+    "19.10.": { nameDay: "Michaela", holiday: "" },
+    "20.10.": { nameDay: "Bohuslav", holiday: "" },
+    "21.10.": { nameDay: "Hana", holiday: "" },
+    "22.10.": { nameDay: "Šimon", holiday: "" },
+    "23.10.": { nameDay: "Teodor", holiday: "" },
+    "24.10.": { nameDay: "Nina", holiday: "" },
+    "25.10.": { nameDay: "Beáta", holiday: "" },
+    "26.10.": { nameDay: "Dimitrij", holiday: "" },
+    "27.10.": { nameDay: "Štěpán", holiday: "" },
+    "28.10.": { nameDay: "Dlouhý den", holiday: "Den vzniku samostatného československého státu" },
+    "29.10.": { nameDay: "Silvia", holiday: "" },
+    "30.10.": { nameDay: "Tadeáš", holiday: "" },
+    "31.10.": { nameDay: "Štěpán", holiday: "" },
+    "1.11.": { nameDay: "Anděla", holiday: "Svátek všech svatých" },
+    "2.11.": { nameDay: "Alois", holiday: "Dušičky" },
+    "3.11.": { nameDay: "Hubert", holiday: "" },
+    "4.11.": { nameDay: "Karel", holiday: "" },
+    "5.11.": { nameDay: "Václav", holiday: "" },
+    "6.11.": { nameDay: "Leonard", holiday: "" },
+    "7.11.": { nameDay: "Erik", holiday: "" },
+    "8.11.": { nameDay: "Bohumil", holiday: "" },
+    "9.11.": { nameDay: "Benedikt", holiday: "" },
+    "10.11.": { nameDay: "Teodor", holiday: "" },
+    "11.11.": { nameDay: "Martin", holiday: "Den boje za svobodu a demokracii" },
+    "12.11.": { nameDay: "Benedikt", holiday: "" },
+    "13.11.": { nameDay: "Margaréta", holiday: "" },
+    "14.11.": { nameDay: "Ladislav", holiday: "" },
+    "15.11.": { nameDay: "Leopold", holiday: "" },
+    "16.11.": { nameDay: "Mikuláš", holiday: "" },
+    "17.11.": { nameDay: "Martin", holiday: "Den boje za svobodu a demokracii" },
+    "18.11.": { nameDay: "Romana", holiday: "" },
+    "19.11.": { nameDay: "Alena", holiday: "" },
+    "20.11.": { nameDay: "Edmund", holiday: "" },
+    "21.11.": { nameDay: "Albert", holiday: "" },
+    "22.11.": { nameDay: "Cecílie", holiday: "" },
+    "23.11.": { nameDay: "Klement", holiday: "" },
+    "24.11.": { nameDay: "Emílie", holiday: "" },
+    "25.11.": { nameDay: "Kateřina", holiday: "" },
+    "26.11.": { nameDay: "Diana", holiday: "" },
+    "27.11.": { nameDay: "Xenie", holiday: "" },
+    "28.11.": { nameDay: "René", holiday: "" },
+    "29.11.": { nameDay: "Jakub", holiday: "" },
+    "30.11.": { nameDay: "Ondřej", holiday: "" },
+    "1.12.": { nameDay: "Iva", holiday: "" },
+    "2.12.": { nameDay: "Blanka", holiday: "" },
+    "3.12.": { nameDay: "Svatoslav", holiday: "" },
+    "4.12.": { nameDay: "Barbora", holiday: "" },
+    "5.12.": { nameDay: "Jitka", holiday: "" },
+    "6.12.": { nameDay: "Mikuláš", holiday: "" },
+    "7.12.": { nameDay: "Ambrož", holiday: "" },
+    "8.12.": { nameDay: "Marika", holiday: "" },
+    "9.12.": { nameDay: "Vratislav", holiday: "" },
+    "10.12.": { nameDay: "Julie", holiday: "" },
+    "11.12.": { nameDay: "Dana", holiday: "" },
+    "12.12.": { nameDay: "Simona", holiday: "" },
+    "13.12.": { nameDay: "Lucie", holiday: "" },
+    "14.12.": { nameDay: "Lýdie", holiday: "" },
+    "15.12.": { nameDay: "Radana", holiday: "" },
+    "16.12.": { nameDay: "Albín", holiday: "" },
+    "17.12.": { nameDay: "Daniel", holiday: "" },
+    "18.12.": { nameDay: "Miriam", holiday: "" },
+    "19.12.": { nameDay: "Ester", holiday: "" },
+    "20.12.": { nameDay: "Štěpán", holiday: "" },
+    "21.12.": { nameDay: "Natálie", holiday: "" },
+    "22.12.": { nameDay: "Estera", holiday: "" },
+    "23.12.": { nameDay: "Vlasta", holiday: "" },
+    "24.12.": { nameDay: "Adam a Eva", holiday: "Štědrý den" },
+    "25.12.": { nameDay: "Boží hod", holiday: "1. svátek vánoční" },
+    "26.12.": { nameDay: "Štěpán", holiday: "2. svátek vánoční" },
+    "27.12.": { nameDay: "David", holiday: "" },
+    "28.12.": { nameDay: "Miloš", holiday: "" },
+    "29.12.": { nameDay: "Judita", holiday: "" },
+    "30.12.": { nameDay: "David", holiday: "" },
+    "31.12.": { nameDay: "Silvestr", holiday: "" }
+};
 
-// ========================
-// Render Day Headers (Day Names and Real Dates)
-// ========================
+
 function renderHeaders(startOfWeek) {
     const dayHeaders = document.getElementById("day-headers");
     if (!dayHeaders) {
@@ -243,21 +625,47 @@ function renderHeaders(startOfWeek) {
     dayHeaders.innerHTML = ""; // Clear existing headers
 
     console.log("Rendering day headers...");
+    console.log("Keys in calendarData:", Object.keys(calendarData)); // Log all keys in calendarData
 
     for (let i = 0; i < 7; i++) {
         const dayDate = addDays(startOfWeek, i);
+        const formattedDate = dayDate.getDate() + "." + (dayDate.getMonth() + 1) + ".";
+
+        console.log(`Checking for formattedDate: "${formattedDate}" in calendarData.`);
+        const data = calendarData[formattedDate] || { nameDay: "", holiday: "" };
+
+        console.log(`Data for ${formattedDate}:`, data);
+
         const th = document.createElement("th");
         th.className = "day-header";
+
+        // Add CSS class for holidays
+        if (data.holiday) {
+            th.classList.add("holiday");
+        }
+        const weekdayName = capitalizeFirstLetter(
+            dayDate.toLocaleString("cs-CZ", { weekday: "long" })
+        );
         th.innerHTML = `
-            <div class="d-inline-flex">
-            <div class="day-name me-2">${dayDate.toLocaleString('cs-CZ', { weekday: 'short' })}</div>
-            <div class="day-date" title="${dayDate.toLocaleDateString('cs-CZ', { year: 'numeric', month: 'long', day: 'numeric' })}">${dayDate.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' })}</div>
-            
+            <div class="day-header-content">
+                <div class="d-inline-block">
+                    <div class="day-date me-1 ${data.holiday ? "" : ""}">
+                        ${dayDate.getDate()}
+                    </div>
+                </div>
+                <div class="d-inline-block">
+                    <div class="day-name ${data.holiday ? "" : ""}">
+                        ${weekdayName}
+                    </div>
+                    ${data.holiday ? `<div class="holiday-name">${data.holiday}</div>` : ""}
+                    <div class="name-day">${data.nameDay}</div>
+                </div>
             </div>
         `;
         dayHeaders.appendChild(th);
     }
 }
+
 
 // ========================
 // Render Time Slots
@@ -319,7 +727,7 @@ function createNoteContainer(day, hour, startOfWeek, spinner) {
 
     const timeLabel = document.createElement("div");
     timeLabel.className = "time-label";
-    timeLabel.innerText = formatHour(hour);
+    timeLabel.innerText = formatHourShort(hour);
 
     const noteText = createNoteTextElement(day, hour, spinner);
 
@@ -456,8 +864,8 @@ function renderMiniCalendar() {
     // Update the week-header with the current selected week number
     const weekHeader = document.querySelector(".week-header");
     if (weekHeader) {
-        const selectedWeekNumber = getWeekNumber(baseDate);
-        weekHeader.innerText = `${selectedWeekNumber} týden`;
+        const [year, weekNumber] = getWeekNumberISO(baseDate);
+        weekHeader.innerText = `Týden ${weekNumber}`;
     }
 
     // Create the accordion wrapper
@@ -480,7 +888,7 @@ if (month == selectedMonth) {
         // Accordion header
         const headerId = `flush-heading${month}`;
         const collapseId = `flush-collapse${month}`;
-        const accordionHeader = document.createElement("h2");
+        const accordionHeader = document.createElement("div");
         accordionHeader.className = "accordion-header";
         accordionHeader.id = headerId;
 
@@ -721,7 +1129,7 @@ async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinner
     const date = format(dateObj, 'yyyy-MM-dd');
     const time = formatHour(hour);
 
-    console.log(`Fetching note for day ${day}, hour ${hour} (${date} ${time})`);
+    //console.log(`Fetching note for day ${day}, hour ${hour} (${date} ${time})`);
 
     // Show spinner
     spinner.style.display = "block";
@@ -732,7 +1140,7 @@ async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinner
     // Hide spinner after loading
     spinner.style.display = "none";
 
-    console.log(`Loaded note for ${date} at ${time}: "${noteText}"`);
+    //console.log(`Loaded note for ${date} at ${time}: "${noteText}"`);
 }
 
 // ========================
@@ -953,31 +1361,7 @@ function highlightSelectedWeek(currentStartOfWeek) {
         }
     });
 }
-
-// ========================
-// Navigation Buttons Initialization
-// ========================
-function setupWeekNavigationButtons() {
-    const prevWeekBtn = document.getElementById("prev-week");
-    const nextWeekBtn = document.getElementById("next-week");
-
-    if (prevWeekBtn) {
-        prevWeekBtn.addEventListener("click", () => {
-            moveToPreviousWeek();
-        });
-    } else {
-        console.error("Element with ID 'prev-week' not found.");
-    }
-
-    if (nextWeekBtn) {
-        nextWeekBtn.addEventListener("click", () => {
-            moveToNextWeek();
-        });
-    } else {
-        console.error("Element with ID 'next-week' not found.");
-    }
-}
-
+ 
 // ========================
 // Swipe Handling Functions
 // ========================
@@ -1078,17 +1462,7 @@ function setupDragScrolling() {
         currentCell.classList.add("selected-cell");
         focusEditableContent(currentCell);
     }
-
-    // Style for the selected cell
-    const css = `
-        .selected-cell {
-            outline: 2px solid blue; /* Highlight the focused cell */
-            background-color: #e0f7fa; /* Optional: Change background color */
-        }
-    `;
-    const style = document.createElement("style");
-    style.appendChild(document.createTextNode(css));
-    document.head.appendChild(style);
+ 
 
     // Function to focus and start editing the content
     function focusEditableContent(cell) {
@@ -1192,4 +1566,66 @@ function isLeapYear(year) {
 function getDateFromDay(year, day) {
     const date = new Date(year, 0); // January 1st
     return new Date(date.setDate(day));
+}
+function capitalizeFirstLetter(string) {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+function getWeeksInYear(year) {
+    const d = new Date(year, 11, 31);
+    const week = getWeekNumberISO(d)[1];
+    // If the last day of the year is in week 1, then the total weeks is the week number of the last Thursday of the year
+    if (week === 1) {
+        const lastThursday = new Date(year, 11, 31);
+        lastThursday.setDate(lastThursday.getDate() - ((lastThursday.getDay() + 6) % 7) - 3);
+        return getWeekNumberISO(lastThursday)[1];
+    }
+    return week;
+}
+function renderWeekDropdown() {
+    const weekDropdownMenu = document.getElementById("weekDropdownMenu");
+    if (!weekDropdownMenu) {
+        console.error("Element with ID 'weekDropdownMenu' not found.");
+        return;
+    }
+    weekDropdownMenu.innerHTML = ''; // Clear existing items
+
+    const currentYear = baseDate.getFullYear();
+    const totalWeeks = getWeeksInYear(currentYear);
+
+    // Create the week grid container
+    const weekGrid = document.createElement('div');
+    weekGrid.className = 'week-grid';
+
+    for (let weekNumber = 1; weekNumber <= totalWeeks; weekNumber++) {
+        const weekCell = document.createElement('div');
+        weekCell.className = 'week-cell';
+        weekCell.innerText = weekNumber;
+
+        // Highlight the current week
+        const [year, currentWeekNumber] = getWeekNumberISO(baseDate);
+        if (weekNumber === currentWeekNumber) {
+            weekCell.classList.add('selected');
+        }
+
+        weekCell.addEventListener('click', () => {
+            selectWeek(weekNumber, currentYear);
+        });
+
+        weekGrid.appendChild(weekCell);
+    }
+
+    weekDropdownMenu.appendChild(weekGrid);
+}
+
+function selectWeek(weekNumber, year) {
+    const firstThursday = new Date(year, 0, 4);
+    const firstWeekStart = new Date(firstThursday.getTime() - ((firstThursday.getDay() + 6) % 7) * 86400000);
+    const selectedDate = new Date(firstWeekStart.getTime() + (weekNumber - 1) * 7 * 86400000);
+    baseDate = selectedDate;
+    renderPlanner();
+    renderMiniCalendar();
+    renderYearCalendarModal();
+    renderWeekDropdown();
+    saveSelectedDateToLocalStorage(baseDate);
 }

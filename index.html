@@ -31,31 +31,34 @@
 
 <body>
     <!-- Real-Time Date and Time -->
-    <div id="real" class="d-flex border-top shadow-sm">
+    <div id="real" class="d-flex border-top">
         <div class="d-inline-flex">
-            <div class="dropdown">
-                <div class="dropdown-toggle p-1 border-end border-start" type="button" id="dropdownMenuClickable" data-bs-toggle="dropdown" data-bs-auto-close="false" aria-expanded="false">
-                    <span class="year-header p-1"></span>
-              <span class="month-header p-1"></span>
-                </div>
-                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
-                     
+            <div class="dropdown p-1">
+                <span class="month-header dropdown-toggle " id="dropdownMenuClickable"
+                    data-bs-toggle="dropdown"  aria-expanded="false"></span>
+
+
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
                     <div class="year-calendar-modal" class="">
                         <!-- Content of the Year Calendar -->
                         <div class="year-calendar-modal-content">
                             <!-- Your calendar rendering will go here -->
                         </div>
                     </div>
-               </li>
-                
-         
-                </ul>
-              </div>
-              <span class="week-header border-start p-1"></span>
-                    <div id="prev-week" class="p-1 border-end border-start"><i class="bi bi-arrow-left"></i></div>
-                    <div id="next-week" class="p-1 border-end"><i class="bi bi-arrow-right"></i></div>
-        
-         </div>
+                </div>
+            </div>
+            <div class="dropdown p-1 border-start ">
+                <span class="week-header dropdown-toggle" id="weekDropdown" data-bs-toggle="dropdown"
+                    aria-expanded="false"></span>
+                <div class="dropdown-menu p-2" aria-labelledby="weekDropdown" id="weekDropdownMenu"
+                    style="min-width: 300px;">
+                    <!-- Week grid will be injected here -->
+                </div>
+            </div>
+            <span class="year-header p-1 border-start "></span>
+
+
+        </div>
 
 
         <div class="me-3" id="go-to-today">
@@ -68,7 +71,7 @@
     <div id="day-numbers" class="day-numbers-container"></div>
     <div class="planner-container">
 
- 
+
 
         <div class="planner-slide-wrapper">
             <!-- Weekly Planner -->
@@ -77,7 +80,7 @@
 
                     <table class="table table-bordered planner-table">
                         <thead>
-                            <tr id="day-headers">
+                            <tr id="day-headers" class="shadow-sm">
                                 <!-- Day Headers will be injected here -->
                             </tr>
                         </thead>
