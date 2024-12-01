@@ -674,11 +674,12 @@ function renderHeaders(startOfWeek) {
                     </div>
                 </div>
                 <div class="d-inline-block">
+                <div class="name-day">${data.nameDay}</div>
                     <div class="day-name ${data.holiday ? "" : ""}">
                         ${weekdayName}
                     </div>
                     ${data.holiday ? `<div class="holiday-name">${data.holiday}</div>` : ""}
-                    <div class="name-day">${data.nameDay}</div>
+                    
                 </div>
             </div>
         `;
