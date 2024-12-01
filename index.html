@@ -31,57 +31,57 @@
     <!-- Real-Time Date and Time -->
     <div id="real" class="d-flex border-top">
         <div class="d-inline-flex">
+            <!-- Month Dropdown -->
             <div class="dropdown p-1">
-                <span class="month-header dropdown-toggle " id="dropdownMenuClickable" data-bs-toggle="dropdown"
-                    aria-expanded="false"></span>
-
+                <span class="month-header dropdown-toggle" id="dropdownMenuClickable" data-bs-toggle="dropdown"
+                    aria-expanded="false">Leden</span>
 
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
-                    <div class="year-calendar-modal" class="">
+                    <div class="year-calendar-modal">
                         <!-- Content of the Year Calendar -->
                         <div class="year-calendar-modal-content">
+                            <!-- Added Year and Week Headers -->
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="year-header">2024</h5>
+                                <h6 class="week-header">Týden 1</h6>
+                            </div>
                             <!-- Your calendar rendering will go here -->
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="dropdown p-1 border-start ">
+            <!-- Week Dropdown -->
+            <div class="dropdown p-1 border-start">
                 <span class="week-header dropdown-toggle" id="weekDropdown" data-bs-toggle="dropdown"
-                    aria-expanded="false"></span>
+                    aria-expanded="false">Týden 1</span>
                 <div class="dropdown-menu p-2" aria-labelledby="weekDropdown" id="weekDropdownMenu"
                     style="min-width: 300px;">
                     <!-- Week grid will be injected here -->
                 </div>
             </div>
-            <span class="year-header p-1 border-start "></span>
-
-
+            <!-- Year Header -->
+            <span class="year-header p-1 border-start">2024</span>
         </div>
         <!-- Microphone Icon Container -->
         <div id="top-mic-container">
-            <i id="top-mic-icon" class="bi bi-mic-fill" title="Přesuňte kurzor pro zahájení přepisu hlasu"></i>
+            <i id="top-mic-icon" class="bi bi-mic-fill" title="Vyberte buňku před zahájením přepisu hlasu"></i>
             <div id="mic-countdown" class="mic-countdown"></div>
         </div>
 
-
-
+        <!-- Go to Today Button and Real-Time Clock -->
         <div class="me-3" id="go-to-today">
             <span id="real-time-date" class="p-1 border-end border-start">19.11.2024</span>
             <span id="real-time-clock" class="p-1">00:00:00</span>
         </div>
-
     </div>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
+    <!-- Planner Container -->
     <div class="planner-container">
-
-
-
         <div class="planner-slide-wrapper">
             <!-- Weekly Planner -->
             <div class="planner-table-container">
                 <div class="week-view">
-
                     <table class="table table-bordered planner-table">
                         <thead>
                             <tr id="day-headers" class="shadow-sm">
@@ -93,21 +93,15 @@
                         </tbody>
                     </table>
                 </div>
-
             </div>
         </div>
     </div>
 
-
-
-
-
     <!-- Mini Calendar Container -->
     <div id="mini-calendar-container" class="mini-calendar-container"></div>
 
-
     <!-- Toast Notifications -->
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
         <div id="notification-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="toast-body" id="toast-body">
                 <!-- Toast messages will appear here -->

@@ -528,13 +528,28 @@ tr#day-headers {
 
 /* Style the microphone icon */
 #top-mic-icon {
-    font-size: 24px; /* Adjust icon size */
+     
     cursor: pointer;
+    background: white;
+    border-bottom-right-radius: 100%;
+    border-bottom-left-radius: 100%;
+    width: 40px;
+    height: 40px;
+    display: block;
+    display: flex
+;
+border: 1px solid #ddd;
+    flex-direction: row;
+    align-content: flex-start;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Change color when active */
 #top-mic-icon.active {
     color: red;
+    box-shadow: 0 0px 6px rgba(255, 0, 0, 1);
+
     animation: pulse 1s infinite;
 }
 
@@ -568,7 +583,7 @@ tr#day-headers {
 
 /* Highlight selected cell */
 .time-slot.selected-cell {
-    outline: 1px solid #007bff;
+    outline: 1px solid #ff0000;
 }
 
 /* Recording state */

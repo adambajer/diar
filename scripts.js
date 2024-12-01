@@ -37,7 +37,7 @@ let isSwiping = false;
 // ========================
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM loaded. Initializing planner...");
-
+    topMicIcon = document.querySelector("#top-mic-icon");
     // Load the last selected date from local storage
     const savedDateStr = localStorage.getItem("selectedDate");
     if (savedDateStr) {
@@ -80,8 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Add click event listener to the top microphone icon
-    const topMicIcon = document.getElementById("top-mic-icon");
-    if (topMicIcon) {
+     if (topMicIcon) {
         topMicIcon.addEventListener("click", (event) => {
             event.preventDefault(); // Prevent default click behavior
             event.stopPropagation(); // Stop the event from bubbling up
@@ -1266,7 +1265,6 @@ function startTranscription(noteTextElement) {
     const cell = noteTextElement.closest('td');
     cell.classList.add('recording');
 
-    const topMicIcon = document.getElementById("top-mic-icon");
     if (topMicIcon) {
         topMicIcon.classList.add('active');
     }
