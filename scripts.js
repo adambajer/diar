@@ -1519,12 +1519,7 @@ function setupDragScrolling() {
 function setupKeyboardNavigation() {
     let currentCell = document.querySelector(".time-slot"); // Default to the first cell
 
-    // Highlight the initial cell and focus its editable content
-    if (currentCell) {
-        currentCell.classList.add("selected-cell");
-        focusEditableContent(currentCell);
-    }
-
+    
 
    
 

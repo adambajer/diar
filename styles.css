@@ -426,8 +426,7 @@ font-weight: bold;}
      position: relative; 
     z-index: 992;
 } .selected-cell {
-
-    background-color: hsl(155, 100%, 92%) !important;
+ 
      
 }
 
@@ -569,7 +568,7 @@ tr#day-headers {
 
 /* Highlight selected cell */
 .time-slot.selected-cell {
-    outline: 2px solid #007bff;
+    outline: 1px solid #007bff;
 }
 
 /* Recording state */
