@@ -1,4 +1,4 @@
- 
+
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY_HERE",
     authDomain: "YOUR_AUTH_DOMAIN_HERE",
@@ -23,12 +23,15 @@ let baseDate = new Date(); // Tracks the currently selected date
 let currentStartOfWeek = null;
 let currentTranscribingCell = null; // Tracks the cell being transcribed into
 let recognition = null; // SpeechRecognition instance
-
+let currentSelectedCell = null;
+let topMicIcon = null;
 // Swipe Variables
 let touchStartX = null;
 let touchEndX = null;
 let isSwiping = false;
-
+// Global Variables
+ let microphonePermissionGranted = false;
+ let currentCell = null;
 // ========================
 // Initialize Planner on DOM Load
 // ========================
@@ -51,14 +54,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupClock();
     renderPlanner();
-    renderWeekDropdown(); // Add this line to render the week dropdown
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
     renderMiniCalendar();
     renderYearCalendarModal();
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
 
     setupDragScrolling();
-    setupKeyboardNavigation(); 
+    setupKeyboardNavigation();
+    renderWeekDropdown(); // Add this line to render the week dropdown
 
     document.getElementById("go-to-today").addEventListener("click", () => {
         // Set the baseDate to the current date
@@ -76,6 +79,24 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("Switched to today's date:", baseDate);
     });
 
+    // Add click event listener to the top microphone icon
+    const topMicIcon = document.getElementById("top-mic-icon");
+    if (topMicIcon) {
+        topMicIcon.addEventListener("click", (event) => {
+            event.preventDefault(); // Prevent default click behavior
+            event.stopPropagation(); // Stop the event from bubbling up
+            
+            if (currentSelectedCell) {
+                startTranscription(currentSelectedCell);
+            } else if (!microphonePermissionGranted) {
+                showToast("Mikrofon nebyl povolen. Klikněte na buňku pro povolení.", 'info');
+            } else if (!currentSelectedCell) {
+                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+            }
+        });
+    } else {
+        console.error("Top microphone icon not found!");
+    }
 });
 
 
@@ -214,7 +235,6 @@ async function renderPlanner() {
 
     // Highlight the selected week and update the week number display
     highlightSelectedWeek(currentStartOfWeek);
-    updateWeekHeader(); // Update week header text
 
     // Fetch and display notes for the week
     const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
@@ -731,11 +751,10 @@ function createNoteContainer(day, hour, startOfWeek, spinner) {
 
     const noteText = createNoteTextElement(day, hour, spinner);
 
-    const micIcon = createMicIcon(noteText);
+
 
     container.appendChild(timeLabel);
     container.appendChild(noteText);
-    container.appendChild(micIcon);
 
     return container;
 }
@@ -754,19 +773,6 @@ function createNoteTextElement(day, hour, spinner) {
     return noteText;
 }
 
-// Create the microphone icon
-function createMicIcon(noteText) {
-    const micIcon = document.createElement("i");
-    micIcon.className = "bi bi-mic-fill cell-mic";
-    micIcon.title = "Voice transcription";
-    micIcon.setAttribute("aria-label", "Start voice transcription");
-
-    micIcon.addEventListener("click", () => {
-        startTranscription(noteText);
-    });
-
-    return micIcon;
-}
 
 // ========================
 // Simplified Note Input Handling
@@ -856,7 +862,7 @@ function renderMiniCalendar() {
     container.innerHTML = ""; // Clear existing year calendar
 
     const currentYear = baseDate.getFullYear();
-    const selectedMonth = baseDate.getMonth(); 
+    const selectedMonth = baseDate.getMonth();
     // Add year as the main header
     let yearHeader = document.querySelector(".year-header");
     yearHeader.innerText = currentYear;
@@ -878,9 +884,9 @@ function renderMiniCalendar() {
         const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
         const monthName = firstDay.toLocaleString("cs-CZ", { month: "long" });
         const isSelectedMonth = month === selectedMonth;
-if (month == selectedMonth) {
-    monthHeader.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); 
-}
+        if (month == selectedMonth) {
+            monthHeader.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+        }
         // Accordion item
         const accordionItem = document.createElement("div");
         accordionItem.className = "accordion-item";
@@ -1146,6 +1152,7 @@ async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinner
 // ========================
 // Set Up Web Speech API for Transcription
 // ========================
+// Set up Web Speech API for Transcription
 function setupWebSpeechAPI() {
     console.log("Initializing Web Speech API for voice transcription.");
 
@@ -1182,7 +1189,7 @@ function setupWebSpeechAPI() {
                 .catch((error) => {
                     showToast("Chyba při ukládání poznámky.", 'error');
                 });
-            saveSelectedDateToLocalStorage(dateObj); // Save to local storage
+            saveSelectedDateToLocalStorage(dateObj);
             stopTranscription(); // Clear current transcription cell
         } else {
             console.warn("Active cell for transcription not found.");
@@ -1190,7 +1197,17 @@ function setupWebSpeechAPI() {
     });
 
     recognition.addEventListener('speechend', () => {
-        console.log("Voice transcription ended (speechend).");
+        console.log("Speech ended. Stopping transcription.");
+        if (currentTranscribingCell) {
+            recognition.stop();
+        }
+    });
+
+    recognition.addEventListener('end', () => {
+        console.log("Speech recognition service disconnected.");
+        if (currentTranscribingCell) {
+            stopTranscription();
+        }
     });
 
     recognition.addEventListener('error', (event) => {
@@ -1201,58 +1218,92 @@ function setupWebSpeechAPI() {
         }
     });
 }
+// Start Transcription with Countdown
+function startTranscriptionWithCountdown(noteTextElement) {
+ 
 
-// ========================
-// Manage Voice Transcription
-// ========================
+    let countdownValue = 1.0; // Start at 1.0 seconds
+    displayCountdown(countdownValue);
+
+    const countdownInterval = setInterval(() => {
+        countdownValue -= 0.1;
+        countdownValue = Math.round(countdownValue * 10) / 10;
+
+        if (countdownValue <= 0) {
+            clearInterval(countdownInterval);
+            hideCountdown();
+            startTranscription(noteTextElement);
+        } else {
+            displayCountdown(countdownValue);
+        }
+    }, 100);
+
+    // Allow user to cancel by moving the cursor away
+    if (topMicIcon) {
+        topMicIcon.addEventListener("click", (event) => {
+            event.preventDefault(); // Prevent default click behavior
+            event.stopPropagation(); // Stop the event from bubbling up
+    
+            if (currentSelectedCell) {
+                startTranscription(currentSelectedCell);
+            }  else if (!currentSelectedCell) {
+                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+            }
+        });
+    }
+    
+}
+
 function startTranscription(noteTextElement) {
-    console.log("Starting voice transcription.");
     if (currentTranscribingCell) {
-        showToast("Již probíhá přepis.", 'error');
-        console.warn("Attempt to start transcription while another transcription is in progress.");
+        showToast("Přepis je již spuštěn.", 'info');
         return;
     }
 
     currentTranscribingCell = noteTextElement;
-    const micIcon = noteTextElement.parentElement.querySelector('.cell-mic');
-    micIcon.classList.add('active');
 
-    // Add 'recording' class to the cell
     const cell = noteTextElement.closest('td');
     cell.classList.add('recording');
 
+    const topMicIcon = document.getElementById("top-mic-icon");
+    if (topMicIcon) {
+        topMicIcon.classList.add('active');
+    }
+
     try {
         recognition.start();
-        console.log("Voice transcription started.");
-        showToast("Začíná přepis hlasu. Prosím, mluvte nyní.", 'success');
+        showToast("Začíná přepis hlasu. Můžete mluvit.", 'success');
     } catch (error) {
         console.error("Error starting voice transcription:", error);
         showToast("Nepodařilo se spustit přepis hlasu.", 'error');
+        stopTranscription();
     }
 }
 
 function stopTranscription() {
-    console.log("Stopping voice transcription.");
     if (recognition && currentTranscribingCell) {
         recognition.stop();
-        const micIcon = currentTranscribingCell.parentElement.querySelector('.cell-mic');
-        micIcon.classList.remove('active');
 
-        // Remove 'recording' class from the cell
         const cell = currentTranscribingCell.closest('td');
         cell.classList.remove('recording');
 
-        console.log("Voice transcription stopped.");
+        
+        if (topMicIcon) {
+            topMicIcon.classList.remove('active');
+        }
+
         currentTranscribingCell = null;
-    } else {
-        console.warn("Attempting to stop transcription, but no transcription is running.");
     }
 }
+
+
+
 
 // ========================
 // Function for Toast Notifications
 // ========================
 
+// Show Toast Notifications
 function showToast(message, type = 'success') {
     const toastEl = document.getElementById('notification-toast');
     if (!toastEl) {
@@ -1361,7 +1412,7 @@ function highlightSelectedWeek(currentStartOfWeek) {
         }
     });
 }
- 
+
 // ========================
 // Swipe Handling Functions
 // ========================
@@ -1454,7 +1505,17 @@ function setupDragScrolling() {
         const walk = (x - startX) * 1; // The multiplier can adjust the scroll speed
         plannerContainer.scrollLeft = scrollLeft - walk;
     });
-} function setupKeyboardNavigation() {
+}
+ // Modify the focusEditableContent function to set currentSelectedCell
+ function focusEditableContent(cell) {
+    const noteText = cell.querySelector(".note-text");
+    if (noteText) {
+        noteText.focus();
+        noteText.setAttribute("contenteditable", "true");
+        currentSelectedCell = noteText; // Set the selected cell's noteText
+    }
+}
+function setupKeyboardNavigation() {
     let currentCell = document.querySelector(".time-slot"); // Default to the first cell
 
     // Highlight the initial cell and focus its editable content
@@ -1462,16 +1523,9 @@ function setupDragScrolling() {
         currentCell.classList.add("selected-cell");
         focusEditableContent(currentCell);
     }
- 
 
-    // Function to focus and start editing the content
-    function focusEditableContent(cell) {
-        const noteText = cell.querySelector(".note-text");
-        if (noteText) {
-            noteText.focus(); // Focus the contenteditable element
-            noteText.setAttribute("contenteditable", "true"); // Ensure it is editable
-        }
-    }
+
+   
 
     document.addEventListener("keydown", function (event) {
         if (!currentCell) return;
@@ -1505,22 +1559,60 @@ function setupDragScrolling() {
             currentCell.classList.add("selected-cell"); // Highlight the new cell
             focusEditableContent(currentCell); // Focus on the editable content
         }
-    });
+           // Check if the Ctrl key is pressed
+    if (event.ctrlKey) {
+        // Prevent default behavior if necessary
+        event.preventDefault();
+        showToast("CTRL.", 'info');
 
-    // Allow direct editing when a cell is clicked
-    document.addEventListener("click", function (event) {
-        const cell = event.target.closest(".time-slot"); // Ensure we only target .time-slot
-        if (cell) {
-            if (currentCell) {
-                currentCell.classList.remove("selected-cell");
-            }
-            currentCell = cell;
-            currentCell.classList.add("selected-cell");
-            focusEditableContent(currentCell); // Focus on the editable content
+        if (currentSelectedCell) {
+            startTranscription(currentSelectedCell);
+        }  else if (!currentSelectedCell) {
+            showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+        }
+    }
+    });
+}
+// Modify Cell Selection to Request Microphone Permission
+document.addEventListener("click", function (event) {
+    const cell = event.target.closest(".time-slot");
+    if (cell) {
+        if (currentCell) {
+            currentCell.classList.remove("selected-cell");
+        }
+        currentCell = cell;
+        currentCell.classList.add("selected-cell");
+        focusEditableContent(currentCell);
+
+      
+    } else {
+        // Deselect current cell if any
+        if (currentCell) {
+            currentCell.classList.remove("selected-cell");
+            currentCell = null;
+            currentSelectedCell = null;
+        }
+    }
+});
+
+// Function to Request Microphone Permission
+function requestMicrophonePermission() {
+    return new Promise((resolve, reject) => {
+        try {
+            recognition.start();
+            recognition.onstart = () => {
+                recognition.stop();
+                recognition.onstart = null;
+                microphonePermissionGranted = true;
+                console.log("Microphone permission granted.");
+                resolve();
+            };
+        } catch (error) {
+            console.error("Error requesting microphone permission:", error);
+            reject(error);
         }
     });
 }
-
 // ========================
 // Week Navigation Functions
 // ========================
@@ -1628,4 +1720,18 @@ function selectWeek(weekNumber, year) {
     renderYearCalendarModal();
     renderWeekDropdown();
     saveSelectedDateToLocalStorage(baseDate);
+}function displayCountdown(value) {
+    const countdownOverlay = document.getElementById("mic-countdown");
+    if (countdownOverlay) {
+        countdownOverlay.innerText = value.toFixed(1);
+        countdownOverlay.style.display = "block";
+    }
+}
+
+// Hide Countdown
+function hideCountdown() {
+    const countdownOverlay = document.getElementById("mic-countdown");
+    if (countdownOverlay) {
+        countdownOverlay.style.display = "none";
+    }
 }
