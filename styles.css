@@ -89,8 +89,7 @@
     flex-direction: column;
     gap: 5px;
 }
-#real-time-info {
-    font-size: 1.5vw;
+#real-time-info { 
     font-family: "Roboto Mono", monospace;
 }
 
@@ -163,13 +162,11 @@ border-right: 1px solid #eaeaea;
     height: 100%;
     padding-left:1vw;
     outline: none;
-    overflow: auto;
-    font-size: 0.7vw;
+    overflow: auto; 
 }
 .time-label {
     position: absolute;
-    
-    font-size: 0.5vw;
+     
      z-index: 999;
     left: 0;
     top: 1vw;
@@ -228,13 +225,11 @@ border-right: 1px solid #eaeaea;
     align-items: center;
     gap: 0.3vw;
 }
-.current-month-name {
-    font-size: 1vw;
+.current-month-name { 
     font-weight: 500;
 }
 #today-date, .real-nadpis {
-    display: flex;
-    font-size: 1.5vw;
+    display: flex; 
 }
 /* ========================
    Responsive Styles
@@ -248,8 +243,7 @@ border-right: 1px solid #eaeaea;
         flex-direction: column;
         align-items: flex-start;
     }
-    .current-month-name {
-        font-size: 1.2rem;
+    .current-month-name { 
     }
   
 }
@@ -389,8 +383,7 @@ border-right: 1px solid #eaeaea;
     background-color: #333;
     color: #fff;
     padding: 5px 8px;
-    border-radius: 4px;
-    font-size: 14px;
+    border-radius: 4px; 
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
@@ -407,8 +400,7 @@ border-right: 1px solid #eaeaea;
 
 /* Month Label */
 .month-label {
-    cursor: pointer;
-    font-size: 1rem; 
+    cursor: pointer; 
 }
 
 .month-label:hover {
@@ -518,13 +510,7 @@ tr#day-headers {
     pointer-events: none;
 }
 /* Position the microphone icon at the top center */
-#top-mic-container {
-    position: absolute;
-    top: 0px; /* Adjust as needed */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000; /* Ensure it's on top */
-}
+ 
 
 /* Style the microphone icon */
 #top-mic-icon {
@@ -570,8 +556,7 @@ border: 1px solid #ddd;
     position: absolute;
     top: 0%;
     left:100%; 
-    color: black;
-    font-size: 18px;
+    color: black; 
     font-weight: bold;
     z-index: 1001; /* Above the mic icon */
     background-color: rgba(255, 255, 255, 0.8);

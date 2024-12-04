@@ -656,7 +656,7 @@ function renderHeaders(startOfWeek) {
         console.log(`Data for ${formattedDate}:`, data);
 
         const th = document.createElement("th");
-        th.className = "day-header";
+        th.className = "day-header ";
 
         // Add CSS class for holidays
         if (data.holiday) {
@@ -668,14 +668,14 @@ function renderHeaders(startOfWeek) {
         th.innerHTML = `
             <div class="day-header-content">
                 <div class="d-inline-block">
-                    <div class="day-date me-1 ${data.holiday ? "" : ""}">
+                    <div class="day-date display-5 me-1 ${data.holiday ? "" : ""}">
                         ${dayDate.getDate()}
                     </div>
                 </div>
                 <div class="d-inline-block">
                 <div class="name-day">${data.nameDay}</div>
                     <div class="day-name ${data.holiday ? "" : ""}">
-                        ${weekdayName}
+                       <strong> ${weekdayName}</strong>
                     </div>
                     ${data.holiday ? `<div class="holiday-name">${data.holiday}</div>` : ""}
                     

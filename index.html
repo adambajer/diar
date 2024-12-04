@@ -20,7 +20,7 @@
     <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="shortcut icon" href="favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"> 
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="./site.webmanifest">
     <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
     <meta name="msapplication-TileColor" content="#da532c">
@@ -28,51 +28,68 @@
 </head>
 
 <body>
+    <nav class="navbar navbar-expand-lg sticky-top navbar-light" style="background-color: #e4fffa">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Diář</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
+                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                <div class="navbar-nav  me-auto">
+                    
+                    <div class="dropdown p-1">
+                        <span class="month-header dropdown-toggle" id="dropdownMenuClickable" data-bs-toggle="dropdown"
+                            aria-expanded="false">Leden</span>
+        
+                        <div class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
+                            <div class="year-calendar-modal">
+                                <!-- Content of the Year Calendar -->
+                                <div class="year-calendar-modal-content">
+                                    <!-- Added Year and Week Headers -->
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="year-header">2024</h5>
+                                        <h6 class="week-header">Týden 1</h6>
+                                    </div>
+                                    <!-- Your calendar rendering will go here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                    <div class="dropdown p-1 border-start">
+                        <span class="week-header dropdown-toggle" id="weekDropdown" data-bs-toggle="dropdown"
+                            aria-expanded="false">Týden 1</span>
+                        <div class="dropdown-menu p-2" aria-labelledby="weekDropdown" id="weekDropdownMenu"
+                            style="min-width: 300px;">
+                            <!-- Week grid will be injected here -->
+                        </div>
+                    </div> 
+                    <!-- Microphone Icon Container -->
+                    <div id="top-mic-container">
+                        <i id="top-mic-icon" class="bi bi-mic-fill"
+                            title="Vyberte buňku před zahájením přepisu hlasu"></i>
+                        <div id="mic-countdown" class="mic-countdown"></div>
+                    </div>
+                    <!-- Go to Today Button and Real-Time Clock -->
+                    
+                </div>
+                <div class="me-3" id="go-to-today">
+                    <span id="real-time-date" class="p-1 border-end border-start">19.11.2024</span>
+                    <span id="real-time-clock" class="p-1">00:00:00</span>
+                </div>
+            </div>
+        </div>
+    </nav>
     <!-- Real-Time Date and Time -->
     <div id="real" class="d-flex border-top">
         <div class="d-inline-flex">
             <!-- Month Dropdown -->
-            <div class="dropdown p-1">
-                <span class="month-header dropdown-toggle" id="dropdownMenuClickable" data-bs-toggle="dropdown"
-                    aria-expanded="false">Leden</span>
-
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuClickable">
-                    <div class="year-calendar-modal">
-                        <!-- Content of the Year Calendar -->
-                        <div class="year-calendar-modal-content">
-                            <!-- Added Year and Week Headers -->
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="year-header">2024</h5>
-                                <h6 class="week-header">Týden 1</h6>
-                            </div>
-                            <!-- Your calendar rendering will go here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
+           
             <!-- Week Dropdown -->
-            <div class="dropdown p-1 border-start">
-                <span class="week-header dropdown-toggle" id="weekDropdown" data-bs-toggle="dropdown"
-                    aria-expanded="false">Týden 1</span>
-                <div class="dropdown-menu p-2" aria-labelledby="weekDropdown" id="weekDropdownMenu"
-                    style="min-width: 300px;">
-                    <!-- Week grid will be injected here -->
-                </div>
-            </div>
-            <!-- Year Header -->
-            <span class="year-header p-1 border-start">2024</span>
-        </div>
-        <!-- Microphone Icon Container -->
-        <div id="top-mic-container">
-            <i id="top-mic-icon" class="bi bi-mic-fill" title="Vyberte buňku před zahájením přepisu hlasu"></i>
-            <div id="mic-countdown" class="mic-countdown"></div>
+     
         </div>
 
-        <!-- Go to Today Button and Real-Time Clock -->
-        <div class="me-3" id="go-to-today">
-            <span id="real-time-date" class="p-1 border-end border-start">19.11.2024</span>
-            <span id="real-time-clock" class="p-1">00:00:00</span>
-        </div>
+
     </div>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
