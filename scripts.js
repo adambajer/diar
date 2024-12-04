@@ -851,156 +851,139 @@ function renderMiniCalendar() {
         row.appendChild(dayCell);
     }
 
-    container.appendChild(row);
+    container.appendChild(row);  // Keeps track of the currently displayed month in the modal
 }
 function renderYearCalendarModal() {
     const container = document.querySelector(".year-calendar-modal");
     if (!container) {
-        console.error("Element with class 'year-calendar-modal' not found.");
+        console.error("Element '.year-calendar-modal' not found.");
         return;
     }
 
-    container.innerHTML = ""; // Vymažeme existující obsah
-
+    const monthHeader = document.querySelector(".month-header");
     const currentYear = baseDate.getFullYear();
     const selectedMonth = baseDate.getMonth();
     const daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
     const firstDay = new Date(currentYear, selectedMonth, 1);
+    const lastDay = new Date(currentYear, selectedMonth, daysInMonth);
 
-    // Header: Navigace měsíce
-    const navContainer = document.createElement("div");
-    navContainer.className = "d-flex justify-content-between align-items-center mb-2";
+    // Set the header to the interval of the selected week
+    if (monthHeader) {
+        const weekStartDate = getStartOfWeek(baseDate);
+        const weekEndDate = getEndOfWeek(baseDate);
+        monthHeader.innerText = `${weekStartDate.getDate()}.${weekStartDate.getMonth() + 1} - ${weekEndDate.getDate()}.${weekEndDate.getMonth() + 1}`;
+    }
+
+    // Clear previous content
+    container.innerHTML = "";
+
+    // Add navigation
+    const nav = document.createElement("div");
+    nav.className = "d-flex justify-content-between align-items-center mb-3";
 
     const prevButton = document.createElement("button");
-    prevButton.className = "btn btn-outline-primary btn-sm";
+    prevButton.className = "btn btn-outline-primary";
     prevButton.innerText = "←";
-    prevButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        baseDate.setMonth(baseDate.getMonth() - 1);
-        renderYearCalendarModal();
+    prevButton.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent closing the dropdown
+        baseDate.setMonth(modalMonthDate.getMonth() - 1);
+        renderYearCalendarModal(); // Re-render modal content
+        highlightSelectedWeek(firstDay); // Highlight the selected week in the calendar
+
+        renderPlanner(); // Update the planner
+
     });
 
     const nextButton = document.createElement("button");
-    nextButton.className = "btn btn-outline-primary btn-sm";
+    nextButton.className = "btn btn-outline-primary";
     nextButton.innerText = "→";
-    nextButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        renderYearCalendarModal();
+    nextButton.addEventListener("click", (e) => {
+        e.stopPropagation(); // Prevent closing the dropdown
+        baseDate.setMonth(modalMonthDate.getMonth() + 1);
+        renderYearCalendarModal(); // Re-render modal content
+        highlightSelectedWeek(firstDay); // Highlight the selected week in the calendar
+
+        renderPlanner(); // Update the planner
+
     });
 
-    const monthName = document.createElement("span");
-    monthName.className = "flex-grow-1 text-center fw-bold";
-    monthName.innerText = `${getMonthName(firstDay)}`;
+    nav.appendChild(prevButton);
+    const dateInterval = document.createElement("span");
+    dateInterval.className = "text-center";
+    dateInterval.innerText = `${getMonthName(firstDay)} ${currentYear}`;
+    nav.appendChild(dateInterval);
+    nav.appendChild(nextButton);
+    container.appendChild(nav);
 
-    navContainer.appendChild(prevButton);
-    navContainer.appendChild(monthName);
-    navContainer.appendChild(nextButton);
+    // Add table for calendar
+    const table = document.createElement("table");
+    table.className = "table table-bordered text-center";
 
-    container.appendChild(navContainer);
-
-    // Day Headers
-    const dayHeadersRow = document.createElement("div");
-    dayHeadersRow.className = "d-flex justify-content-between text-center fw-bold mb-1";
-    const czechDayNames = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
-
-    const emptyCell = document.createElement("div");
-    emptyCell.className = "week-number-cell flex-grow-1";
-    emptyCell.innerText = ""; // Prázdná buňka pro čísla týdnů
-    dayHeadersRow.appendChild(emptyCell);
-
-    czechDayNames.forEach(day => {
-        const dayHeader = document.createElement("div");
-        dayHeader.className = "day-header small flex-grow-1";
-        dayHeader.innerText = day;
-        dayHeadersRow.appendChild(dayHeader);
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    const thweek = document.createElement("th");
+    thweek.innerText = "W";
+    headerRow.appendChild(thweek);
+    ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach(day => {
+        const th = document.createElement("th");
+        th.innerText = day;
+        headerRow.appendChild(th);
     });
-    container.appendChild(dayHeadersRow);
 
-    // Month Days Table
-    const table = document.createElement("div");
-    table.className = "month-days-grid";
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
 
-    let row = document.createElement("div");
-    row.className = "d-flex align-items-center";
+    const tbody = document.createElement("tbody");
+    let weekRow = document.createElement("tr");
 
-    let currentWeekNumber = getWeekNumberISO(firstDay)[1];
-    let isFirstRow = true;
+    // Week number column
+    let weekNumber = getWeekNumber(firstDay);
+    const weekCell = document.createElement("td");
+    weekCell.innerText = `W${weekNumber}`;
+    weekRow.appendChild(weekCell);
 
-    // Přidání prázdných buněk před prvním dnem měsíce
-    if (firstDay.getDay() !== 1) {
-        const weekNumberCell = document.createElement("div");
-        weekNumberCell.className = "week-number-cell fw-bold";
-        weekNumberCell.innerText = `W${currentWeekNumber}`;
-        row.appendChild(weekNumberCell);
-
-        for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
-            const emptyCell = document.createElement("div");
-            emptyCell.className = "day-cell empty-cell";
-            row.appendChild(emptyCell);
-        }
+    // Empty cells for days before the start of the month
+    for (let i = 1; i < firstDay.getDay(); i++) {
+        const emptyCell = document.createElement("td");
+        weekRow.appendChild(emptyCell);
     }
 
+    // Fill in the days
     for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(currentYear, selectedMonth, day);
-        const cell = document.createElement("div");
-        cell.className = "day-cell";
-        cell.innerText = day;
+        const dayDate = new Date(currentYear, selectedMonth, day);
+        const dayCell = document.createElement("td");
+        dayCell.innerText = day;
 
-        // Zvýraznění nedělí
-        if (date.getDay() === 0) {
-            cell.style.color = "red";
+        // Highlight the selected week
+        if (isDateInCurrentSelectedWeek(dayDate)) {
+            dayCell.classList.add("table-success");
         }
 
-        // Zvýraznění aktuálního týdne
-        if (isDateInCurrentSelectedWeek(date)) {
-            cell.style.backgroundColor = "#d1e7dd"; // Světle zelené pozadí
+        // Add click event
+        dayCell.addEventListener("click", () => {
+            baseDate = dayDate; // Update the global selected date
+            renderPlanner(); // Update the planner
+         });
+
+        weekRow.appendChild(dayCell);
+
+        // Start a new row for the next week
+        if (dayDate.getDay() === 0 || day === daysInMonth) {
+            tbody.appendChild(weekRow);
+            weekRow = document.createElement("tr");
+
+            // Add week number for the new row
+            weekNumber++;
+            const newWeekCell = document.createElement("td");
+            newWeekCell.innerText = `W${weekNumber}`;
+            weekRow.appendChild(newWeekCell);
         }
-
-        // Kliknutí na den v týdnu změní data tabulky
-        cell.addEventListener("click", (event) => {
-            event.stopPropagation();
-            baseDate = date;
-            renderPlanner();
-            renderYearCalendarModal();
-        });
-
-        // Týdenní číslo na začátku řádku
-        if (date.getDay() === 1 || (isFirstRow && day === 1)) {
-            if (!isFirstRow) {
-                table.appendChild(row);
-                row = document.createElement("div");
-                row.className = "d-flex align-items-center";
-            }
-
-            const weekNumberCell = document.createElement("div");
-            weekNumberCell.className = "week-number-cell fw-bold";
-            weekNumberCell.innerText = `W${currentWeekNumber}`;
-            weekNumberCell.addEventListener("click", (event) => {
-                event.stopPropagation();
-                baseDate = new Date(currentYear, selectedMonth, day);
-                renderPlanner();
-                renderYearCalendarModal();
-            });
-            row.appendChild(weekNumberCell);
-
-            currentWeekNumber += 1;
-        }
-
-        row.appendChild(cell);
-
-        // Konec řádku při neděli nebo posledním dni měsíce
-        if (date.getDay() === 0 || day === daysInMonth) {
-            table.appendChild(row);
-            row = document.createElement("div");
-            row.className = "d-flex align-items-center";
-        }
-
-        isFirstRow = false;
     }
 
+    table.appendChild(tbody);
     container.appendChild(table);
- 
 }
+
 
 // ========================
 // Firebase Operations
