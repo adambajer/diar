@@ -28,16 +28,20 @@ let topMicIcon = null;
 // Swipe Variables
 let touchStartX = null;
 let touchEndX = null;
+
+
 let isSwiping = false;
 // Global Variables
- let microphonePermissionGranted = false;
- let currentCell = null;
+let microphonePermissionGranted = false;
+let currentCell = null; 
+let yearHeader = null;
 // ========================
 // Initialize Planner on DOM Load
 // ========================
 document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM loaded. Initializing planner...");
     topMicIcon = document.querySelector("#top-mic-icon");
+    yearHeader = document.querySelector(".year-header");
     // Load the last selected date from local storage
     const savedDateStr = localStorage.getItem("selectedDate");
     if (savedDateStr) {
@@ -55,23 +59,19 @@ document.addEventListener("DOMContentLoaded", () => {
     setupClock();
     renderPlanner();
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
-    renderMiniCalendar();
-    renderYearCalendarModal();
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
 
     setupDragScrolling();
-    setupKeyboardNavigation();
-    renderWeekDropdown(); // Add this line to render the week dropdown
+    setupKeyboardNavigation(); 
 
+    renderYearCalendarModal();
     document.getElementById("go-to-today").addEventListener("click", () => {
         // Set the baseDate to the current date
         baseDate = new Date();
 
         // Re-render the planner, mini-calendar, and year calendar modal
         renderPlanner();
-        renderMiniCalendar();
-        renderYearCalendarModal();
-        renderWeekDropdown(); // Re-render the week dropdown
+        renderYearCalendarModal(); 
 
         // Save the current date to local storage
         saveSelectedDateToLocalStorage(baseDate);
@@ -80,17 +80,17 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Add click event listener to the top microphone icon
-     if (topMicIcon) {
+    if (topMicIcon) {
         topMicIcon.addEventListener("click", (event) => {
             event.preventDefault(); // Prevent default click behavior
             event.stopPropagation(); // Stop the event from bubbling up
-            
+
             if (currentSelectedCell) {
                 startTranscription(currentSelectedCell);
             } else if (!microphonePermissionGranted) {
-                showToast("Mikrofon nebyl povolen. Klikněte na buňku pro povolení.", 'info');
+                showToast("Napřed vyberte buňku, jestli chcete přepsat hlas!", 'warning');
             } else if (!currentSelectedCell) {
-                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'warning');
             }
         });
     } else {
@@ -747,7 +747,7 @@ function createNoteContainer(day, hour, startOfWeek, spinner) {
 
     const timeLabel = document.createElement("div");
     timeLabel.className = "time-label";
-    timeLabel.innerText = formatHourShort(hour);
+    timeLabel.innerHTML ='<small class="text-muted">'+ formatHourShort(hour)+'</span>';
 
     const noteText = createNoteTextElement(day, hour, spinner);
 
@@ -852,139 +852,155 @@ function renderMiniCalendar() {
     }
 
     container.appendChild(row);
-} function renderYearCalendarModal() {
+}
+function renderYearCalendarModal() {
     const container = document.querySelector(".year-calendar-modal");
     if (!container) {
         console.error("Element with class 'year-calendar-modal' not found.");
         return;
     }
 
-    container.innerHTML = ""; // Clear existing year calendar
+    container.innerHTML = ""; // Vymažeme existující obsah
 
     const currentYear = baseDate.getFullYear();
     const selectedMonth = baseDate.getMonth();
-    // Add year as the main header
-    let yearHeader = document.querySelector(".year-header");
-    yearHeader.innerText = currentYear;
-    let monthHeader = document.querySelector(".month-header");
-    // Update the week-header with the current selected week number
-    const weekHeader = document.querySelector(".week-header");
-    if (weekHeader) {
-        const [year, weekNumber] = getWeekNumberISO(baseDate);
-        weekHeader.innerText = `Týden ${weekNumber}`;
-    }
+    const daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
+    const firstDay = new Date(currentYear, selectedMonth, 1);
 
-    // Create the accordion wrapper
-    const accordion = document.createElement("div");
-    accordion.className = "accordion accordion-flush";
-    accordion.id = "yearCalendarAccordion";
+    // Header: Navigace měsíce
+    const navContainer = document.createElement("div");
+    navContainer.className = "d-flex justify-content-between align-items-center mb-2";
 
-    for (let month = 0; month < 12; month++) {
-        const firstDay = new Date(currentYear, month, 1);
-        const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
-        const monthName = firstDay.toLocaleString("cs-CZ", { month: "long" });
-        const isSelectedMonth = month === selectedMonth;
-        if (month == selectedMonth) {
-            monthHeader.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-        }
-        // Accordion item
-        const accordionItem = document.createElement("div");
-        accordionItem.className = "accordion-item";
+    const prevButton = document.createElement("button");
+    prevButton.className = "btn btn-outline-primary btn-sm";
+    prevButton.innerText = "←";
+    prevButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        baseDate.setMonth(baseDate.getMonth() - 1);
+        renderYearCalendarModal();
+    });
 
-        // Accordion header
-        const headerId = `flush-heading${month}`;
-        const collapseId = `flush-collapse${month}`;
-        const accordionHeader = document.createElement("div");
-        accordionHeader.className = "accordion-header";
-        accordionHeader.id = headerId;
+    const nextButton = document.createElement("button");
+    nextButton.className = "btn btn-outline-primary btn-sm";
+    nextButton.innerText = "→";
+    nextButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        renderYearCalendarModal();
+    });
 
-        const accordionButton = document.createElement("button");
-        accordionButton.className = `accordion-button ${isSelectedMonth ? "" : "collapsed"}`;
-        accordionButton.type = "button";
-        accordionButton.setAttribute("data-bs-toggle", "collapse");
-        accordionButton.setAttribute("data-bs-target", `#${collapseId}`);
-        accordionButton.setAttribute("aria-expanded", isSelectedMonth ? "true" : "false");
-        accordionButton.setAttribute("aria-controls", collapseId);
-        accordionButton.innerText = monthName.charAt(0).toUpperCase() + monthName.slice(1); // Capitalize first letter
+    const monthName = document.createElement("span");
+    monthName.className = "flex-grow-1 text-center fw-bold";
+    monthName.innerText = `${getMonthName(firstDay)}`;
 
-        accordionHeader.appendChild(accordionButton);
-        accordionItem.appendChild(accordionHeader);
+    navContainer.appendChild(prevButton);
+    navContainer.appendChild(monthName);
+    navContainer.appendChild(nextButton);
 
-        // Accordion body (collapse content)
-        const accordionCollapse = document.createElement("div");
-        accordionCollapse.id = collapseId;
-        accordionCollapse.className = `accordion-collapse collapse ${isSelectedMonth ? "show" : ""}`;
-        accordionCollapse.setAttribute("aria-labelledby", headerId);
-        accordionCollapse.setAttribute("data-bs-parent", "#yearCalendarAccordion");
+    container.appendChild(navContainer);
 
-        const accordionBody = document.createElement("div");
-        accordionBody.className = "accordion-body";
+    // Day Headers
+    const dayHeadersRow = document.createElement("div");
+    dayHeadersRow.className = "d-flex justify-content-between text-center fw-bold mb-1";
+    const czechDayNames = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"];
 
-        // Generate month table
-        const table = document.createElement("table");
-        table.className = "table table-bordered table-sm text-center";
+    const emptyCell = document.createElement("div");
+    emptyCell.className = "week-number-cell flex-grow-1";
+    emptyCell.innerText = ""; // Prázdná buňka pro čísla týdnů
+    dayHeadersRow.appendChild(emptyCell);
 
-        const tbody = document.createElement("tbody");
-        let row = document.createElement("tr");
+    czechDayNames.forEach(day => {
+        const dayHeader = document.createElement("div");
+        dayHeader.className = "day-header small flex-grow-1";
+        dayHeader.innerText = day;
+        dayHeadersRow.appendChild(dayHeader);
+    });
+    container.appendChild(dayHeadersRow);
 
-        // Empty cells for days before the first day of the month
+    // Month Days Table
+    const table = document.createElement("div");
+    table.className = "month-days-grid";
+
+    let row = document.createElement("div");
+    row.className = "d-flex align-items-center";
+
+    let currentWeekNumber = getWeekNumberISO(firstDay)[1];
+    let isFirstRow = true;
+
+    // Přidání prázdných buněk před prvním dnem měsíce
+    if (firstDay.getDay() !== 1) {
+        const weekNumberCell = document.createElement("div");
+        weekNumberCell.className = "week-number-cell fw-bold";
+        weekNumberCell.innerText = `W${currentWeekNumber}`;
+        row.appendChild(weekNumberCell);
+
         for (let i = 0; i < (firstDay.getDay() || 7) - 1; i++) {
-            row.appendChild(document.createElement("td"));
+            const emptyCell = document.createElement("div");
+            emptyCell.className = "day-cell empty-cell";
+            row.appendChild(emptyCell);
         }
-
-        // Add cells for each day of the month
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(currentYear, month, day);
-            const cell = document.createElement("td");
-            cell.innerText = day;
-
-            // Highlight Sundays
-            if (date.getDay() === 0) {
-                cell.style.color = "red";
-            }
-
-            // Highlight the selected week
-            if (isDateInCurrentSelectedWeek(date)) {
-                cell.classList.add("selected-week");
-                cell.style.backgroundColor = "#d1e7dd"; // Light green
-            }
-
-            // Add click event to select a date
-            cell.addEventListener("click", () => {
-                baseDate = date;
-                renderPlanner();
-                renderMiniCalendar();
-                renderYearCalendarModal();
-                saveSelectedDateToLocalStorage(date);
-
-                // Close the modal if Bootstrap modal is active
-                const modal = bootstrap.Modal.getInstance(
-                    document.getElementById("yearCalendarModal")
-                );
-                if (modal) modal.hide();
-            });
-
-            row.appendChild(cell);
-
-            // Start a new row if the current day is Sunday or the last day of the month
-            if (date.getDay() === 0 || day === daysInMonth) {
-                tbody.appendChild(row);
-                row = document.createElement("tr");
-            }
-        }
-
-        table.appendChild(tbody);
-        accordionBody.appendChild(table);
-        accordionCollapse.appendChild(accordionBody);
-        accordionItem.appendChild(accordionCollapse);
-
-        // Append the accordion item to the accordion
-        accordion.appendChild(accordionItem);
     }
 
-    container.appendChild(accordion);
-}
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, selectedMonth, day);
+        const cell = document.createElement("div");
+        cell.className = "day-cell";
+        cell.innerText = day;
 
+        // Zvýraznění nedělí
+        if (date.getDay() === 0) {
+            cell.style.color = "red";
+        }
+
+        // Zvýraznění aktuálního týdne
+        if (isDateInCurrentSelectedWeek(date)) {
+            cell.style.backgroundColor = "#d1e7dd"; // Světle zelené pozadí
+        }
+
+        // Kliknutí na den v týdnu změní data tabulky
+        cell.addEventListener("click", (event) => {
+            event.stopPropagation();
+            baseDate = date;
+            renderPlanner();
+            renderYearCalendarModal();
+        });
+
+        // Týdenní číslo na začátku řádku
+        if (date.getDay() === 1 || (isFirstRow && day === 1)) {
+            if (!isFirstRow) {
+                table.appendChild(row);
+                row = document.createElement("div");
+                row.className = "d-flex align-items-center";
+            }
+
+            const weekNumberCell = document.createElement("div");
+            weekNumberCell.className = "week-number-cell fw-bold";
+            weekNumberCell.innerText = `W${currentWeekNumber}`;
+            weekNumberCell.addEventListener("click", (event) => {
+                event.stopPropagation();
+                baseDate = new Date(currentYear, selectedMonth, day);
+                renderPlanner();
+                renderYearCalendarModal();
+            });
+            row.appendChild(weekNumberCell);
+
+            currentWeekNumber += 1;
+        }
+
+        row.appendChild(cell);
+
+        // Konec řádku při neděli nebo posledním dni měsíce
+        if (date.getDay() === 0 || day === daysInMonth) {
+            table.appendChild(row);
+            row = document.createElement("div");
+            row.className = "d-flex align-items-center";
+        }
+
+        isFirstRow = false;
+    }
+
+    container.appendChild(table);
+ 
+}
 
 // ========================
 // Firebase Operations
@@ -1220,7 +1236,7 @@ function setupWebSpeechAPI() {
 }
 // Start Transcription with Countdown
 function startTranscriptionWithCountdown(noteTextElement) {
- 
+
 
     let countdownValue = 1.0; // Start at 1.0 seconds
     displayCountdown(countdownValue);
@@ -1243,15 +1259,15 @@ function startTranscriptionWithCountdown(noteTextElement) {
         topMicIcon.addEventListener("click", (event) => {
             event.preventDefault(); // Prevent default click behavior
             event.stopPropagation(); // Stop the event from bubbling up
-    
+
             if (currentSelectedCell) {
                 startTranscription(currentSelectedCell);
-            }  else if (!currentSelectedCell) {
+            } else if (!currentSelectedCell) {
                 showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
             }
         });
     }
-    
+
 }
 
 function startTranscription(noteTextElement) {
@@ -1286,7 +1302,7 @@ function stopTranscription() {
         const cell = currentTranscribingCell.closest('td');
         cell.classList.remove('recording');
 
-        
+
         if (topMicIcon) {
             topMicIcon.classList.remove('active');
         }
@@ -1320,6 +1336,8 @@ function showToast(message, type = 'success') {
         icon.className = "bi bi-check-circle-fill text-success me-2";
     } else if (type === 'error') {
         icon.className = "bi bi-exclamation-triangle-fill text-danger me-2";
+    } else if (type === 'warning') {
+        icon.className = "bi bi-exclamation-triangle-fill text-warning me-2";
     } else {
         icon.className = "bi bi-info-circle-fill text-info me-2";
     }
@@ -1505,8 +1523,8 @@ function setupDragScrolling() {
         plannerContainer.scrollLeft = scrollLeft - walk;
     });
 }
- // Modify the focusEditableContent function to set currentSelectedCell
- function focusEditableContent(cell) {
+// Modify the focusEditableContent function to set currentSelectedCell
+function focusEditableContent(cell) {
     const noteText = cell.querySelector(".note-text");
     if (noteText) {
         noteText.focus();
@@ -1517,9 +1535,9 @@ function setupDragScrolling() {
 function setupKeyboardNavigation() {
     let currentCell = document.querySelector(".time-slot"); // Default to the first cell
 
-    
 
-   
+
+
 
     document.addEventListener("keydown", function (event) {
         if (!currentCell) return;
@@ -1553,18 +1571,18 @@ function setupKeyboardNavigation() {
             currentCell.classList.add("selected-cell"); // Highlight the new cell
             focusEditableContent(currentCell); // Focus on the editable content
         }
-           // Check if the Ctrl key is pressed
-    if (event.ctrlKey) {
-        // Prevent default behavior if necessary
-        event.preventDefault();
-        showToast("CTRL.", 'info');
+        // Check if the Ctrl key is pressed
+        if (event.ctrlKey) {
+            // Prevent default behavior if necessary
+            event.preventDefault();
+            showToast("CTRL.", 'info');
 
-        if (currentSelectedCell) {
-            startTranscription(currentSelectedCell);
-        }  else if (!currentSelectedCell) {
-            showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+            if (currentSelectedCell) {
+                startTranscription(currentSelectedCell);
+            } else if (!currentSelectedCell) {
+                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+            }
         }
-    }
     });
 }
 // Modify Cell Selection to Request Microphone Permission
@@ -1578,7 +1596,7 @@ document.addEventListener("click", function (event) {
         currentCell.classList.add("selected-cell");
         focusEditableContent(currentCell);
 
-      
+
     } else {
         // Deselect current cell if any
         if (currentCell) {
@@ -1667,42 +1685,7 @@ function getWeeksInYear(year) {
         return getWeekNumberISO(lastThursday)[1];
     }
     return week;
-}
-function renderWeekDropdown() {
-    const weekDropdownMenu = document.getElementById("weekDropdownMenu");
-    if (!weekDropdownMenu) {
-        console.error("Element with ID 'weekDropdownMenu' not found.");
-        return;
-    }
-    weekDropdownMenu.innerHTML = ''; // Clear existing items
-
-    const currentYear = baseDate.getFullYear();
-    const totalWeeks = getWeeksInYear(currentYear);
-
-    // Create the week grid container
-    const weekGrid = document.createElement('div');
-    weekGrid.className = 'week-grid';
-
-    for (let weekNumber = 1; weekNumber <= totalWeeks; weekNumber++) {
-        const weekCell = document.createElement('div');
-        weekCell.className = 'week-cell';
-        weekCell.innerText = weekNumber;
-
-        // Highlight the current week
-        const [year, currentWeekNumber] = getWeekNumberISO(baseDate);
-        if (weekNumber === currentWeekNumber) {
-            weekCell.classList.add('selected');
-        }
-
-        weekCell.addEventListener('click', () => {
-            selectWeek(weekNumber, currentYear);
-        });
-
-        weekGrid.appendChild(weekCell);
-    }
-
-    weekDropdownMenu.appendChild(weekGrid);
-}
+} 
 
 function selectWeek(weekNumber, year) {
     const firstThursday = new Date(year, 0, 4);
@@ -1711,10 +1694,9 @@ function selectWeek(weekNumber, year) {
     baseDate = selectedDate;
     renderPlanner();
     renderMiniCalendar();
-    renderYearCalendarModal();
-    renderWeekDropdown();
+    renderYearCalendarModal(); 
     saveSelectedDateToLocalStorage(baseDate);
-}function displayCountdown(value) {
+} function displayCountdown(value) {
     const countdownOverlay = document.getElementById("mic-countdown");
     if (countdownOverlay) {
         countdownOverlay.innerText = value.toFixed(1);
