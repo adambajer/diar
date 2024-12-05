@@ -168,16 +168,7 @@ opacity: 1;
    
 } 
 
-#real {
-    z-index: 999; 
-    width: 100%;  
-    flex-direction: row;
-    align-items: flex-start;
-    display: flex !important ;
-    align-items: center; 
-    position: relative;
-    justify-content: space-between;
-}/* Existing styles */
+ Existing styles */
 
 .planner-container {
     /* position: relative; */
@@ -437,12 +428,10 @@ td.time-slot {
     padding-left: 1vw;
     outline: none;
     overflow: auto;
-    word-wrap: break-word;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    max-width: 3vw;
+    word-wrap: break-word; 
+    overflow-wrap: anywhere; 
     box-sizing: content-box;
-    overflow: hidden;
+    overflow: oveflow-y;
 } .feedback-orange {
     color: orange !important;
     transition: color 0.3s;

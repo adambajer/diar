@@ -60,8 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPlanner();
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
-
-    setupDragScrolling();
+ 
     setupKeyboardNavigation();
 
     renderYearCalendarModal();
@@ -1340,7 +1339,7 @@ function highlightSelectedWeek(selectedDate) {
 // Swipe Handling Functions
 // ========================
 function setupSwipeListeners() {
-    const plannerContainer = document.querySelector(".planner-table-container");
+    const plannerContainer = document.querySelector(".planner-table-container #day-headers");
 
     if (!plannerContainer) {
         console.error("Planner table container not found for swipe listeners.");
@@ -1389,46 +1388,7 @@ function handleSwipeGesture() {
     touchStartX = null;
     touchEndX = null;
 }
-
-// ========================
-// Drag Scrolling and Keyboard Navigation
-// ========================
-function setupDragScrolling() {
-    const plannerContainer = document.querySelector(".planner-table-container");
-    if (!plannerContainer) {
-        console.error("Planner table container not found for drag scrolling.");
-        return;
-    }
-
-    let isDown = false;
-    let startX;
-    let scrollLeft;
-
-    plannerContainer.addEventListener('mousedown', (e) => {
-        isDown = true;
-        plannerContainer.classList.add('active');
-        startX = e.pageX - plannerContainer.offsetLeft;
-        scrollLeft = plannerContainer.scrollLeft;
-    });
-
-    plannerContainer.addEventListener('mouseleave', () => {
-        isDown = false;
-        plannerContainer.classList.remove('active');
-    });
-
-    plannerContainer.addEventListener('mouseup', () => {
-        isDown = false;
-        plannerContainer.classList.remove('active');
-    });
-
-    plannerContainer.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - plannerContainer.offsetLeft;
-        const walk = (x - startX) * 1; // The multiplier can adjust the scroll speed
-        plannerContainer.scrollLeft = scrollLeft - walk;
-    });
-}
+ 
 // Modify the focusEditableContent function to set currentSelectedCell
 function focusEditableContent(cell) {
     const noteText = cell.querySelector(".note-text");
