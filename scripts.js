@@ -87,11 +87,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (currentSelectedCell) {
                 startTranscription(currentSelectedCell);
-            } else if (!microphonePermissionGranted) {
+            } else if (!microphonePermissionGranted || !currentSelectedCell) {
                 showToast("Napřed vyberte buňku, jestli chcete přepsat hlas!", 'warning');
-            } else if (!currentSelectedCell) {
-                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'warning');
-            }
+                iconElement.classList.add("shake");
+
+                // Add the orange color class
+                iconElement.classList.add("feedback-orange");
+            
+                // Remove the shake and orange classes after the animation completes (e.g., 1s)
+                setTimeout(() => {
+                    iconElement.classList.remove("shake");
+                    iconElement.classList.remove("feedback-orange");
+                }, 1000); // Duration should match the CSS animation duration
+            }  
         });
     } else {
         console.error("Top microphone icon not found!");
@@ -665,17 +673,15 @@ function renderHeaders(startOfWeek) {
         th.innerHTML = `
             <div class="day-header-content">
                 <div class="d-inline-block">
-                    <div class="day-date display-5 me-1 ${data.holiday ? "" : ""}">
+                    <div class="day-date display-5 me-1">
                         ${dayDate.getDate()}
                     </div>
                 </div>
                 <div class="d-inline-block">
                 
-                <div class="holiday-name d-sm-none">${data.holiday}</div>
-                <div class="name-day">${data.nameDay}</div>
-                    
-                
-                  <div class="day-name ${data.holiday ? "" : ""}">
+                <div class="holiday-name d-sm-none d-none d-md-block">${data.holiday}</div>
+                <div class="name-day">${data.nameDay}</div
+                  <div class="day-name">
                        <strong> ${weekdayName}</strong>
                     </div>
                     </div>
@@ -1493,30 +1499,100 @@ function focusEditableContent(cell) {
     }
 }
 function setupKeyboardNavigation() {
-    let currentCell = document.querySelector(".time-slot"); // Default to the first cell
+    // Initialize currentCell to null. Selection starts only when a cell is clicked or a key is pressed.
+    let currentCell = null;
 
+    // Function to select a cell
+    function selectCell(cell) {
+        if (currentCell) {
+            currentCell.classList.remove("selected-cell");
+        }
+        currentCell = cell;
+        if (currentCell) {
+            currentCell.classList.add("selected-cell");
+            focusEditableContent(currentCell);
+        }
+    }
 
+    // Function to focus on editable content within the cell
+    function focusEditableContent(cell) {
+        const editable = cell.querySelector('.editable');
+        if (editable) {
+            editable.focus();
+        }
+    }
 
+    // Function to display toast notifications
+    function showToast(message, type) {
+        // Implementation of toast notifications
+        // Example using a simple alert for demonstration
+        alert(`${type.toUpperCase()}: ${message}`);
+    }
 
+    // Function to start transcription
+    function startTranscription(cell) {
+        // Implementation of transcription logic
+        console.log("Transcription started for:", cell);
+    }
+
+    // Add click event listeners to all time-slot cells to allow mouse selection
+    const timeSlots = document.querySelectorAll(".time-slot");
+    timeSlots.forEach(cell => {
+        cell.addEventListener('click', () => {
+            selectCell(cell);
+        });
+    });
 
     document.addEventListener("keydown", function (event) {
-        if (!currentCell) return;
+        const KEY_ARROW_RIGHT = "ArrowRight";
+        const KEY_ARROW_LEFT = "ArrowLeft";
+        const KEY_ARROW_DOWN = "ArrowDown";
+        const KEY_ARROW_UP = "ArrowUp";
+        const KEY_CTRL = "Control";
+
+        // Handle Ctrl + Key combinations first
+        if (event.ctrlKey) {
+            event.preventDefault(); // Prevent default behavior if Ctrl is pressed
+
+            if (event.key === 'c' || event.key === 'C') { // Example: Ctrl+C to start transcription
+                if (currentCell) {
+                    startTranscription(currentCell);
+                } else {
+                    showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+                }
+                return; // Exit after handling Ctrl+Key
+            }
+
+            // Add more Ctrl+Key handlers here if needed
+        }
+
+        // If no cell is selected, select the first cell on any arrow key press
+        if (!currentCell && [KEY_ARROW_RIGHT, KEY_ARROW_LEFT, KEY_ARROW_DOWN, KEY_ARROW_UP].includes(event.key)) {
+            currentCell = document.querySelector(".time-slot");
+            if (currentCell) {
+                selectCell(currentCell);
+                event.preventDefault();
+            }
+            return;
+        }
+
+        if (!currentCell) return; // If still no cell is selected, do nothing
 
         let nextCell = null;
         const day = parseInt(currentCell.dataset.day, 10);
         const hour = parseInt(currentCell.dataset.hour, 10);
 
         switch (event.key) {
-            case "ArrowRight":
+            case KEY_ARROW_RIGHT:
                 nextCell = document.querySelector(`td[data-day="${(day + 1) % 7}"][data-hour="${hour}"]`);
                 break;
-            case "ArrowLeft":
+            case KEY_ARROW_LEFT:
                 nextCell = document.querySelector(`td[data-day="${(day - 1 + 7) % 7}"][data-hour="${hour}"]`);
                 break;
-            case "ArrowDown":
+            case KEY_ARROW_DOWN:
                 nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour + 1 <= 20 ? hour + 1 : 7}"]`);
                 break;
-            case "ArrowUp":
+            case KEY_ARROW_UP:
                 nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour - 1 >= 7 ? hour - 1 : 20}"]`);
                 break;
             default:
@@ -1526,25 +1602,11 @@ function setupKeyboardNavigation() {
         // If a valid next cell exists, move focus
         if (nextCell) {
             event.preventDefault(); // Prevent default scrolling behavior
-            currentCell.classList.remove("selected-cell"); // Remove highlight from the current cell
-            currentCell = nextCell; // Update to the new cell
-            currentCell.classList.add("selected-cell"); // Highlight the new cell
-            focusEditableContent(currentCell); // Focus on the editable content
-        }
-        // Check if the Ctrl key is pressed
-        if (event.ctrlKey) {
-            // Prevent default behavior if necessary
-            event.preventDefault();
-            showToast("CTRL.", 'info');
-
-            if (currentSelectedCell) {
-                startTranscription(currentSelectedCell);
-            } else if (!currentSelectedCell) {
-                showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
-            }
+            selectCell(nextCell);
         }
     });
 }
+
 // Modify Cell Selection to Request Microphone Permission
 document.addEventListener("click", function (event) {
     const cell = event.target.closest(".time-slot");
