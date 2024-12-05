@@ -796,67 +796,7 @@ const handleNoteInput = debounce((event, day, hour) => {
 // ========================
 // Mini Calendar
 // ========================
-function renderMiniCalendar() {
-    const container = document.getElementById("mini-calendar-container");
-    if (!container) {
-        console.error("Element with ID 'mini-calendar-container' not found.");
-        return;
-    }
-    container.innerHTML = ""; // Clear existing calendar
-
-    const currentYear = baseDate.getFullYear();
-    const currentMonth = baseDate.getMonth();
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    const row = document.createElement("div");
-    row.style.display = "flex";
-    row.style.flexWrap = "wrap";
-    row.style.justifyContent = "space-around";
-
-    // Create day cells
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(currentYear, currentMonth, day);
-
-        const dayCell = document.createElement("div");
-        dayCell.innerText = day;
-        dayCell.className = "day-cell";
-        dayCell.style.padding = "10px";
-        dayCell.style.textAlign = "center";
-        dayCell.style.flex = "1";
-        dayCell.style.cursor = "pointer";
-        dayCell.style.position = "relative";
-
-        // Highlight Sundays in red
-        if (date.getDay() === 0) {
-            dayCell.style.color = "red";
-        }
-
-        // Add click event
-        dayCell.addEventListener("click", () => {
-            console.log(`Clicked on mini calendar: day ${day}`);
-            baseDate = date;
-            renderPlanner();
-            renderMiniCalendar();
-            renderYearCalendarModal();
-            saveSelectedDateToLocalStorage(date); // Save to local storage
-
-        });
-
-        // Highlight the current day
-        const today = new Date();
-        if (
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear()
-        ) {
-            dayCell.style.backgroundColor = "#e0f7fa"; // Light blue
-        }
-
-        row.appendChild(dayCell);
-    }
-
-    container.appendChild(row);  // Keeps track of the currently displayed month in the modal
+function renderMiniCalendar() {  
 }
 function renderYearCalendarModal() {
     const container = document.querySelector(".year-calendar-modal");
