@@ -414,7 +414,15 @@ tr#day-headers {
     text-align: center;
     display: none; /* Initially hidden */
 }
-
+.dropdown-menu {
+    padding: 0px !important;
+    background-color: rgba(255,255,255,0.3) !important;
+    border: 0px !important;
+    backdrop-filter: blur(20px);
+}
+.year-calendar-modal td {
+    border: 0px !important;
+}
 /* Highlight selected cell */
 .time-slot.selected-cell {
     outline: 1px solid #ff0000;
