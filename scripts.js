@@ -89,15 +89,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 startTranscription(currentSelectedCell);
             } else if (!microphonePermissionGranted || !currentSelectedCell) {
                 showToast("Napřed vyberte buňku, jestli chcete přepsat hlas!", 'warning');
-                iconElement.classList.add("shake");
+                topMicIcon.classList.add("shake");
 
                 // Add the orange color class
-                iconElement.classList.add("feedback-orange");
+                topMicIcon.classList.add("feedback-orange");
             
                 // Remove the shake and orange classes after the animation completes (e.g., 1s)
                 setTimeout(() => {
-                    iconElement.classList.remove("shake");
-                    iconElement.classList.remove("feedback-orange");
+                    topMicIcon.classList.remove("shake");
+                    topMicIcon.classList.remove("feedback-orange");
                 }, 1000); // Duration should match the CSS animation duration
             }  
         });
