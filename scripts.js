@@ -873,7 +873,7 @@ function renderYearCalendarModal() {
     let weekStartDate = getStartOfWeek(baseDate);
     let weekEndDate = getEndOfWeek(weekStartDate);
     let monthheader = document.querySelector(".month-header");
-    monthheader.innerText = `${weekStartDate.getDate()}.${weekStartDate.getMonth() + 1}. - ${weekEndDate.getDate()}.${weekEndDate.getMonth() + 1}. ${currentYear}`;
+    monthheader.innerText = `${weekStartDate.getDate()}. - ${weekEndDate.getDate()}.${weekEndDate.getMonth() + 1}. ${currentYear}`;
     // Clear previous content
     container.innerHTML = "";
 
