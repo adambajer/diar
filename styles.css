@@ -449,7 +449,7 @@ td.time-slot {
     word-wrap: break-word;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    max-width: 1vw;
+    max-width: 3vw;
     box-sizing: content-box;
     overflow: hidden;
 } .feedback-orange {
