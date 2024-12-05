@@ -840,14 +840,16 @@ function renderYearCalendarModal() {
     // Week number column
     let weekNumber = getWeekNumber(firstDay);
     const weekCell = document.createElement("td");
-    weekCell.innerText = `W${weekNumber}`;
+    weekCell.innerText = `${weekNumber}`;
+    weekCell.className = 'weekname';
     weekRow.appendChild(weekCell);
+    const emptyCells = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
-    // Empty cells for days before the start of the month
-    for (let i = 1; i < firstDay.getDay(); i++) {
-        const emptyCell = document.createElement("td");
-        weekRow.appendChild(emptyCell);
-    }
+  for (let i = 0; i < emptyCells; i++) {
+    const emptyCell = document.createElement("td");
+    weekRow.appendChild(emptyCell);
+}
+
 
     // Fill in the days
     for (let day = 1; day <= daysInMonth; day++) {
@@ -880,7 +882,8 @@ function renderYearCalendarModal() {
             // Add week number for the new row
             weekNumber++;
             const newWeekCell = document.createElement("td");
-            newWeekCell.innerText = `W${weekNumber}`;
+            newWeekCell.innerText = `${weekNumber}`;
+            newWeekCell.className = 'weekname';
             weekRow.appendChild(newWeekCell);
         }
     }

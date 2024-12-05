@@ -424,6 +424,14 @@ tr#day-headers {
 .time-slot.recording {
     background-color: #ffe6e6; /* Light red to indicate recording */
 }
+.year-calendar-modal tr .weekname {
+    border: 0;
+}
+.weekname {
+    font-size: 2vw;
+    color: #ccc !important;
+    border: 0;
+}
 td.time-slot {
     padding-left: 1vw;
     outline: none;
