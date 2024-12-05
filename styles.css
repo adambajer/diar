@@ -131,8 +131,7 @@ border-right: 1px solid #eaeaea;
     
 }
 .time-label {
-
-    position: absolute;
+ 
     z-index: 999;
     right: 0;
     top: 1vw;
@@ -380,6 +379,8 @@ tr#day-headers {
     justify-content: center;
     align-items: center;
     background-color: white;
+    padding: 10px;  
+    border-radius: 100%
 }
 #top-mic-icon {
     /* padding: 10px; */
@@ -387,15 +388,12 @@ tr#day-headers {
     background-color: white;
     border-radius: 20px;
     width: 100%;
-    display: flex
-;
-    width: 3vw;
+    display: flex;  
     transform: translateY(1px);
-    border-radius: 100%;
-    height: 3vw;
+    border-radius: 100%; 
     flex-direction: row;
     justify-content: center;
-    align-items: center;
+    align-items: center;    padding: 10px;
 }
 
 /* Change color when active */

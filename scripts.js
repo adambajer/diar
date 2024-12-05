@@ -879,7 +879,7 @@ function renderYearCalendarModal() {
 
     // Add table for calendar
     const table = document.createElement("table");
-    table.className = "table table-bordered text-center";
+    table.className = "table table-bordered text-right";
 
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
@@ -954,7 +954,7 @@ function renderYearCalendarModal() {
     footer.className = "d-flex justify-content-between align-items-center mt-3";
 
     const prevButton = document.createElement("button");
-    prevButton.className = "btn btn-outline-primary";
+    prevButton.className = "btn btn-outline-secondary";
     prevButton.innerText = "←";
     prevButton.addEventListener("click", (e) => {
         e.stopPropagation(); // Prevent closing the dropdown
@@ -964,7 +964,7 @@ function renderYearCalendarModal() {
     });
 
     const nextButton = document.createElement("button");
-    nextButton.className = "btn btn-outline-primary";
+    nextButton.className = "btn btn-outline-secondary";
     nextButton.innerText = "→";
     nextButton.addEventListener("click", (e) => {
         e.stopPropagation(); // Prevent closing the dropdown
@@ -975,7 +975,7 @@ function renderYearCalendarModal() {
 
 
     const dateInterval = document.createElement("span");
-    dateInterval.className = "text-center";
+    dateInterval.className = "text-right";
     dateInterval.innerText = `${weekStartDate.getDate()}.${weekStartDate.getMonth() + 1} - ${weekEndDate.getDate()}.${weekEndDate.getMonth() + 1}`;
 
     footer.appendChild(prevButton);
