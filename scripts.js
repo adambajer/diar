@@ -884,7 +884,7 @@ function renderYearCalendarModal() {
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
     const thweek = document.createElement("th");
-    thweek.innerText = "W";
+    thweek.innerText = "";
     headerRow.appendChild(thweek);
     ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
         const th = document.createElement("th");
