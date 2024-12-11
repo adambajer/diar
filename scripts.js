@@ -856,17 +856,7 @@ function renderMiniCalendar() {
         });
 
         // Create Today Button
-        const todayButton = document.createElement("i");
-        todayButton.className = "today-button bi bi-calendar-event-fill";
-        todayButton.innerText = "";
-        todayButton.title = "Přejdi na dnešek";
-        todayButton.addEventListener("click", (e) => {
-            e.stopPropagation();
-            baseDate = new Date(); // Reset to today's date
-            renderYearCalendarModal();
-            renderPlanner();
-        });
-
+    
         // Create Date Interval Span
         const dateInterval = document.createElement("span");
         dateInterval.className = "date-interval";
@@ -881,8 +871,7 @@ function renderMiniCalendar() {
         headerContent.appendChild(prevButton);
         headerContent.appendChild(dateInterval);
         headerContent.appendChild(nextButton);
-        headerContent.appendChild(todayButton);
-
+ 
         // Append the header content to the monthHeader
         monthHeader.appendChild(headerContent);
 
@@ -897,7 +886,7 @@ function renderMiniCalendar() {
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
         const thWeek = document.createElement("th");
-        thWeek.innerText = "Týden"; // "Week" in Czech
+        thWeek.innerText = "T"; // "Week" in Czech
         headerRow.appendChild(thWeek);
         ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
             const th = document.createElement("th");
@@ -993,8 +982,7 @@ function renderMiniCalendar() {
             renderYearCalendarModal(); // Render the calendar
             setupHoverEffect(); // Setup hover effect
             // Set focus to the close button for accessibility
-            document.querySelector(".year-calendar-modal .close-modal").focus();
-        }
+         }
     }
 
    

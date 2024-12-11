@@ -498,3 +498,8 @@ td.time-slot {
 .time-slot.selected-cell {
     outline: 1px solid red !important;
 }
+.modal-body.opaque {
+    position: absolute;
+    background: white;
+    padding: 1em;
+}
