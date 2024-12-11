@@ -167,17 +167,8 @@ border-right: 1px solid #eaeaea;
         align-items: flex-start;
     }
    
-} @media (max-width: 500px) {
- 
-.day-header-content {
-    display: flex
-;
-    flex-wrap: wrap;
-    align-items: stretch;
-    flex-direction: column;
 }
-   
-} 
+
  
 .planner-container {
     /* position: relative; */
@@ -371,34 +362,36 @@ tr#day-headers {
 #top-mic-container {
   
     position: fixed;
-    bottom: 0%;
+    top:50%;
     border: 1px solid #eaeaea;
-    left: 50%;
-    backdrop-filter: blur(20px);
-    transform: translate(-50%, -50%);
+    right: 0%; 
+    transform: translate(20%, -50%);
     z-index: 1000;
     display: flex
 ;
     justify-content: center;
     align-items: center;
-    background-color: #ffffff30;
-    padding: 10px;
-    border-radius: 100%;
- 
-    border-radius: 100%;
+    background-color: #8d8d8d7e;
+    padding: 10px; border-bottom-left-radius: 100%;
+    border-top-left-radius: 100%;
+    backdrop-filter: drop-shadow(2px 4px 6px black) blur(20px);
 }
 #top-mic-icon {
-    /* padding: 10px; */
-    border: 1px solid #ccc;
+
+    /* padding: 10px; */ 
+    backdrop-filter: drop-shadow(2px 4px 6px black);
     background-color: white;
-    border-radius: 20px;
+    /* border-radius: 20px; */
     width: 100%;
-    display: flex;  
+    display: flex; 
     transform: translateY(1px);
-    border-radius: 100%; 
+    /* */
     flex-direction: row;
     justify-content: center;
-    align-items: center;    padding: 10px;
+    align-items: center;border-bottom-left-radius: 100%;
+    border-top-left-radius: 100%;
+    padding: 10px;
+   
 }
 
 /* Change color when active */
@@ -422,21 +415,7 @@ tr#day-headers {
     100% {
         box-shadow: 0px 0px 20px red;
     }
-}
-/* Style for the countdown overlay */
-.mic-countdown {
-    position: absolute;
-    top: 0%;
-    left:100%; 
-    color: black; 
-    font-weight: bold;
-    z-index: 1001; /* Above the mic icon */
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 50%;
-    padding: 5px;
-    text-align: center;
-    display: none; /* Initially hidden */
-}
+} 
 .dropdown-menu {
     padding: 0px !important;
     background-color: rgba(239, 0, 0, 0.3) !important;
@@ -517,3 +496,13 @@ td.time-slot {
     background: white;
     padding: 1em;
 }
+@media (max-width: 1200px) {
+ 
+    .day-header-content {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        flex-direction: column;
+    }
+       
+    } 
