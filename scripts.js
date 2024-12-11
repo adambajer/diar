@@ -77,7 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         console.log("Switched to today's date:", baseDate);
     });
+    // Add event listener to the trigger button
+    document.getElementById("openCalendar").addEventListener("click", openCalendarModal);
 
+    // Add event listener to the close button
     // Add click event listener to the top microphone icon
     if (topMicIcon) {
         topMicIcon.addEventListener("click", (event) => {
@@ -830,8 +833,8 @@ function renderMiniCalendar() {
 
         // Create Previous Button with Font Awesome Icon
         const prevButton = document.createElement("button");
-        prevButton.className = "btn btn-outline-secondary prev-button";
-        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevButton.className = "btn btn-outline-secondary prev-button me-2";
+        prevButton.innerHTML = '<i class="bi bi-arrow-left"></i>';
         prevButton.setAttribute("aria-label", "Previous Week");
         prevButton.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent closing the dropdown if applicable
@@ -842,8 +845,8 @@ function renderMiniCalendar() {
 
         // Create Next Button with Font Awesome Icon
         const nextButton = document.createElement("button");
-        nextButton.className = "btn btn-outline-secondary next-button";
-        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextButton.className = "btn btn-outline-secondary next-button ms-2 me-2";
+        nextButton.innerHTML = '<i class="bi bi-arrow-right pe-2"></i>';
         nextButton.setAttribute("aria-label", "Next Week");
         nextButton.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent closing the dropdown if applicable
@@ -853,10 +856,10 @@ function renderMiniCalendar() {
         });
 
         // Create Today Button
-        const todayButton = document.createElement("button");
-        todayButton.className = "today-button";
-        todayButton.innerText = "Today";
-        todayButton.setAttribute("aria-label", "Go to Today");
+        const todayButton = document.createElement("i");
+        todayButton.className = "today-button bi bi-calendar-event-fill";
+        todayButton.innerText = "";
+        todayButton.title = "Přejdi na dnešek";
         todayButton.addEventListener("click", (e) => {
             e.stopPropagation();
             baseDate = new Date(); // Reset to today's date
@@ -980,11 +983,13 @@ function renderMiniCalendar() {
 
     // Function to open the calendar modal
     function openCalendarModal() {
-        const modal = document.querySelector(".year-calendar-modal");
+        const modal = document.querySelector(".year-calendar-modal .modal-body");
         const overlay = document.querySelector(".modal-overlay");
         if (modal && overlay) {
-            modal.style.display = "block"; // Show the modal
-            overlay.style.display = "block"; // Show the overlay
+            modal.classList.toggle("visible");
+            overlay.classList.toggle("visible");
+
+            
             renderYearCalendarModal(); // Render the calendar
             setupHoverEffect(); // Setup hover effect
             // Set focus to the close button for accessibility
@@ -992,18 +997,7 @@ function renderMiniCalendar() {
         }
     }
 
-    // Function to close the calendar modal
-    function closeCalendarModal() {
-        const modal = document.querySelector(".year-calendar-modal");
-        const overlay = document.querySelector(".modal-overlay");
-        if (modal && overlay) {
-            modal.style.display = "none"; // Hide the modal
-            overlay.style.display = "none"; // Hide the overlay
-            // Return focus to the trigger button
-            document.getElementById("openCalendar").focus();
-        }
-    }
-
+   
     // Function to setup hover effect using JavaScript
     function setupHoverEffect() {
         const monthHeader = document.querySelector(".year-calendar-modal .month-header");
@@ -1051,14 +1045,7 @@ function renderMiniCalendar() {
         }
     }
 
-    // Add event listener to the trigger button
-    document.getElementById("openCalendar").addEventListener("click", openCalendarModal);
 
-    // Add event listener to the close button
-    document.querySelector(".year-calendar-modal .close-modal").addEventListener("click", closeCalendarModal);
-
-    // Close the modal when clicking outside of it
-    document.querySelector(".modal-overlay").addEventListener("click", closeCalendarModal);
  
 // ========================
 // Firebase Operations

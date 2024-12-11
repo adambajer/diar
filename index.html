@@ -38,20 +38,21 @@
                 <div class="navbar-nav  me-auto">
 
            <!-- Trigger Button -->
-    <button id="openCalendar" class="btn btn-primary m-3">Open Calendar</button>
+    
 
     <!-- Modal Overlay -->
     <div class="modal-overlay"></div>
 
     <!-- Modal Structure -->
-    <div class="year-calendar-modal">
+    <div class="year-calendar-modal" >
         <div class="modal-header">
-            <div class="month-header">
+            <i id="openCalendar"  class="bi bi-arrow-down-circle-fill"></i>
+            
+            <div class="month-header ps-2 pe-2">
                 <!-- Navigation buttons and date interval will be injected here -->
             </div>
-            <button type="button" class="btn-close close-modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body" style="display: none;">
             <!-- Calendar table will be injected here -->
         </div>
     </div>

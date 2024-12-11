@@ -128,10 +128,11 @@ border-right: 1px solid #eaeaea;
     top: 1vw;
     font-size: 1vw;
     opacity: 0;
+    position: absolute;
     color: #eaeaea;
-} .note-text-container:hover  .time-label {
-opacity: 1;
-}   
+} 
+
+  
 /* ========================
    Toast Notifications
    ======================== */
@@ -266,11 +267,19 @@ opacity: 1;
 
 /* Sundays Highlight */
 td {
-     vertical-align: middle;  
-     white-space: nowrap; /* Prevents the text from wrapping */
-     overflow: hidden;    /* Hides any overflow */
-     text-overflow: ellipsis; /* Displays ellipsis when overflow occurs */
+    /* Consider removing or changing these if you want full text display */
+    /* white-space: nowrap; */
+    /* overflow: hidden; */
+    /* text-overflow: ellipsis; */
 }
+td.time-slot {
+    padding-left: 0; /* or a smaller value */
+}
+
+.time-slot.selected-cell {
+    outline: none !important;
+}
+
 
 td[style*="color: red"] {
     font-weight: bold;
@@ -475,4 +484,25 @@ td.time-slot {
 
 .year-calendar-modal {
     pointer-events: auto; /* Ensures the modal receives pointer events */
+}
+.note-text-container {
+    display: block;
+    width: 100%;
+}
+
+.note-text {
+    display: block;
+    width: 100%;
+    outline: none !important;
+}
+.time-slot.selected-cell {
+    outline: 1px solid red !important;
+}
+.modal-body,.modal-overlay {
+    visibility: hidden;
+    display:none;
+}
+.modal-body .visible,.modal-overlay .visible {
+    visibility: visible;
+    display: block;
 }
