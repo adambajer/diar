@@ -797,139 +797,269 @@ const handleNoteInput = debounce((event, day, hour) => {
 // ========================
 function renderMiniCalendar() {  
 }
-function renderYearCalendarModal() {
-    const container = document.querySelector(".year-calendar-modal");
-    if (!container) {
-        console.error("Element '.year-calendar-modal' not found.");
-        return;
+    // Helper function to format dates as "DD.MM"
+    function formatDate(date) {
+        const day = date.getDate();
+        const month = date.getMonth() + 1; // Months are 0-indexed
+        return `${day < 10 ? '0' + day : day}.${month < 10 ? '0' + month : month}`;
     }
 
-    let currentYear = baseDate.getFullYear();
-    let selectedMonth = baseDate.getMonth();
-    let daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
-    let firstDay = new Date(currentYear, selectedMonth, 1);
-    // Get and display the interval for the current week
-    let weekStartDate = getStartOfWeek(baseDate);
-    let weekEndDate = getEndOfWeek(weekStartDate);
-    let monthheader = document.querySelector(".month-header");
-    monthheader.innerText = `${weekStartDate.getDate()}. - ${weekEndDate.getDate()}.${weekEndDate.getMonth() + 1}. ${currentYear}`;
-    // Clear previous content
-    container.innerHTML = "";
+ 
 
-    // Add table for calendar
-    const table = document.createElement("table");
-    table.className = "table table-bordered text-right";
-
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    const thweek = document.createElement("th");
-    thweek.innerText = "";
-    headerRow.appendChild(thweek);
-    ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
-        const th = document.createElement("th");
-        th.innerText = day;
-        headerRow.appendChild(th);
-    });
-
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    const tbody = document.createElement("tbody");
-    let weekRow = document.createElement("tr");
-
-    // Week number column
-    let weekNumber = getWeekNumber(firstDay);
-    const weekCell = document.createElement("td");
-    weekCell.innerText = `${weekNumber}`;
-    weekCell.className = 'weekname';
-    weekRow.appendChild(weekCell);
-    const emptyCells = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-
-  for (let i = 0; i < emptyCells; i++) {
-    const emptyCell = document.createElement("td");
-    weekRow.appendChild(emptyCell);
-}
-
-
-    // Fill in the days
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayDate = new Date(currentYear, selectedMonth, day);
-        const dayCell = document.createElement("td");
-        dayCell.innerText = day;
-
-        // Highlight the selected week
-        if (isDateInCurrentSelectedWeek(dayDate)) {
-            dayCell.classList.add("table-success");
+        // Function to render the calendar modal
+       // Function to render the calendar modal
+       function renderYearCalendarModal() {
+        const modalBody = document.querySelector(".year-calendar-modal .modal-body");
+        if (!modalBody) {
+            console.error("Element '.year-calendar-modal .modal-body' not found.");
+            return;
         }
 
-        // Add click event
-        dayCell.addEventListener("click", () => {
+        let currentYear = baseDate.getFullYear();
+        let selectedMonth = baseDate.getMonth(); // 0-indexed (0 = January)
+        let daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
+        let firstDay = new Date(currentYear, selectedMonth, 1);
+        
+        // Get and display the interval for the current week
+        let weekStartDate = getStartOfWeek(baseDate);
+        let weekEndDate = getEndOfWeek(weekStartDate);
+        let monthHeader = document.querySelector(".year-calendar-modal .month-header");
 
-            baseDate = dayDate; // Update the global selected date
-            renderPlanner(); // Update the planner
+        // Clear previous content of monthHeader
+        monthHeader.innerHTML = "";
+
+        // Create Previous Button with Font Awesome Icon
+        const prevButton = document.createElement("button");
+        prevButton.className = "btn btn-outline-secondary prev-button";
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevButton.setAttribute("aria-label", "Previous Week");
+        prevButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent closing the dropdown if applicable
+            baseDate.setDate(baseDate.getDate() - 7); // Move back one week
             renderYearCalendarModal(); // Re-render modal content
-
-            highlightSelectedWeek(baseDate); // Update the selected week highlight
+            renderPlanner(); // Update the planner
         });
 
-        weekRow.appendChild(dayCell);
+        // Create Next Button with Font Awesome Icon
+        const nextButton = document.createElement("button");
+        nextButton.className = "btn btn-outline-secondary next-button";
+        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextButton.setAttribute("aria-label", "Next Week");
+        nextButton.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent closing the dropdown if applicable
+            baseDate.setDate(baseDate.getDate() + 7); // Move forward one week
+            renderYearCalendarModal(); // Re-render modal content
+            renderPlanner(); // Update the planner
+        });
 
-        // Start a new row for the next week
-        if (dayDate.getDay() === 0 || day === daysInMonth) {
-            tbody.appendChild(weekRow);
-            weekRow = document.createElement("tr");
+        // Create Today Button
+        const todayButton = document.createElement("button");
+        todayButton.className = "today-button";
+        todayButton.innerText = "Today";
+        todayButton.setAttribute("aria-label", "Go to Today");
+        todayButton.addEventListener("click", (e) => {
+            e.stopPropagation();
+            baseDate = new Date(); // Reset to today's date
+            renderYearCalendarModal();
+            renderPlanner();
+        });
 
-            // Add week number for the new row
-            weekNumber++;
-            const newWeekCell = document.createElement("td");
-            newWeekCell.innerText = `${weekNumber}`;
-            newWeekCell.className = 'weekname';
-            weekRow.appendChild(newWeekCell);
+        // Create Date Interval Span
+        const dateInterval = document.createElement("span");
+        dateInterval.className = "date-interval";
+        dateInterval.innerText = `${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}`;
+
+        // Append elements to monthHeader using Flexbox structure
+        // Create a container for the header content
+        const headerContent = document.createElement("div");
+        headerContent.className = "header-content";
+
+        // Append buttons and date interval to the header content
+        headerContent.appendChild(prevButton);
+        headerContent.appendChild(dateInterval);
+        headerContent.appendChild(nextButton);
+        headerContent.appendChild(todayButton);
+
+        // Append the header content to the monthHeader
+        monthHeader.appendChild(headerContent);
+
+        // Clear previous content in modal body
+        modalBody.innerHTML = "";
+
+        // Create table for calendar
+        const table = document.createElement("table");
+        table.className = "table table-bordered text-center";
+
+        // Create table header
+        const thead = document.createElement("thead");
+        const headerRow = document.createElement("tr");
+        const thWeek = document.createElement("th");
+        thWeek.innerText = "Týden"; // "Week" in Czech
+        headerRow.appendChild(thWeek);
+        ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
+            const th = document.createElement("th");
+            th.innerText = day;
+            headerRow.appendChild(th);
+        });
+
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body
+        const tbody = document.createElement("tbody");
+        let weekRow = document.createElement("tr");
+
+        // Initialize week number
+        let weekNumber = getWeekNumber(firstDay);
+
+        // Add week number cell
+        const weekCell = document.createElement("td");
+        weekCell.innerText = `${weekNumber}`;
+        weekCell.className = 'weekname';
+        weekRow.appendChild(weekCell);
+
+        // Calculate number of empty cells before the first day
+        const emptyCells = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+        // Append empty cells for days before the first day of the month
+        for (let i = 0; i < emptyCells; i++) {
+            const emptyCell = document.createElement("td");
+            weekRow.appendChild(emptyCell);
+        }
+
+        // Fill in the days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayDate = new Date(currentYear, selectedMonth, day);
+            const dayCell = document.createElement("td");
+            dayCell.innerText = day;
+
+            // Highlight the selected week
+            if (isDateInCurrentSelectedWeek(dayDate)) {
+                dayCell.classList.add("table-success", "selected-cell");
+            }
+
+            // Add click event to select the day
+            dayCell.addEventListener("click", () => {
+                baseDate = dayDate; // Update the global selected date
+                renderPlanner(); // Update the planner
+                renderYearCalendarModal(); // Re-render modal content
+                highlightSelectedWeek(baseDate); // Update the selected week highlight
+            });
+
+            weekRow.appendChild(dayCell);
+
+            // If the current day is Sunday or the last day of the month, start a new week row
+            if (dayDate.getDay() === 0 || day === daysInMonth) {
+                // Fill the remaining cells of the last week if the month doesn't end on Sunday
+                if (day === daysInMonth && dayDate.getDay() !== 0) {
+                    const remainingCells = 7 - (dayDate.getDay() === 0 ? 7 : dayDate.getDay());
+                    for (let i = 0; i < remainingCells; i++) {
+                        const emptyCell = document.createElement("td");
+                        weekRow.appendChild(emptyCell);
+                    }
+                }
+
+                tbody.appendChild(weekRow);
+                weekRow = document.createElement("tr");
+
+                // Increment week number
+                weekNumber++;
+                const newWeekCell = document.createElement("td");
+                newWeekCell.innerText = `${weekNumber}`;
+                newWeekCell.className = 'weekname';
+                weekRow.appendChild(newWeekCell);
+            }
+        }
+
+        table.appendChild(tbody);
+        modalBody.appendChild(table);
+
+        // Highlight the selected week after rendering
+        highlightSelectedWeek(baseDate);
+    }
+
+    // Function to open the calendar modal
+    function openCalendarModal() {
+        const modal = document.querySelector(".year-calendar-modal");
+        const overlay = document.querySelector(".modal-overlay");
+        if (modal && overlay) {
+            modal.style.display = "block"; // Show the modal
+            overlay.style.display = "block"; // Show the overlay
+            renderYearCalendarModal(); // Render the calendar
+            setupHoverEffect(); // Setup hover effect
+            // Set focus to the close button for accessibility
+            document.querySelector(".year-calendar-modal .close-modal").focus();
         }
     }
 
-    table.appendChild(tbody);
-    container.appendChild(table);
+    // Function to close the calendar modal
+    function closeCalendarModal() {
+        const modal = document.querySelector(".year-calendar-modal");
+        const overlay = document.querySelector(".modal-overlay");
+        if (modal && overlay) {
+            modal.style.display = "none"; // Hide the modal
+            overlay.style.display = "none"; // Hide the overlay
+            // Return focus to the trigger button
+            document.getElementById("openCalendar").focus();
+        }
+    }
 
-    // Add navigation and footer
-    const footer = document.createElement("div");
-    footer.className = "d-flex justify-content-between align-items-center mt-3";
+    // Function to setup hover effect using JavaScript
+    function setupHoverEffect() {
+        const monthHeader = document.querySelector(".year-calendar-modal .month-header");
+        const modalBody = document.querySelector(".year-calendar-modal .modal-body");
+        const modal = document.querySelector(".year-calendar-modal");
 
-    const prevButton = document.createElement("button");
-    prevButton.className = "btn btn-outline-secondary";
-    prevButton.innerText = "←";
-    prevButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent closing the dropdown
-        baseDate.setDate(baseDate.getDate() - 7); // Move back one week
-        renderYearCalendarModal(); // Re-render modal content
-        renderPlanner(); // Update the planner
-    });
+        if (monthHeader && modalBody && modal) {
+            // Function to add the 'opaque' class
+            function addOpaque() {
+                modalBody.classList.add("opaque");
+            }
 
-    const nextButton = document.createElement("button");
-    nextButton.className = "btn btn-outline-secondary";
-    nextButton.innerText = "→";
-    nextButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent closing the dropdown
-        baseDate.setDate(baseDate.getDate() + 7); // Move forward one week
-        renderYearCalendarModal(); // Re-render modal content
-        renderPlanner(); // Update the planner
-    });
+            // Function to remove the 'opaque' class
+            function removeOpaque() {
+                modalBody.classList.remove("opaque");
+            }
 
+            // When the mouse enters the monthHeader, add 'opaque' to modalBody
+            monthHeader.addEventListener("mouseenter", addOpaque);
 
-    const dateInterval = document.createElement("span");
-    dateInterval.className = "text-right";
-    dateInterval.innerText = `${weekStartDate.getDate()}.${weekStartDate.getMonth() + 1} - ${weekEndDate.getDate()}.${weekEndDate.getMonth() + 1}`;
+            // When the mouse leaves the monthHeader, check if it's entering modalBody
+            monthHeader.addEventListener("mouseleave", (e) => {
+                // Use a timeout to check if the mouse has entered modalBody
+                setTimeout(() => {
+                    const related = e.relatedTarget;
+                    if (!modal.contains(related)) {
+                        removeOpaque();
+                    }
+                }, 10);
+            });
 
-    footer.appendChild(prevButton);
+            // When the mouse enters the modalBody, ensure 'opaque' is added
+            modalBody.addEventListener("mouseenter", addOpaque);
 
-    footer.appendChild(dateInterval);
-    footer.appendChild(nextButton);
-    container.appendChild(footer);
+            // When the mouse leaves the modalBody, remove 'opaque' if not hovering over monthHeader
+            modalBody.addEventListener("mouseleave", (e) => {
+                // Use a timeout to check if the mouse has entered monthHeader
+                setTimeout(() => {
+                    const related = e.relatedTarget;
+                    if (!modal.contains(related)) {
+                        removeOpaque();
+                    }
+                }, 10);
+            });
+        }
+    }
 
-    // Highlight the selected week after rendering
-    highlightSelectedWeek(baseDate);
-}
+    // Add event listener to the trigger button
+    document.getElementById("openCalendar").addEventListener("click", openCalendarModal);
 
+    // Add event listener to the close button
+    document.querySelector(".year-calendar-modal .close-modal").addEventListener("click", closeCalendarModal);
+
+    // Close the modal when clicking outside of it
+    document.querySelector(".modal-overlay").addEventListener("click", closeCalendarModal);
+ 
 // ========================
 // Firebase Operations
 // ========================

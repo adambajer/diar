@@ -416,7 +416,7 @@ tr#day-headers {
 }
 .dropdown-menu {
     padding: 0px !important;
-    background-color: rgba(255,255,255,0.3) !important;
+    background-color: rgba(239, 0, 0, 0.3) !important;
     border: 0px !important;
     backdrop-filter: blur(20px);
 }
@@ -435,8 +435,7 @@ tr#day-headers {
 .year-calendar-modal tr .weekname {
     border: 0;
 }
-.weekname {
-    font-size: 2vw;
+.weekname { 
     color: #ccc !important;
     border: 0;
 }
@@ -470,4 +469,10 @@ td.time-slot {
 }
 .shake {
     animation: shake 0.5s;
+}.modal-overlay {
+    pointer-events: none; /* Allows clicks to pass through unless active */
+}
+
+.year-calendar-modal {
+    pointer-events: auto; /* Ensures the modal receives pointer events */
 }
