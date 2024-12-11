@@ -167,10 +167,18 @@ border-right: 1px solid #eaeaea;
         align-items: flex-start;
     }
    
+} @media (max-width: 500px) {
+ 
+.day-header-content {
+    display: flex
+;
+    flex-wrap: wrap;
+    align-items: stretch;
+    flex-direction: column;
+}
+   
 } 
-
- Existing styles */
-
+ 
 .planner-container {
     /* position: relative; */
     display: flex;
@@ -361,17 +369,22 @@ tr#day-headers {
 }
 /* Position the microphone icon at the top center */
 #top-mic-container {
+  
     position: fixed;
     bottom: 0%;
+    border: 1px solid #eaeaea;
     left: 50%;
+    backdrop-filter: blur(20px);
     transform: translate(-50%, -50%);
     z-index: 1000;
     display: flex
 ;
     justify-content: center;
     align-items: center;
-    background-color: white;
+    background-color: #ffffff30;
     padding: 10px;
+    border-radius: 100%;
+ 
     border-radius: 100%;
 }
 #top-mic-icon {

@@ -980,59 +980,10 @@ function renderMiniCalendar() {
 
             
             renderYearCalendarModal(); // Render the calendar
-            setupHoverEffect(); // Setup hover effect
-            // Set focus to the close button for accessibility
+             // Set focus to the close button for accessibility
          }
     }
-
-   
-    // Function to setup hover effect using JavaScript
-    function setupHoverEffect() {
-        const monthHeader = document.querySelector(".year-calendar-modal .month-header");
-        const modalBody = document.querySelector(".year-calendar-modal .modal-body");
-        const modal = document.querySelector(".year-calendar-modal");
-
-        if (monthHeader && modalBody && modal) {
-            // Function to add the 'opaque' class
-            function addOpaque() {
-                modalBody.classList.add("opaque");
-            }
-
-            // Function to remove the 'opaque' class
-            function removeOpaque() {
-                modalBody.classList.remove("opaque");
-            }
-
-            // When the mouse enters the monthHeader, add 'opaque' to modalBody
-            monthHeader.addEventListener("mouseenter", addOpaque);
-
-            // When the mouse leaves the monthHeader, check if it's entering modalBody
-            monthHeader.addEventListener("mouseleave", (e) => {
-                // Use a timeout to check if the mouse has entered modalBody
-                setTimeout(() => {
-                    const related = e.relatedTarget;
-                    if (!modal.contains(related)) {
-                        removeOpaque();
-                    }
-                }, 10);
-            });
-
-            // When the mouse enters the modalBody, ensure 'opaque' is added
-            modalBody.addEventListener("mouseenter", addOpaque);
-
-            // When the mouse leaves the modalBody, remove 'opaque' if not hovering over monthHeader
-            modalBody.addEventListener("mouseleave", (e) => {
-                // Use a timeout to check if the mouse has entered monthHeader
-                setTimeout(() => {
-                    const related = e.relatedTarget;
-                    if (!modal.contains(related)) {
-                        removeOpaque();
-                    }
-                }, 10);
-            });
-        }
-    }
-
+ 
 
  
 // ========================
