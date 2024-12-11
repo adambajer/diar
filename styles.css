@@ -498,11 +498,3 @@ td.time-slot {
 .time-slot.selected-cell {
     outline: 1px solid red !important;
 }
-.modal-body,.modal-overlay {
-    visibility: hidden;
-    display:none;
-}
-.modal-body .visible,.modal-overlay .visible {
-    visibility: visible;
-    display: block;
-}

@@ -832,9 +832,9 @@ function renderMiniCalendar() {
         monthHeader.innerHTML = "";
 
         // Create Previous Button with Font Awesome Icon
-        const prevButton = document.createElement("button");
-        prevButton.className = "btn btn-outline-secondary prev-button me-2";
-        prevButton.innerHTML = '<i class="bi bi-arrow-left"></i>';
+        const prevButton = document.createElement("i");
+        prevButton.className = "prev-button bi bi-arrow-left me-2 ms-2";
+        prevButton.innerHTML = '';
         prevButton.setAttribute("aria-label", "Previous Week");
         prevButton.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent closing the dropdown if applicable
@@ -844,9 +844,9 @@ function renderMiniCalendar() {
         });
 
         // Create Next Button with Font Awesome Icon
-        const nextButton = document.createElement("button");
-        nextButton.className = "btn btn-outline-secondary next-button ms-2 me-2";
-        nextButton.innerHTML = '<i class="bi bi-arrow-right pe-2"></i>';
+        const nextButton = document.createElement("i");
+        nextButton.className = "next-button bi bi-arrow-right me-2 ms-2";
+        nextButton.innerHTML = '';
         nextButton.setAttribute("aria-label", "Next Week");
         nextButton.addEventListener("click", (e) => {
             e.stopPropagation(); // Prevent closing the dropdown if applicable
@@ -986,8 +986,8 @@ function renderMiniCalendar() {
         const modal = document.querySelector(".year-calendar-modal .modal-body");
         const overlay = document.querySelector(".modal-overlay");
         if (modal && overlay) {
-            modal.classList.toggle("visible");
-            overlay.classList.toggle("visible");
+            modal.classList.toggle("d-none");
+            overlay.classList.toggle("d-none");
 
             
             renderYearCalendarModal(); // Render the calendar
