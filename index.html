@@ -28,62 +28,30 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand sticky-top d-fixed navbar-light" style="background-color: #f3f3f3">
-        <div class="container-fluid"> 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup"
-                aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                <div class="navbar-nav  me-auto">
-
-           <!-- Trigger Button -->
-    
-
-    <!-- Modal Overlay -->
-    <div class="modal-overlay"></div>
-
-    <!-- Modal Structure -->
-    <div class="year-calendar-modal" >
-        <div class="modal-header">
-             
-            <div  id="openCalendar"  class="month-header ps-2 pe-2">
-                <!-- Navigation buttons and date interval will be injected here -->
-            </div>
-        </div>
-        <div class="modal-body d-none" >
-            <!-- Calendar table will be injected here -->
-        </div>
-    </div>
-
-
-                    <!-- Microphone Icon Container -->
-                    <div id="top-mic-container">
-                        <i id="top-mic-icon" class="bi bi-mic-fill"
-                            title="Vyberte buňku před zahájením přepisu hlasu"></i>
-                        <div id="mic-countdown" class="mic-countdown"></div>
+    <nav class=" sticky-top d-flex navtop" >
+        <div class="headtop d-flex">
+            <div class="modal-overlay"></div>
+            <div class="year-calendar-modal">
+                <div class="modal-header border-end">
+                    <div id="openCalendar" class="month-header ps-2 pe-2">
                     </div>
-                    <!-- Go to Today Button and Real-Time Clock -->
-
                 </div>
-                <div class="me-3" id="go-to-today">
-                    <span id="real-time-date" class="p-1 ">19.11.2024</span>
-                    <span id="real-time-clock" class="p-1">00:00:00</span>
+                <div class="modal-body d-none">
                 </div>
             </div>
+            <div id="top-mic-container">
+                <i id="top-mic-icon" class="bi bi-mic-fill" title="Vyberte buňku před zahájením přepisu hlasu"></i>
+                <div id="mic-countdown" class="mic-countdown"></div>
+            </div>
         </div>
+        <!-- Right side: Date and Time -->
+        <div id="go-to-today" class="clickable d-flex flex-column align-items-betwee pe-3">
+            <span id="real-time-date" class="p-1 fw-bold">19.11.2024</span>
+            <span id="real-time-clock" class="p-1">00:00:00</span>
+        </div>
+        </div>
+
     </nav>
-    <!-- Real-Time Date and Time -->
-    <div id="real" class="d-flex border-top">
-        <div class="d-inline-flex">
-            <!-- Month Dropdown -->
-
-            <!-- Week Dropdown -->
-
-        </div>
-
-
-    </div>
     <!-- Day Numbers Row -->
     <div id="day-numbers" class="day-numbers-container"></div>
     <!-- Planner Container -->

@@ -26,7 +26,19 @@
 
 .week-navigation .btn { 
 }
-
+.navtop td, .navtop th, .navtop tr {
+    border: 0px solid white;
+}
+.navtop th {
+    background-color: #f6f6f6;
+    font-weight: normal;
+}.navtop td {
+    outline: 1px solid white;
+    background-color: #f6f6f6;
+}
+.navtop td.selected-cell {
+background-color: #99e9c4;
+}
 .month-cell {
     cursor: pointer;
     font-weight: bold;
@@ -102,7 +114,7 @@
     width: 14.3%;
     
 }.planner-table th.day-header {
-     border-right: 1px solid #aaa;
+     border-right: 1px solid #eaeaea;
 }
 #day-headers th:nth-child(7) {
 border-right: 1px solid #eaeaea;
@@ -111,7 +123,7 @@ border-right: 1px solid #eaeaea;
     border-right: 1px solid #eaeaea;
 }
 .planner-table td.time-slot {
-     border-right: 1px solid #aaa;
+     border-right: 1px solid #eaeaea;
 }
 .left-hed div {
     border-left: 1px solid #eaeaea;
@@ -123,15 +135,16 @@ border-right: 1px solid #eaeaea;
 }
 .time-label {
  
-    z-index: 999;
+    z-index: 9999;
     right: 0;
-    top: 1vw;
+    top: 0;
     font-size: 1vw;
     opacity: 0;
     position: absolute;
-    color: #eaeaea;
-} 
-
+ } 
+td.time-slot:hover .time-label {
+    opacity: 1;
+}
   
 /* ========================
    Toast Notifications
@@ -267,13 +280,14 @@ border-right: 1px solid #eaeaea;
 /* Sundays Highlight */
 td {
     /* Consider removing or changing these if you want full text display */
-    /* white-space: nowrap; */
-    /* overflow: hidden; */
+     white-space: nowrap; 
+      overflow: hidden;  
     /* text-overflow: ellipsis; */
 }
-td.time-slot {
-    padding-left: 0; /* or a smaller value */
-}
+.note-text-container {
+    position: relative;      overflow: hidden;  
+
+ }
 
 .time-slot.selected-cell {
     outline: none !important;
@@ -318,8 +332,9 @@ td[style*="color: red"] {
     justify-content: center;
     height: 50%;
 }
-tr#day-headers {
-    border-bottom: 1px solid #aaa;
+tr#day-headers th {
+    border-bottom: 1px solid #eaeaea;
+    background-color: #f6f6f6;
 }
 .accordion-button {
     padding: 0.5vw;
@@ -364,14 +379,12 @@ tr#day-headers {
     position: fixed;
     top:50%;
     border: 1px solid #eaeaea;
-    right: 0%; 
-    transform: translate(20%, -50%);
-    z-index: 1000;
+    right: 0%;   
     display: flex
 ;
     justify-content: center;
     align-items: center;
-    background-color: #8d8d8d7e;
+    background-color: #ffffff7e;
     padding: 10px; border-bottom-left-radius: 100%;
     border-top-left-radius: 100%;
     backdrop-filter: drop-shadow(2px 4px 6px black) blur(20px);
@@ -380,7 +393,7 @@ tr#day-headers {
 
     /* padding: 10px; */ 
     backdrop-filter: drop-shadow(2px 4px 6px black);
-    background-color: white;
+    background-color: #f3f3f3;
     /* border-radius: 20px; */
     width: 100%;
     display: flex; 
@@ -388,8 +401,7 @@ tr#day-headers {
     /* */
     flex-direction: row;
     justify-content: center;
-    align-items: center;border-bottom-left-radius: 100%;
-    border-top-left-radius: 100%;
+    align-items: center;border-radius: 100%;
     padding: 10px;
    
 }
@@ -438,7 +450,7 @@ tr#day-headers {
     border: 0;
 }
 .weekname { 
-    color: #ccc !important;
+    color: #0000FF !important;
     border: 0;
 }
 td.time-slot {
@@ -505,4 +517,48 @@ td.time-slot {
         flex-direction: column;
     }
        
-    } 
+    }#go-to-today {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end; /* Aligns text to the right */
+      }
+      
+      #real-time-date {
+        font-weight: bold; /* Make the date stand out */
+      }
+      #real-time-clock {
+        color: #666; /* Slightly lighter color for the time */
+      }
+      .week-year-info {
+        cursor: pointer;
+        font-weight: bold;
+        margin-right: 1rem; /* Add spacing if needed */
+        transition: background-color 0.2s ease;
+      }
+      
+      .week-year-info:hover {
+        background-color: #eaeaea;
+        text-decoration: underline;
+      }
+.navtop {
+    
+    display: flex !important
+;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+} .year-calendar-modal .modal-body {
+    position: absolute; 
+    background: #ffffff57;
+    backdrop-filter: blur(6px);
+    border: 1px solid #ccc;
+}      .header-content {
+    display: flex
+;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: center;
+}

@@ -830,7 +830,14 @@ function renderMiniCalendar() {
 
         // Clear previous content of monthHeader
         monthHeader.innerHTML = "";
-
+        let weekNumberheader = getWeekNumber(weekStartDate);
+        const weekYearSpan = document.createElement("span");
+        weekYearSpan.className = "d-inline-block";
+        weekYearSpan.textContent = `Týden ${weekNumberheader}`; 
+       
+        let YearSpan = document.createElement("span");
+        YearSpan.className = "d-block";
+        YearSpan.textContent = `${currentYear}`; 
         // Create Previous Button with Font Awesome Icon
         const prevButton = document.createElement("i");
         prevButton.className = "prev-button bi bi-arrow-left me-2 ms-2";
@@ -859,19 +866,24 @@ function renderMiniCalendar() {
     
         // Create Date Interval Span
         const dateInterval = document.createElement("span");
-        dateInterval.className = "date-interval";
+        dateInterval.className = "date-interval d-block";
         dateInterval.innerText = `${formatDate(weekStartDate)} - ${formatDate(weekEndDate)}`;
 
         // Append elements to monthHeader using Flexbox structure
         // Create a container for the header content
         const headerContent = document.createElement("div");
         headerContent.className = "header-content";
-
+        const prevnextContent = document.createElement("div");
+        prevnextContent.className = "prevnextContent d-flex";
         // Append buttons and date interval to the header content
-        headerContent.appendChild(prevButton);
+        
+        prevnextContent.appendChild(prevButton);
+        prevnextContent.appendChild(weekYearSpan); 
+        prevnextContent.appendChild(nextButton);   
+        headerContent.appendChild(YearSpan);   
+        headerContent.appendChild(prevnextContent);  
         headerContent.appendChild(dateInterval);
-        headerContent.appendChild(nextButton);
- 
+
         // Append the header content to the monthHeader
         monthHeader.appendChild(headerContent);
 
@@ -886,7 +898,7 @@ function renderMiniCalendar() {
         const thead = document.createElement("thead");
         const headerRow = document.createElement("tr");
         const thWeek = document.createElement("th");
-        thWeek.innerText = "T"; // "Week" in Czech
+        thWeek.innerText = ""; // "Week" in Czech
         headerRow.appendChild(thWeek);
         ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
             const th = document.createElement("th");
