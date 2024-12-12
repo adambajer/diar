@@ -294,9 +294,7 @@ td {
 }
 
 
-td[style*="color: red"] {
-    font-weight: bold;
-}
+
 /* Existing CSS styles */
 .holiday-name {  
 }
@@ -316,22 +314,7 @@ td[style*="color: red"] {
     border-left: 1px solid #ccc; /* Optional border for weekends */
 }
 
-.weekend-cell .saturday {
-    flex: 1; /* Top half for Saturday */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: 1px solid #ddd;
-    height: 50%;
-}
 
-.weekend-cell .sunday {
-    flex: 1; /* Bottom half for Sunday */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50%;
-}
 tr#day-headers th {
     border-bottom: 1px solid #eaeaea;
     background-color: #f6f6f6;
@@ -498,6 +481,7 @@ td.time-slot {
 .note-text {
     display: block;
     width: 100%;
+   font-weight:100;
     outline: none !important;
 }
 .time-slot.selected-cell {
