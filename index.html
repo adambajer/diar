@@ -34,14 +34,19 @@
               <div id="openCalendar" class="month-header ps-2 pe-2">
               </div></span>
           </section> 
-
-            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
-                <!-- Datum a čas -->
-                <div class="mdc-typography--body1" id="go-to-today">
-                    <span id="real-time-date" class="fw-bold">19.11.2024</span>
-                    <span id="real-time-clock">00:00:00</span>
-                </div>
-            </section>
+          <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+      
+            <!-- Week Navigation -->
+            <div class="week-navigation" style="display: flex; align-items: center; margin-left: 20px;">
+                <button class="mdc-icon-button material-icons" id="prevWeek" aria-label="Předchozí týden">chevron_left</button>
+                <span id="current-week-interval" style="margin: 0 10px; font-weight: bold;">19.11.2024 - 25.11.2024</span>
+                <button class="mdc-icon-button material-icons" id="nextWeek" aria-label="Další týden">chevron_right</button>
+            </div>      <!-- Datum a čas -->
+            <div class="mdc-typography--body1" id="go-to-today">
+                <span id="real-time-date" class="fw-bold">19.11.2024</span>
+                <span id="real-time-clock">00:00:00</span>
+            </div>
+        </section> 
         </div>
     </header>
     <main class="mdc-top-app-bar--fixed-adjust">

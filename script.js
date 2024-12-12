@@ -432,7 +432,6 @@ function addDays(date, days) {
     return result;
 }
 
-// Format Date according to Specified Format
 function format(date, formatStr) {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -440,10 +439,25 @@ function format(date, formatStr) {
 
     if (formatStr === 'yyyy-MM-dd') {
         return `${year}-${month}-${day}`;
+    } else if (formatStr === 'dd.MM.yyyy') {
+        return `${day}.${month}.${year}`;
     }
     // Add more formats as needed
     return date.toString();
 }
+function updateWeekIntervalDisplay() {
+    const weekIntervalElement = document.getElementById("current-week-interval");
+    if (!weekIntervalElement) {
+        console.error("Element with ID 'current-week-interval' not found.");
+        return;
+    }
+    const startOfWeek = getStartOfWeek(baseDate);
+    const endOfWeek = getEndOfWeek(startOfWeek);
+    const formattedStart = format(startOfWeek, 'dd.MM.yyyy');
+    const formattedEnd = format(endOfWeek, 'dd.MM.yyyy');
+    weekIntervalElement.innerText = `${formattedStart} - ${formattedEnd}`;
+}
+
 
 // Get Week Number for a Date (ISO 8601)
 function getWeekNumberISO(date) {
@@ -637,11 +651,27 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         console.error("Top microphone icon not found!");
     }
-});
+    // Přidání posluchačů pro tlačítka 'Předchozí týden' a 'Další týden'
+const prevWeekButton = document.getElementById("prevWeek");
+const nextWeekButton = document.getElementById("nextWeek");
 
-// ========================
-// Render Weekly Planner
-// ========================
+if (prevWeekButton) {
+    prevWeekButton.addEventListener("click", () => {
+        moveToPreviousWeek();
+    });
+} else {
+    console.error("Button with ID 'prevWeek' not found!");
+}
+
+if (nextWeekButton) {
+    nextWeekButton.addEventListener("click", () => {
+        moveToNextWeek();
+    });
+} else {
+    console.error("Button with ID 'nextWeek' not found!");
+}
+
+});
 async function renderPlanner() {
     console.log("Rendering planner...");
 
@@ -666,7 +696,11 @@ async function renderPlanner() {
     } else {
         console.log("No notes found for the current week.");
     }
+
+    // Update the week interval display
+    updateWeekIntervalDisplay();
 }
+
 
 // ========================
 // Populate Planner with Notes
@@ -1569,4 +1603,34 @@ function setupClock() {
 
     updateClock(); // Initial call
     setInterval(updateClock, 1000); // Update every second
+}
+function moveToNextWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    // Update baseDate to next week
+    baseDate = addDays(baseDate, 7);
+    renderPlanner();
+    renderYearCalendarModal();
+    // After rendering is done, re-attach swipe listeners
+    setTimeout(() => {
+        setupSwipeListeners();
+        isAnimating = false;
+    }, 500); // Match with CSS transition duration (adjust if needed)
+}
+
+function moveToPreviousWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    // Update baseDate to previous week
+    baseDate = addDays(baseDate, -7);
+    renderPlanner();
+    renderYearCalendarModal();
+
+    // After rendering is done, re-attach swipe listeners
+    setTimeout(() => {
+        setupSwipeListeners();
+        isAnimating = false;
+    }, 500); // Match with CSS transition duration (adjust if needed)
 }
