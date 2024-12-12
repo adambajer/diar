@@ -25,14 +25,12 @@ let baseDate = new Date(); // Tracks the currently selected date
 let currentStartOfWeek = null;
 let currentTranscribingCell = null; // Tracks the cell being transcribed into
 let recognition = null; // SpeechRecognition instance
-let currentSelectedCell = null;
+let isRecognizing = false; // Tracks if transcription is active
 let topMicIcon = null;
 // Swipe Variables
 let touchStartX = null;
 let touchEndX = null;
 let isSwiping = false;
-// Global Variables
-let microphonePermissionGranted = false;
 
 // ========================
 // Calendar Data
@@ -41,7 +39,1240 @@ let microphonePermissionGranted = false;
 /**
  * Data kalendáře obsahující svátky a jmeniny.
  * Klíče jsou formátovány jako "den.měsíc.", např. "1.1." pro 1. ledna.
+ */ 
+
+// ========================
+// Utility and Helper Functions
+// ========================
+
+// Debounce Function to Limit Frequency of Function Calls
+function debounce(func, wait) {
+    let timeout;
+    return function (...args) {
+        const context = this;
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+}
+
+// Add Days to a Date
+function addDays(date, days) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+function format(date, formatStr) {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+
+    if (formatStr === 'yyyy-MM-dd') {
+        return `${year}-${month}-${day}`;
+    } else if (formatStr === 'dd.MM.yyyy') {
+        return `${day}.${month}.${year}`;
+    }
+    // Add more formats as needed
+    return date.toString();
+}
+
+function updateWeekIntervalDisplay() {
+    const weekIntervalElement = document.getElementById("current-week-interval");
+    if (!weekIntervalElement) {
+        console.error("Element with ID 'current-week-interval' not found.");
+        return;
+    }
+    const startOfWeek = getStartOfWeek(baseDate);
+    const endOfWeek = getEndOfWeek(startOfWeek);
+    const formattedStart = format(startOfWeek, 'dd.MM.yyyy');
+    const formattedEnd = format(endOfWeek, 'dd.MM.yyyy');
+    weekIntervalElement.innerText = `${formattedStart} - ${formattedEnd}`;
+}
+
+// Get Week Number for a Date (ISO 8601)
+function getWeekNumberISO(date) {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7; // Monday=0, Sunday=6
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    const weekNumber = 1 + Math.ceil((firstThursday - target) / 604800000);
+    return weekNumber;
+}
+
+// Get Month Name in Czech
+function getMonthName(date) {
+    const monthNamesCzech = [
+        "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
+        "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
+    ];
+    return monthNamesCzech[date.getMonth()];
+}
+
+function getStartOfWeek(date) {
+    const result = new Date(date);
+    const day = result.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const diff = day === 0 ? -6 : 1 - day; // Adjust so that Monday is the start of the week
+    result.setDate(result.getDate() + diff);
+    result.setHours(0, 0, 0, 0); // Reset time
+    return result;
+}
+
+function getEndOfWeek(startOfWeek) {
+    const result = new Date(startOfWeek);
+    result.setDate(result.getDate() + 6); // Add 6 days to get Sunday
+    result.setHours(23, 59, 59, 999); // Set time to the end of the day
+    return result;
+}
+
+// Get Day Index from Date relative to the Start of the Week
+function getDayFromDate(date) {
+    const startOfWeek = getStartOfWeek(baseDate);
+    const dayDiff = Math.floor((new Date(date) - startOfWeek) / (24 * 60 * 60 * 1000));
+    return dayDiff;
+}
+
+// Get Hour from Time String
+function getHourFromTime(timeString) {
+    return parseInt(timeString.split(':')[0], 10);
+}
+
+// Sanitize Input to Prevent XSS
+function sanitizeInput(str) {
+    if (!str) return '';
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
+}
+
+// Format Hour
+function formatHour(hour) {
+    return hour.toString().padStart(2, '0') + ':00';
+}
+
+function formatHourShort(hour) {
+    return hour.toString().padStart(2, '0') + ':00';
+}
+
+// ========================
+// New Function: isDateInCurrentSelectedWeek
+// ========================
+
+/**
+ * Kontroluje, zda je dané datum v aktuálně vybraném týdnu.
+ * @param {Date} date - Datum k ověření.
+ * @returns {boolean} - Vrací true, pokud je datum v aktuálním týdnu, jinak false.
  */
+function isDateInCurrentSelectedWeek(date) {
+    const startOfWeek = getStartOfWeek(baseDate);
+    const endOfWeek = getEndOfWeek(startOfWeek);
+    return date >= startOfWeek && date <= endOfWeek;
+}
+
+// ========================
+// Firebase Operations
+// ========================
+
+// Save Note to Firebase
+async function saveNoteToFirebase(date, time, text) {
+    const dateObj = new Date(date);
+    const weekStart = getStartOfWeek(dateObj);
+    const weekNumber = getWeekNumberISO(weekStart);
+    const monthName = getMonthName(weekStart);
+
+    const dayIndex = getDayFromDate(dateObj);
+    const hourIndex = getHourFromTime(time);
+
+    const noteRef = database.ref(`planner/${monthName}/week_${weekNumber}/day${dayIndex}/hour${hourIndex}`);
+
+    return noteRef.set(text)
+        .then(() => {
+            console.log(`Note successfully saved for ${date} at ${time}.`);
+            showToast("Poznámka úspěšně uložena.", 'success');
+        })
+        .catch(error => {
+            console.error(`Error saving note for ${date} at ${time}:`, error);
+            showToast("Nepodařilo se uložit poznámku. Prosím, zkuste to znovu.", 'error');
+        });
+}
+
+// Delete Note from Firebase
+async function deleteNoteFromFirebase(date, time) {
+    const dateObj = new Date(date);
+    const weekStart = getStartOfWeek(dateObj);
+    const weekNumber = getWeekNumberISO(weekStart);
+    const monthName = getMonthName(weekStart);
+
+    const dayIndex = getDayFromDate(dateObj);
+    const hourIndex = getHourFromTime(time);
+
+    const noteRef = database.ref(`planner/${monthName}/week_${weekNumber}/day${dayIndex}/hour${hourIndex}`);
+
+    return noteRef.remove()
+        .then(() => {
+            console.log(`Note successfully deleted for ${date} at ${time}.`);
+            showToast("Poznámka úspěšně smazána.", 'success');
+        })
+        .catch(error => {
+            console.error(`Error deleting note for ${date} at ${time}:`, error);
+            showToast("Nepodařilo se smazat poznámku.", 'error');
+        });
+}
+
+// Fetch Specific Note from Firebase
+function fetchNoteFromFirebase(date, time) {
+    const dateObj = new Date(date);
+    const weekStart = getStartOfWeek(dateObj);
+    const weekNumber = getWeekNumberISO(weekStart);
+    const monthName = getMonthName(weekStart);
+    const dayIndex = getDayFromDate(dateObj);
+    const hourIndex = getHourFromTime(time);
+
+    const noteRef = database.ref(`planner/${monthName}/week_${weekNumber}/day${dayIndex}/hour${hourIndex}`);
+
+    return noteRef.once('value')
+        .then(snapshot => snapshot.val())
+        .catch(error => {
+            console.error(`Error fetching note for ${date} at ${time}:`, error);
+            showToast("Nepodařilo se načíst poznámku.", 'error');
+            return null;
+        });
+}
+
+// Fetch All Notes for a Specific Week from Firebase
+function fetchNotesForWeekFromFirebase(weekStartDate) {
+    const startOfWeek = getStartOfWeek(new Date(weekStartDate));
+    const weekNumber = getWeekNumberISO(startOfWeek);
+    const monthName = getMonthName(startOfWeek);
+    const weekRef = database.ref(`planner/${monthName}/week_${weekNumber}`);
+
+    return weekRef.once('value')
+        .then(snapshot => snapshot.val())
+        .catch(error => {
+            console.error("Error fetching notes from Firebase:", error);
+            showToast("Nepodařilo se načíst poznámky z Firebase.", 'error');
+            return null;
+        });
+}
+
+// ========================
+// Render Weekly Planner
+// ========================
+async function renderPlanner() {
+    console.log("Rendering planner...");
+
+    // Calculate start and end of the week
+    currentStartOfWeek = getStartOfWeek(baseDate);
+    const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
+
+    // Render headers and time slots for the correct week
+    renderHeaders(currentStartOfWeek);
+    renderTimeSlots(currentStartOfWeek);
+
+    // Highlight the selected week and update the week number display
+    highlightSelectedWeek(currentStartOfWeek);
+
+    // Fetch and display notes for the week
+    const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
+    console.log(`Fetching notes for the week starting: ${weekStartDate}`);
+    const weekNotes = await fetchNotesForWeekFromFirebase(weekStartDate);
+    if (weekNotes) {
+        console.log("Notes found. Populating planner.");
+        populatePlannerWithNotes(weekNotes);
+    } else {
+        console.log("No notes found for the current week.");
+    }
+
+    // Update the week interval display
+    updateWeekIntervalDisplay();
+}
+
+// ========================
+// Populate Planner with Notes
+// ========================
+function populatePlannerWithNotes(notes) {
+    console.log("Populating planner with loaded notes...");
+    for (const [dayKey, hours] of Object.entries(notes)) {
+        const dayIndex = parseInt(dayKey.replace("day", ""), 10);
+        for (const [hourKey, noteText] of Object.entries(hours)) {
+            const hourIndex = parseInt(hourKey.replace("hour", ""), 10);
+            const cell = document.querySelector(`td[data-day="${dayIndex}"][data-hour="${hourIndex}"] .note-text`);
+            if (cell) {
+                cell.innerText = sanitizeInput(noteText);
+                console.log(`Note for day ${dayIndex}, hour ${hourIndex} set to: "${noteText}"`);
+            }
+        }
+    }
+}
+
+// ========================
+// Render Headers
+// ========================
+function renderHeaders(startOfWeek) {
+    const dayHeaders = document.getElementById("day-headers");
+    if (!dayHeaders) {
+        console.error("Element with ID 'day-headers' not found.");
+        return;
+    }
+    dayHeaders.innerHTML = ""; // Clear existing headers
+
+    console.log("Rendering day headers...");
+
+    for (let i = 0; i < 7; i++) {
+        const dayDate = addDays(startOfWeek, i);
+        const formattedDate = `${dayDate.getDate()}.${dayDate.getMonth() + 1}.`;
+
+        console.log(`Checking for formattedDate: "${formattedDate}" in calendarData.`);
+        const data = calendarData[formattedDate] || { nameDay: "", holiday: "" };
+
+        console.log(`Data for ${formattedDate}:`, data);
+
+        const th = document.createElement("th");
+        th.className = "mdc-data-table__header-cell day-header";
+
+        // Add CSS class for holidays
+        if (data.holiday) {
+            th.classList.add("holiday");
+        }
+
+        const weekdayName = capitalizeFirstLetter(
+            dayDate.toLocaleString("cs-CZ", { weekday: "long" })
+        );
+
+        th.innerHTML = `
+            <div class="day-header-content">
+                <div class="day-date">
+                    ${dayDate.getDate()}
+                </div>
+                <div class="day-info">
+                    <div class="holiday-name">${data.holiday}</div>
+                    <div class="name-day">${data.nameDay}</div>
+                    <div class="day-name">
+                        <strong>${weekdayName}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+        dayHeaders.appendChild(th);
+    }
+}
+
+// ========================
+// Render Time Slots
+// ========================
+function renderTimeSlots(startOfWeek) {
+    const tbody = document.getElementById("time-slots");
+    if (!tbody) {
+        console.error("Element with ID 'time-slots' not found.");
+        return;
+    }
+    tbody.innerHTML = ""; // Clear existing slots
+
+    const startHour = 7; // Start hour for time slots
+    const endHour = 20; // End hour for time slots
+
+    for (let hour = startHour; hour <= endHour; hour++) {
+        const row = document.createElement("tr");
+        row.className = "mdc-data-table__row";
+
+        for (let day = 0; day < 7; day++) {
+            const cell = createTimeSlotCell(day, hour, startOfWeek);
+            row.appendChild(cell);
+        }
+
+        tbody.appendChild(row);
+    }
+}
+
+function createTimeSlotCell(day, hour, startOfWeek) {
+    const cell = document.createElement("td");
+    cell.className = "time-slot mdc-data-table__cell";
+    cell.dataset.day = day;
+    cell.dataset.hour = hour;
+    cell.tabIndex = 0; // Enable focus for keyboard navigation
+
+    // Create the note container
+    const noteContainer = createNoteContainer(day, hour, startOfWeek);
+    cell.appendChild(noteContainer);
+
+    // Create and append the spinner
+    const spinnerTemplate = document.getElementById("spinner-template");
+    if (!spinnerTemplate) {
+        console.error("Spinner template not found!");
+        return cell;
+    }
+    const spinnerClone = spinnerTemplate.content.cloneNode(true);
+    cell.appendChild(spinnerClone);
+
+    // Now, get the spinnerElement from the cell
+    const spinnerElement = cell.querySelector(".mdc-circular-progress");
+    if (!spinnerElement) {
+        console.error("Spinner element not found in cloned template!");
+        return cell;
+    }
+
+    // Initialize MDC Circular Progress
+    const spinner = new mdc.circularProgress.MDCCircularProgress(spinnerElement);
+    spinner.determinate = true;
+    spinner.progress = 0; // Start with 0% progress
+    spinnerElement.style.display = "none"; // Hide spinner initially
+
+    // Load and display notes
+    fetchNoteForCell(noteContainer.querySelector(".note-text"), day, hour, startOfWeek, spinnerElement);
+
+    return cell;
+}
+
+// ========================
+// Create Note Container
+// ========================
+function createNoteContainer(day, hour, startOfWeek) {
+    const container = document.createElement("div");
+    container.className = "note-text-container";
+
+    const timeLabel = document.createElement("div");
+    timeLabel.className = "time-label mdc-typography--caption";
+    timeLabel.innerText = formatHourShort(hour);
+
+    const noteText = createNoteTextElement(day, hour);
+
+    container.appendChild(timeLabel);
+    container.appendChild(noteText);
+
+    return container;
+}
+
+// ========================
+// Create Note Text Element
+// ========================
+function createNoteTextElement(day, hour) {
+    const noteText = document.createElement("div");
+    noteText.className = "note-text mdc-typography--body1";
+    noteText.contentEditable = true;
+    noteText.dataset.day = day;
+    noteText.dataset.hour = hour;
+
+    noteText.addEventListener("input", debounce((event) => handleNoteInput(event, day, hour), 500));
+    noteText.addEventListener("blur", (event) => saveNoteDirectly(event, day, hour));
+
+    return noteText;
+}
+
+// ========================
+// Handle Note Input and Save
+// ========================
+
+const handleNoteInput = debounce((event, day, hour) => {
+    const noteText = event.target.innerText.trim();
+    const dateObj = addDays(currentStartOfWeek, day);
+    const date = format(dateObj, 'yyyy-MM-dd');
+    const time = formatHour(hour);
+
+    if (!noteText) return; // Skip saving if note is empty
+
+    saveNoteToFirebase(date, time, noteText);
+}, 500);
+
+// Save Note Directly on Blur Event
+async function saveNoteDirectly(event, day, hour) {
+    const noteText = event.target.innerText.trim();
+    console.log(`Saving note on blur for day ${day}, hour ${hour}: "${noteText}"`);
+
+    const dateObj = addDays(currentStartOfWeek, day);
+    const date = format(dateObj, 'yyyy-MM-dd');
+    const time = formatHour(hour);
+
+    if (!noteText) {
+        console.log(`Note for day ${day}, hour ${hour} is empty. Not performing any action.`);
+        saveSelectedDateToLocalStorage(dateObj); // Save to local storage
+        return;
+    }
+
+    console.log(`Saving note for ${date} at ${time}: "${noteText}"`);
+    await saveNoteToFirebase(date, time, noteText);
+    saveSelectedDateToLocalStorage(dateObj); // Save to local storage
+}
+
+// ========================
+// Fetch Note for Specific Cell
+// ========================
+async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinnerElement) {
+    const dateObj = addDays(startOfWeek, day);
+    const date = format(dateObj, 'yyyy-MM-dd');
+    const time = formatHour(hour);
+
+    // Show spinner
+    spinnerElement.style.display = "block";
+
+    // Initialize MDC Circular Progress
+    const spinner = new mdc.circularProgress.MDCCircularProgress(spinnerElement);
+    spinner.determinate = true;
+    spinner.progress = 0;
+
+    try {
+        const noteText = await fetchNoteFromFirebase(date, time);
+        noteTextElement.innerText = sanitizeInput(noteText || '');
+    } catch (error) {
+        console.error(`Error loading note for ${date} at ${time}:`, error);
+    }
+
+    // Hide spinner after loading
+    spinnerElement.style.display = "none";
+
+    // Destroy spinner instance
+    spinner.destroy();
+
+    console.log(`Loaded note for ${date} at ${time}: "${noteTextElement.innerText}"`);
+}
+
+// ========================
+// Render Year Calendar Modal
+// ========================
+function renderYearCalendarModal() {
+    const modalBody = document.querySelector(".year-calendar-modal .modal-body");
+    if (!modalBody) {
+        console.error("Element '.year-calendar-modal .modal-body' not found.");
+        return;
+    }
+
+    let currentYear = baseDate.getFullYear();
+    let selectedMonth = baseDate.getMonth(); // 0-indexed (0 = January)
+    let daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
+    let firstDay = new Date(currentYear, selectedMonth, 1);
+    
+    // Get and display the interval for the current week
+    let weekStartDate = getStartOfWeek(baseDate);
+    let weekEndDate = getEndOfWeek(weekStartDate);
+    let monthHeader = document.querySelector(".year-calendar-modal .mdc-dialog__title");
+
+    // Update dialog title with week number and year
+    let weekNumber = getWeekNumberISO(weekStartDate);
+    monthHeader.innerText = `Týden ${weekNumber}, ${currentYear}`;
+
+    // Clear previous content in modal body
+    modalBody.innerHTML = "";
+
+    // Create table for calendar
+    const table = document.createElement("table");
+    table.className = "mdc-data-table__table table-bordered text-center";
+
+    // Create table header
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+    headerRow.className = "mdc-data-table__header-row";
+    const thWeek = document.createElement("th");
+    thWeek.innerText = "Týden";
+    thWeek.className = "mdc-data-table__header-cell";
+    headerRow.appendChild(thWeek);
+    ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
+        const th = document.createElement("th");
+        th.innerText = day;
+        th.className = "mdc-data-table__header-cell";
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Create table body
+    const tbody = document.createElement("tbody");
+    tbody.className = "mdc-data-table__content";
+    let weekRow = document.createElement("tr");
+    weekRow.className = "mdc-data-table__row";
+
+    // Initialize week number
+    let weekNumberRow = getWeekNumberISO(firstDay);
+
+    // Add week number cell
+    const weekCell = document.createElement("td");
+    weekCell.innerText = `${weekNumberRow}`;
+    weekCell.className = 'weekname mdc-data-table__cell';
+    weekRow.appendChild(weekCell);
+
+    // Calculate number of empty cells before the first day
+    const emptyCells = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+
+    // Append empty cells for days before the first day of the month
+    for (let i = 0; i < emptyCells; i++) {
+        const emptyCell = document.createElement("td");
+        emptyCell.className = "mdc-data-table__cell";
+        weekRow.appendChild(emptyCell);
+    }
+
+    // Fill in the days
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayDate = new Date(currentYear, selectedMonth, day);
+        const dayCell = document.createElement("td");
+        dayCell.innerText = day;
+        dayCell.className = "mdc-data-table__cell";
+
+        // Highlight the selected week
+        if (isDateInCurrentSelectedWeek(dayDate)) {
+            dayCell.classList.add("table-success", "selected-cell");
+        }
+
+        // Add click event to select the day
+        dayCell.addEventListener("click", () => {
+            baseDate = dayDate; // Update the global selected date
+            renderPlanner(); // Update the planner
+            renderYearCalendarModal(); // Re-render modal content
+            highlightSelectedWeek(baseDate); // Update the selected week highlight
+        });
+
+        weekRow.appendChild(dayCell);
+
+        // If the current day is Sunday or the last day of the month, start a new week row
+        if (dayDate.getDay() === 0 || day === daysInMonth) {
+            // Fill the remaining cells of the last week if the month doesn't end on Sunday
+            if (day === daysInMonth && dayDate.getDay() !== 0) {
+                const remainingCells = 7 - (dayDate.getDay() === 0 ? 7 : dayDate.getDay());
+                for (let i = 0; i < remainingCells; i++) {
+                    const emptyCell = document.createElement("td");
+                    emptyCell.className = "mdc-data-table__cell";
+                    weekRow.appendChild(emptyCell);
+                }
+            }
+
+            tbody.appendChild(weekRow);
+            weekRow = document.createElement("tr");
+            weekRow.className = "mdc-data-table__row";
+
+            // Increment week number
+            weekNumberRow++;
+            const newWeekCell = document.createElement("td");
+            newWeekCell.innerText = `${weekNumberRow}`;
+            newWeekCell.className = 'weekname mdc-data-table__cell';
+            weekRow.appendChild(newWeekCell);
+        }
+    }
+
+    table.appendChild(tbody);
+    modalBody.appendChild(table);
+
+    // Initialize MDC Data Table
+    mdc.dataTable.MDCDataTable.attachTo(table);
+
+    // Highlight the selected week after rendering
+    highlightSelectedWeek(baseDate);
+}
+
+// ========================
+// Navigation and Event Listeners
+// ========================
+function highlightSelectedWeek(selectedDate) {
+    console.log("Highlighting selected week in calendars.");
+
+    // Get the start and end of the selected week
+    const startOfWeek = getStartOfWeek(selectedDate);
+    const endOfWeek = getEndOfWeek(startOfWeek);
+
+    // Highlight in Year Calendar Modal
+    const yearCalendarCells = document.querySelectorAll(".year-calendar-modal td");
+    yearCalendarCells.forEach((cell) => {
+        const day = parseInt(cell.innerText, 10);
+        if (isNaN(day)) return;
+
+        const month = baseDate.getMonth(); // Ensure the current month context
+        const cellDate = new Date(baseDate.getFullYear(), month, day);
+
+        if (isDateInCurrentSelectedWeek(cellDate)) {
+            cell.classList.add("table-success");
+        } else {
+            cell.classList.remove("table-success");
+        }
+    });
+}
+
+function setupSwipeListeners() {
+    const plannerContainer = document.querySelector(".planner-table-container");
+
+    if (!plannerContainer) {
+        console.error("Planner table container not found for swipe listeners.");
+        return;
+    }
+
+    // Remove existing listeners to prevent duplicate handlers
+    plannerContainer.removeEventListener('touchstart', handleTouchStart);
+    plannerContainer.removeEventListener('touchmove', handleTouchMove);
+    plannerContainer.removeEventListener('touchend', handleTouchEnd);
+
+    // Check if touch events are supported
+    if ('ontouchstart' in window || navigator.maxTouchPoints) {
+        // Attach new listeners
+        plannerContainer.addEventListener('touchstart', handleTouchStart, false);
+        plannerContainer.addEventListener('touchmove', handleTouchMove, false);
+        plannerContainer.addEventListener('touchend', handleTouchEnd, false);
+    }
+}
+
+function handleTouchStart(event) {
+    touchStartX = event.changedTouches[0].clientX;
+    isSwiping = true;
+}
+
+function handleTouchMove(event) {
+    if (!isSwiping) return;
+    touchEndX = event.changedTouches[0].clientX;
+}
+
+function handleTouchEnd(event) {
+    if (!isSwiping) return;
+    handleSwipeGesture();
+    isSwiping = false;
+}
+
+function handleSwipeGesture() {
+    if (touchStartX === null || touchEndX === null) return;
+    const deltaX = touchEndX - touchStartX;
+    const threshold = 50; // Adjust as necessary
+    if (deltaX > threshold) {
+        moveToPreviousWeek();
+    } else if (deltaX < -threshold) {
+        moveToNextWeek();
+    }
+    touchStartX = null;
+    touchEndX = null;
+}
+
+function setupKeyboardNavigation() {
+    // Initialize currentCell to null. Selection starts only when a cell is clicked or a key is pressed.
+    let currentCell = null;
+
+    // Function to select a cell
+    function selectCell(cell) {
+        if (currentCell) {
+            currentCell.classList.remove("selected-cell");
+        }
+        currentCell = cell;
+        if (currentCell) {
+            currentCell.classList.add("selected-cell");
+            // Update currentTranscribingCell to the .note-text element within the selected cell
+            currentTranscribingCell = currentCell.querySelector('.note-text');
+            console.log("Selected cell:", currentCell);
+            console.log("Current Transcribing Cell:", currentTranscribingCell);
+            focusEditableContent(currentCell);
+        }
+    }
+
+    // Function to focus on editable content within the cell
+    function focusEditableContent(cell) {
+        const editable = cell.querySelector('.note-text');
+        if (editable) {
+            editable.focus();
+        }
+    }
+
+    // Function to start transcription
+    function startTranscription(cell) {
+        // Trigger click on the mic icon to start transcription
+        topMicIcon.click();
+    }
+
+    // Add click event listeners to all time-slot cells to allow mouse selection
+    const timeSlots = document.querySelectorAll(".time-slot");
+    timeSlots.forEach(cell => {
+        cell.addEventListener('click', () => {
+            selectCell(cell);
+        });
+    });
+
+    document.addEventListener("keydown", function (event) {
+        const KEY_ARROW_RIGHT = "ArrowRight";
+        const KEY_ARROW_LEFT = "ArrowLeft";
+        const KEY_ARROW_DOWN = "ArrowDown";
+        const KEY_ARROW_UP = "ArrowUp";
+        const KEY_CTRL = "Control";
+
+        // Handle Ctrl + Key combinations first
+        if (event.ctrlKey) {
+            if (event.key === 'c' || event.key === 'C') { // Example: Ctrl+C to start transcription
+                event.preventDefault(); // Prevent default behavior
+                if (currentTranscribingCell) {
+                    startTranscription(currentTranscribingCell);
+                } else {
+                    showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
+                }
+                return; // Exit after handling Ctrl+Key
+            }
+
+            // Add more Ctrl+Key handlers here if needed
+        }
+
+        // If no cell is selected, select the first cell on any arrow key press
+        if (!currentCell && [KEY_ARROW_RIGHT, KEY_ARROW_LEFT, KEY_ARROW_DOWN, KEY_ARROW_UP].includes(event.key)) {
+            currentCell = document.querySelector(".time-slot");
+            if (currentCell) {
+                selectCell(currentCell);
+                event.preventDefault();
+            }
+            return;
+        }
+
+        if (!currentCell) return; // If still no cell is selected, do nothing
+
+        let nextCell = null;
+        const day = parseInt(currentCell.dataset.day, 10);
+        const hour = parseInt(currentCell.dataset.hour, 10);
+
+        switch (event.key) {
+            case KEY_ARROW_RIGHT:
+                nextCell = document.querySelector(`td[data-day="${(day + 1) % 7}"][data-hour="${hour}"]`);
+                break;
+            case KEY_ARROW_LEFT:
+                nextCell = document.querySelector(`td[data-day="${(day - 1 + 7) % 7}"][data-hour="${hour}"]`);
+                break;
+            case KEY_ARROW_DOWN:
+                nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour + 1 <= 20 ? hour + 1 : 7}"]`);
+                break;
+            case KEY_ARROW_UP:
+                nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour - 1 >= 7 ? hour - 1 : 20}"]`);
+                break;
+            default:
+                return; // Ignore other keys
+        }
+
+        // If a valid next cell exists, move focus
+        if (nextCell) {
+            event.preventDefault(); // Prevent default scrolling behavior
+            selectCell(nextCell);
+        }
+    });
+}
+
+// ========================
+// Function to Request Microphone Permission
+// ========================
+function requestMicrophonePermission() {
+    return new Promise((resolve, reject) => {
+        try {
+            recognition.start();
+            recognition.onstart = () => {
+                recognition.stop();
+                recognition.onstart = null;
+                microphonePermissionGranted = true;
+                console.log("Microphone permission granted.");
+                resolve();
+            };
+        } catch (error) {
+            console.error("Error requesting microphone permission:", error);
+            reject(error);
+        }
+    });
+}
+
+// ========================
+// Week Navigation Functions
+// ========================
+function moveToNextWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    // Update baseDate to next week
+    baseDate = addDays(baseDate, 7);
+    renderPlanner();
+    renderYearCalendarModal();
+    // After rendering is done, re-attach swipe listeners
+    setTimeout(() => {
+        setupSwipeListeners();
+        isAnimating = false;
+    }, 500); // Match with CSS transition duration (adjust if needed)
+}
+
+function moveToPreviousWeek() {
+    if (isAnimating) return; // Prevent overlapping animations
+    isAnimating = true;
+
+    // Update baseDate to previous week
+    baseDate = addDays(baseDate, -7);
+    renderPlanner();
+    renderYearCalendarModal();
+
+    // After rendering is done, re-attach swipe listeners
+    setTimeout(() => {
+        setupSwipeListeners();
+        isAnimating = false;
+    }, 500); // Match with CSS transition duration (adjust if needed)
+}
+
+// ========================
+// Function to determine if a year is a leap year
+// ========================
+function isLeapYear(year) {
+    return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
+}
+
+// Function to get a date from day of the year
+function getDateFromDay(year, day) {
+    const date = new Date(year, 0, 1); // January 1st
+    return new Date(date.setDate(day));
+}
+
+function capitalizeFirstLetter(string) {
+    if (!string) return '';
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function getWeeksInYear(year) {
+    const d = new Date(year, 11, 31);
+    const week = getWeekNumberISO(d);
+    // If the last day of the year is in week 1, then the total weeks is the week number of the last Thursday of the year
+    if (week === 1) {
+        const lastThursday = new Date(year, 11, 31);
+        lastThursday.setDate(lastThursday.getDate() - ((lastThursday.getDay() + 6) % 7) - 3);
+        return getWeekNumberISO(lastThursday);
+    }
+    return week;
+}
+
+function selectWeek(weekNumber, year) {
+    const firstThursday = new Date(year, 0, 4);
+    const firstWeekStart = new Date(firstThursday.getTime() - ((firstThursday.getDay() + 6) % 7) * 86400000);
+    const selectedDate = new Date(firstWeekStart.getTime() + (weekNumber - 1) * 7 * 86400000);
+    baseDate = selectedDate;
+    renderPlanner();
+    renderYearCalendarModal();
+    saveSelectedDateToLocalStorage(baseDate);
+}
+
+function displayCountdown(value) {
+    const countdownOverlay = document.getElementById("mic-countdown");
+    if (countdownOverlay) {
+        countdownOverlay.innerText = value.toFixed(1);
+        countdownOverlay.style.display = "block";
+    }
+}
+
+// Hide Countdown
+function hideCountdown() {
+    const countdownOverlay = document.getElementById("mic-countdown");
+    if (countdownOverlay) {
+        countdownOverlay.style.display = "none";
+    }
+}
+
+// ========================
+// Function to save selected date to local storage
+// ========================
+function saveSelectedDateToLocalStorage(date) {
+    const dateStr = date.toISOString();
+    localStorage.setItem("selectedDate", dateStr);
+    console.log(`Selected date saved to local storage: ${dateStr}`);
+}
+
+// ========================
+// Initialize Planner on DOM Load
+// ========================
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM loaded. Initializing planner...");
+
+    topMicIcon = document.querySelector("#top-mic-icon");
+
+    // Prevent focus on microphone icon
+    if (topMicIcon) {
+        topMicIcon.setAttribute("tabindex", "-1");
+        topMicIcon.addEventListener("mousedown", (event) => {
+            event.preventDefault(); // Prevent focus
+        });
+    }
+
+    // Load the last selected date from local storage
+    const savedDateStr = localStorage.getItem("selectedDate");
+    if (savedDateStr) {
+        const savedDate = new Date(savedDateStr);
+        if (!isNaN(savedDate)) {
+            baseDate = savedDate;
+            console.log(`Loaded saved date: ${baseDate}`);
+        } else {
+            console.warn("Saved date is invalid. Using current date.");
+        }
+    } else {
+        console.log("No saved date found. Using current date.");
+    }
+
+    setupClock();
+    renderPlanner();
+    setupSwipeListeners(); // Attach swipe listeners to the initial planner
+    setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
+    setupKeyboardNavigation();
+
+    renderYearCalendarModal();
+
+    // Initialize MDC Snackbar
+    const snackbarElement = document.querySelector('.mdc-snackbar');
+    const snackbar = new mdc.snackbar.MDCSnackbar(snackbarElement);
+
+    // Replace showToast function to use MDC Snackbar
+    window.showToast = function(message, type = 'success') {
+        const snackbarLabel = snackbarElement.querySelector('.mdc-snackbar__label');
+        const snackbarAction = snackbarElement.querySelector('.mdc-snackbar__action');
+        
+        // Set message
+        snackbarLabel.textContent = message;
+
+        // Optionally, set a custom action or icon based on type
+        // For simplicity, we'll just set the label
+        snackbar.open();
+    };
+
+    document.getElementById("go-to-today").addEventListener("click", () => {
+        // Set the baseDate to the current date
+        baseDate = new Date();
+
+        // Re-render the planner, mini-calendar, and year calendar modal
+        renderPlanner();
+        renderYearCalendarModal();
+
+        // Save the current date to local storage
+        saveSelectedDateToLocalStorage(baseDate);
+
+        console.log("Switched to today's date:", baseDate);
+    });
+
+    // Initialize MDC Dialog
+    const dialogElement = document.querySelector('.mdc-dialog');
+    const dialog = new mdc.dialog.MDCDialog(dialogElement);
+
+    // Otevření dialogu při kliknutí na tlačítko
+    document.getElementById("openCalendar").addEventListener("click", () => {
+        dialog.open();
+    });
+
+    // Zavření dialogu při kliknutí na zavřít tlačítko
+    const closeButton = dialogElement.querySelector('[data-mdc-dialog-action="close"]');
+    closeButton.addEventListener("click", () => {
+        dialog.close();
+    });
+
+    // Zavření Snackbar při kliknutí na tlačítko zavření
+    const snackbarCloseButton = document.getElementById('snackbar-close');
+    if (snackbarCloseButton) {
+        snackbarCloseButton.addEventListener('click', () => {
+            snackbar.close();
+        });
+    }
+
+    // Add event listener to the top microphone icon
+    if (topMicIcon) {
+        topMicIcon.addEventListener("click", (event) => {
+            event.preventDefault(); // Prevent default click behavior
+            event.stopPropagation(); // Stop the event from bubbling up
+
+            console.log("Microphone icon clicked.");
+            console.log("Current Transcribing Cell:", currentTranscribingCell);
+
+            if (currentTranscribingCell) {
+                startTranscription(currentTranscribingCell);
+            } else {
+                showToast("Napřed vyberte buňku, jestli chcete přepsat hlas!", 'warning');
+                topMicIcon.classList.add("shake");
+                topMicIcon.classList.add("feedback-orange");
+
+                // Remove the shake and orange classes after the animation completes (e.g., 1s)
+                setTimeout(() => {
+                    topMicIcon.classList.remove("shake");
+                    topMicIcon.classList.remove("feedback-orange");
+                }, 1000); // Duration should match the CSS animation duration
+            }
+        });
+    } else {
+        console.error("Top microphone icon not found!");
+    }
+
+    // Přidání posluchačů pro tlačítka 'Předchozí týden' a 'Další týden'
+    const prevWeekButton = document.getElementById("prevWeek");
+    const nextWeekButton = document.getElementById("nextWeek");
+
+    if (prevWeekButton) {
+        prevWeekButton.addEventListener("click", () => {
+            moveToPreviousWeek();
+        });
+    } else {
+        console.error("Button with ID 'prevWeek' not found!");
+    }
+
+    if (nextWeekButton) {
+        nextWeekButton.addEventListener("click", () => {
+            moveToNextWeek();
+        });
+    } else {
+        console.error("Button with ID 'nextWeek' not found!");
+    }
+
+});
+
+// ========================
+// Function to Request Microphone Permission
+// ========================
+function requestMicrophonePermission() {
+    return new Promise((resolve, reject) => {
+        try {
+            recognition.start();
+            recognition.onstart = () => {
+                recognition.stop();
+                recognition.onstart = null;
+                microphonePermissionGranted = true;
+                console.log("Microphone permission granted.");
+                resolve();
+            };
+        } catch (error) {
+            console.error("Error requesting microphone permission:", error);
+            reject(error);
+        }
+    });
+}
+
+// ========================
+// Initialize Web Speech API
+// ========================
+function setupWebSpeechAPI() {
+    console.log("Initializing Web Speech API for voice transcription.");
+
+    // Check browser support
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        showToast("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.", 'error');
+        console.error("Web Speech API is not supported in your browser.");
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = 'cs-CZ'; // Set language to Czech
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    // Handle voice transcription results
+    recognition.addEventListener('result', (event) => {
+        console.log("Voice transcription completed. Processing results.");
+        const transcript = event.results[0][0].transcript.trim();
+        console.log(`Transcript: "${transcript}"`);
+        if (currentTranscribingCell) {
+            currentTranscribingCell.innerText = transcript;
+            const day = parseInt(currentTranscribingCell.closest('td').dataset.day, 10);
+            const hour = parseInt(currentTranscribingCell.closest('td').dataset.hour, 10);
+            const dateObj = addDays(currentStartOfWeek, day);
+            const date = format(dateObj, 'yyyy-MM-dd');
+            const time = formatHour(hour);
+            console.log(`Saving transcription for day ${day}, hour ${hour}: "${transcript}"`);
+            saveNoteToFirebase(date, time, transcript)
+                .then(() => {
+                    showToast(`Poznámka přidána: "${transcript}"`, 'success');
+                })
+                .catch((error) => {
+                    showToast("Chyba při ukládání poznámky.", 'error');
+                });
+            saveSelectedDateToLocalStorage(dateObj);
+            stopTranscription(); // Clear current transcription cell
+        } else {
+            console.warn("Active cell for transcription not found.");
+        }
+    });
+
+    recognition.addEventListener('speechend', () => {
+        console.log("Speech ended. Stopping transcription.");
+        if (isRecognizing) {
+            recognition.stop();
+        }
+    });
+
+    recognition.addEventListener('end', () => {
+        console.log("Speech recognition service disconnected.");
+        if (isRecognizing) {
+            stopTranscription();
+        }
+    });
+
+    recognition.addEventListener('error', (event) => {
+        console.error(`Voice transcription error (${event.error}):`, event);
+        showToast(`Chyba přepisu hlasu: ${event.error}.`, 'error');
+        if (isRecognizing) {
+            stopTranscription();
+        }
+    });
+}
+
+// Start Transcription
+function startTranscription(noteTextElement) {
+    if (isRecognizing) {
+        showToast("Přepis je již spuštěn.", 'info');
+        return;
+    }
+
+    currentTranscribingCell = noteTextElement;
+
+    const cell = currentTranscribingCell.closest('td');
+    cell.classList.add('recording');
+
+    if (topMicIcon) {
+        topMicIcon.classList.add('active');
+    }
+
+    try {
+        recognition.start();
+        isRecognizing = true;
+        showToast("Začíná přepis hlasu. Můžete mluvit.", 'success');
+    } catch (error) {
+        console.error("Error starting voice transcription:", error);
+        showToast("Nepodařilo se spustit přepis hlasu.", 'error');
+        stopTranscription();
+    }
+}
+
+function stopTranscription() {
+    if (recognition && isRecognizing) {
+        recognition.stop();
+
+        const cell = currentTranscribingCell.closest('td');
+        cell.classList.remove('recording');
+
+        if (topMicIcon) {
+            topMicIcon.classList.remove('active');
+        }
+
+        currentTranscribingCell = null;
+        isRecognizing = false;
+    }
+}
+
+// ========================
+// Function for Snackbar Notifications
+// ========================
+
+// (Already replaced showToast during initialization)
+
+// ========================
+// Real-Time Clock and Date
+// ========================
+function setupClock() {
+    const clockElement = document.getElementById("real-time-clock");
+    const dateElement = document.getElementById("real-time-date");
+
+    if (!clockElement || !dateElement) {
+        console.error("Clock or date elements not found!");
+        return;
+    }
+
+    console.log("Initializing real-time clock...");
+
+    function updateClock() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        clockElement.innerText = `${hours}:${minutes}:${seconds}`;
+
+        const day = now.getDate().toString().padStart(2, '0');
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const year = now.getFullYear();
+        dateElement.innerText = `${day}.${month}.${year}`;
+    }
+
+    updateClock(); // Initial call
+    setInterval(updateClock, 1000); // Update every second
+}
+
 const calendarData = {
     "1.1.": { nameDay: "Nový rok", holiday: "Nový rok" },
     "2.1.": { nameDay: "Karina", holiday: "" },
@@ -410,1227 +1641,3 @@ const calendarData = {
     "30.12.": { nameDay: "David", holiday: "" },
     "31.12.": { nameDay: "Silvestr", holiday: "" }
 };
-
-// ========================
-// Utility and Helper Functions
-// ========================
-
-// Debounce Function to Limit Frequency of Function Calls
-function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-        const context = this;
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(context, args), wait);
-    };
-}
-
-// Add Days to a Date
-function addDays(date, days) {
-    const result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-}
-
-function format(date, formatStr) {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-
-    if (formatStr === 'yyyy-MM-dd') {
-        return `${year}-${month}-${day}`;
-    } else if (formatStr === 'dd.MM.yyyy') {
-        return `${day}.${month}.${year}`;
-    }
-    // Add more formats as needed
-    return date.toString();
-}
-function updateWeekIntervalDisplay() {
-    const weekIntervalElement = document.getElementById("current-week-interval");
-    if (!weekIntervalElement) {
-        console.error("Element with ID 'current-week-interval' not found.");
-        return;
-    }
-    const startOfWeek = getStartOfWeek(baseDate);
-    const endOfWeek = getEndOfWeek(startOfWeek);
-    const formattedStart = format(startOfWeek, 'dd.MM.yyyy');
-    const formattedEnd = format(endOfWeek, 'dd.MM.yyyy');
-    weekIntervalElement.innerText = `${formattedStart} - ${formattedEnd}`;
-}
-
-
-// Get Week Number for a Date (ISO 8601)
-function getWeekNumberISO(date) {
-    const target = new Date(date.valueOf());
-    const dayNr = (date.getDay() + 6) % 7; // Monday=0, Sunday=6
-    target.setDate(target.getDate() - dayNr + 3);
-    const firstThursday = target.valueOf();
-    target.setMonth(0, 1);
-    if (target.getDay() !== 4) {
-        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
-    }
-    const weekNumber = 1 + Math.ceil((firstThursday - target) / 604800000);
-    return weekNumber;
-}
-
-// Get Month Name in Czech
-function getMonthName(date) {
-    const monthNamesCzech = [
-        "Leden", "Únor", "Březen", "Duben", "Květen", "Červen",
-        "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
-    ];
-    return monthNamesCzech[date.getMonth()];
-}
-
-function getStartOfWeek(date) {
-    const result = new Date(date);
-    const day = result.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-    const diff = day === 0 ? -6 : 1 - day; // Adjust so that Monday is the start of the week
-    result.setDate(result.getDate() + diff);
-    result.setHours(0, 0, 0, 0); // Reset time
-    return result;
-}
-
-function getEndOfWeek(startOfWeek) {
-    const result = new Date(startOfWeek);
-    result.setDate(result.getDate() + 6); // Add 6 days to get Sunday
-    result.setHours(23, 59, 59, 999); // Set time to the end of the day
-    return result;
-}
-
-// Get Day Index from Date relative to the Start of the Week
-function getDayFromDate(date) {
-    const startOfWeek = getStartOfWeek(baseDate);
-    const dayDiff = Math.floor((new Date(date) - startOfWeek) / (24 * 60 * 60 * 1000));
-    return dayDiff;
-}
-
-// Get Hour from Time String
-function getHourFromTime(timeString) {
-    return parseInt(timeString.split(':')[0], 10);
-}
-
-// Sanitize Input to Prevent XSS
-function sanitizeInput(str) {
-    if (!str) return '';
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-}
-
-// Format Hour
-function formatHour(hour) {
-    return hour.toString().padStart(2, '0') + ':00';
-}
-
-function formatHourShort(hour) {
-    return hour.toString().padStart(2, '0') + ':00';
-}
-
-// ========================
-// New Function: isDateInCurrentSelectedWeek
-// ========================
-
-/**
- * Kontroluje, zda je dané datum v aktuálně vybraném týdnu.
- * @param {Date} date - Datum k ověření.
- * @returns {boolean} - Vrací true, pokud je datum v aktuálním týdnu, jinak false.
- */
-function isDateInCurrentSelectedWeek(date) {
-    const startOfWeek = getStartOfWeek(baseDate);
-    const endOfWeek = getEndOfWeek(startOfWeek);
-    return date >= startOfWeek && date <= endOfWeek;
-}
-
-// ========================
-// Initialize Planner on DOM Load
-// ========================
-document.addEventListener("DOMContentLoaded", () => {
-    console.log("DOM loaded. Initializing planner...");
-
-    topMicIcon = document.querySelector("#top-mic-icon");
-
-   
-
-    // Load the last selected date from local storage
-    const savedDateStr = localStorage.getItem("selectedDate");
-    if (savedDateStr) {
-        const savedDate = new Date(savedDateStr);
-        if (!isNaN(savedDate)) {
-            baseDate = savedDate;
-            console.log(`Loaded saved date: ${baseDate}`);
-        } else {
-            console.warn("Saved date is invalid. Using current date.");
-        }
-    } else {
-        console.log("No saved date found. Using current date.");
-    }
-
-    setupClock();
-    renderPlanner();
-    setupSwipeListeners(); // Attach swipe listeners to the initial planner
-    setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
-    setupKeyboardNavigation();
-
-    renderYearCalendarModal();
-
-    // Initialize MDC Snackbar
-    const snackbarElement = document.querySelector('.mdc-snackbar');
-    const snackbar = new mdc.snackbar.MDCSnackbar(snackbarElement);
-
-    // Replace showToast function to use MDC Snackbar
-    window.showToast = function(message, type = 'success') {
-        const snackbarLabel = snackbarElement.querySelector('.mdc-snackbar__label');
-        const snackbarAction = snackbarElement.querySelector('.mdc-snackbar__action');
-        
-        // Set message
-        snackbarLabel.textContent = message;
-
-        // Optionally, set a custom action or icon based on type
-        // For simplicity, we'll just set the label
-        snackbar.open();
-    };
-
-    document.getElementById("go-to-today").addEventListener("click", () => {
-        // Set the baseDate to the current date
-        baseDate = new Date();
-
-        // Re-render the planner, mini-calendar, and year calendar modal
-        renderPlanner();
-        renderYearCalendarModal();
-
-        // Save the current date to local storage
-        saveSelectedDateToLocalStorage(baseDate);
-
-        console.log("Switched to today's date:", baseDate);
-    });
-
-    // Initialize MDC Dialog
-    const dialogElement = document.querySelector('.mdc-dialog');
-    const dialog = new mdc.dialog.MDCDialog(dialogElement);
-
-    // Otevření dialogu při kliknutí na tlačítko
-    document.getElementById("openCalendar").addEventListener("click", () => {
-        dialog.open();
-    });
-
-    // Zavření dialogu při kliknutí na zavřít tlačítko
-    const closeButton = dialogElement.querySelector('[data-mdc-dialog-action="close"]');
-    closeButton.addEventListener("click", () => {
-        dialog.close();
-    });
-
-    // Zavření Snackbar při kliknutí na tlačítko zavření
-    const snackbarCloseButton = document.getElementById('snackbar-close');
-    if (snackbarCloseButton) {
-        snackbarCloseButton.addEventListener('click', () => {
-            snackbar.close();
-        });
-    }
-
-    // Add event listener to the top microphone icon
-    if (topMicIcon) {
-        topMicIcon.addEventListener("click", (event) => {
-            event.preventDefault(); // Prevent default click behavior
-            event.stopPropagation(); // Stop the event from bubbling up
-
-            if (currentTranscribingCell) {
-                startTranscription(currentTranscribingCell);
-            } else if (!microphonePermissionGranted || !currentTranscribingCell) {
-                showToast("Napřed vyberte buňku, jestli chcete přepsat hlas!", 'warning');
-                topMicIcon.classList.add("shake");
-                topMicIcon.classList.add("feedback-orange");
-
-                // Remove the shake and orange classes after the animation completes (e.g., 1s)
-                setTimeout(() => {
-                    topMicIcon.classList.remove("shake");
-                    topMicIcon.classList.remove("feedback-orange");
-                }, 1000); // Duration should match the CSS animation duration
-            }
-        });
-    } else {
-        console.error("Top microphone icon not found!");
-    }
-    // Přidání posluchačů pro tlačítka 'Předchozí týden' a 'Další týden'
-const prevWeekButton = document.getElementById("prevWeek");
-const nextWeekButton = document.getElementById("nextWeek");
-
-if (prevWeekButton) {
-    prevWeekButton.addEventListener("click", () => {
-        moveToPreviousWeek();
-    });
-} else {
-    console.error("Button with ID 'prevWeek' not found!");
-}
-
-if (nextWeekButton) {
-    nextWeekButton.addEventListener("click", () => {
-        moveToNextWeek();
-    });
-} else {
-    console.error("Button with ID 'nextWeek' not found!");
-}
-
-});
-async function renderPlanner() {
-    console.log("Rendering planner...");
-
-    // Calculate start and end of the week
-    currentStartOfWeek = getStartOfWeek(baseDate);
-    const currentEndOfWeek = getEndOfWeek(currentStartOfWeek);
-
-    // Render headers and time slots for the correct week
-    renderHeaders(currentStartOfWeek);
-    renderTimeSlots(currentStartOfWeek);
-
-    // Highlight the selected week and update the week number display
-    highlightSelectedWeek(currentStartOfWeek);
-
-    // Fetch and display notes for the week
-    const weekStartDate = format(currentStartOfWeek, 'yyyy-MM-dd');
-    console.log(`Fetching notes for the week starting: ${weekStartDate}`);
-    const weekNotes = await fetchNotesForWeekFromFirebase(weekStartDate);
-    if (weekNotes) {
-        console.log("Notes found. Populating planner.");
-        populatePlannerWithNotes(weekNotes);
-    } else {
-        console.log("No notes found for the current week.");
-    }
-
-    // Update the week interval display
-    updateWeekIntervalDisplay();
-}
-
-
-// ========================
-// Populate Planner with Notes
-// ========================
-function populatePlannerWithNotes(notes) {
-    console.log("Populating planner with loaded notes...");
-    for (const [dayKey, hours] of Object.entries(notes)) {
-        const dayIndex = parseInt(dayKey.replace("day", ""), 10);
-        for (const [hourKey, noteText] of Object.entries(hours)) {
-            const hourIndex = parseInt(hourKey.replace("hour", ""), 10);
-            const cell = document.querySelector(`td[data-day="${dayIndex}"][data-hour="${hourIndex}"] .note-text`);
-            if (cell) {
-                cell.innerText = sanitizeInput(noteText);
-                console.log(`Note for day ${dayIndex}, hour ${hourIndex} set to: "${noteText}"`);
-            }
-        }
-    }
-}
-
-// ========================
-// Render Headers
-// ========================
-function renderHeaders(startOfWeek) {
-    const dayHeaders = document.getElementById("day-headers");
-    if (!dayHeaders) {
-        console.error("Element with ID 'day-headers' not found.");
-        return;
-    }
-    dayHeaders.innerHTML = ""; // Clear existing headers
-
-    console.log("Rendering day headers...");
-
-    for (let i = 0; i < 7; i++) {
-        const dayDate = addDays(startOfWeek, i);
-        const formattedDate = dayDate.getDate() + "." + (dayDate.getMonth() + 1) + ".";
-
-        console.log(`Checking for formattedDate: "${formattedDate}" in calendarData.`);
-        const data = calendarData[formattedDate] || { nameDay: "", holiday: "" };
-
-        console.log(`Data for ${formattedDate}:`, data);
-
-        const th = document.createElement("th");
-        th.className = "mdc-data-table__header-cell day-header";
-
-        // Add CSS class for holidays
-        if (data.holiday) {
-            th.classList.add("holiday");
-        }
-
-        const weekdayName = capitalizeFirstLetter(
-            dayDate.toLocaleString("cs-CZ", { weekday: "long" })
-        );
-
-        th.innerHTML = `
-            <div class="day-header-content">
-                <div class="day-date">
-                    ${dayDate.getDate()}
-                </div>
-                <div class="day-info">
-                    <div class="holiday-name">${data.holiday}</div>
-                    <div class="name-day">${data.nameDay}</div>
-                    <div class="day-name">
-                        <strong>${weekdayName}</strong>
-                    </div>
-                </div>
-            </div>
-        `;
-        dayHeaders.appendChild(th);
-    }
-}
-
-// ========================
-// Render Time Slots
-// ========================
-function renderTimeSlots(startOfWeek) {
-    const tbody = document.getElementById("time-slots");
-    if (!tbody) {
-        console.error("Element with ID 'time-slots' not found.");
-        return;
-    }
-    tbody.innerHTML = ""; // Clear existing slots
-
-    const startHour = 7; // Start hour for time slots
-    const endHour = 20; // End hour for time slots
-
-    for (let hour = startHour; hour <= endHour; hour++) {
-        const row = document.createElement("tr");
-        row.className = "mdc-data-table__row";
-
-        for (let day = 0; day < 7; day++) {
-            const cell = createTimeSlotCell(day, hour, startOfWeek);
-            row.appendChild(cell);
-        }
-
-        tbody.appendChild(row);
-    }
-}
-
-function createTimeSlotCell(day, hour, startOfWeek) {
-    const cell = document.createElement("td");
-    cell.className = "time-slot mdc-data-table__cell";
-    cell.dataset.day = day;
-    cell.dataset.hour = hour;
-    cell.tabIndex = 0; // Enable focus for keyboard navigation
-
-    // Create the note container
-    const noteContainer = createNoteContainer(day, hour, startOfWeek);
-    cell.appendChild(noteContainer);
-
-    // Create and append the spinner
-    const spinnerTemplate = document.getElementById("spinner-template");
-    if (!spinnerTemplate) {
-        console.error("Spinner template not found!");
-        return cell;
-    }
-    const spinnerClone = spinnerTemplate.content.cloneNode(true);
-    cell.appendChild(spinnerClone);
-
-    // Now, get the spinnerElement from the cell
-    const spinnerElement = cell.querySelector(".mdc-circular-progress");
-    if (!spinnerElement) {
-        console.error("Spinner element not found in cloned template!");
-        return cell;
-    }
-
-    // Initialize MDC Circular Progress
-    const spinner = new mdc.circularProgress.MDCCircularProgress(spinnerElement);
-    spinner.determinate = true;
-    spinner.progress = 0; // Start with 0% progress
-    spinnerElement.style.display = "none"; // Hide spinner initially
-
-    // Load and display notes
-    fetchNoteForCell(noteContainer.querySelector(".note-text"), day, hour, startOfWeek, spinnerElement);
-
-    return cell;
-}
-
-// Create the note container
-function createNoteContainer(day, hour, startOfWeek) {
-    const container = document.createElement("div");
-    container.className = "note-text-container";
-
-    const timeLabel = document.createElement("div");
-    timeLabel.className = "time-label mdc-typography--caption";
-    timeLabel.innerText = formatHourShort(hour);
-
-    const noteText = createNoteTextElement(day, hour);
-
-    container.appendChild(timeLabel);
-    container.appendChild(noteText);
-
-    return container;
-}
-
-// Create the note text element
-function createNoteTextElement(day, hour) {
-    const noteText = document.createElement("div");
-    noteText.className = "note-text mdc-typography--body1";
-    noteText.contentEditable = true;
-    noteText.dataset.day = day;
-    noteText.dataset.hour = hour;
-
-    noteText.addEventListener("input", debounce((event) => handleNoteInput(event, day, hour), 500));
-    noteText.addEventListener("blur", (event) => saveNoteDirectly(event, day, hour));
-
-    return noteText;
-}
-
-// ========================
-// Handle Note Input and Save
-// ========================
-
-const handleNoteInput = debounce((event, day, hour) => {
-    const noteText = event.target.innerText.trim();
-    const dateObj = addDays(currentStartOfWeek, day);
-    const date = format(dateObj, 'yyyy-MM-dd');
-    const time = formatHour(hour);
-
-    if (!noteText) return; // Skip saving if note is empty
-
-    saveNoteToFirebase(date, time, noteText);
-}, 500);
-
-// Save Note Directly on Blur Event
-async function saveNoteDirectly(event, day, hour) {
-    const noteText = event.target.innerText.trim();
-    console.log(`Saving note on blur for day ${day}, hour ${hour}: "${noteText}"`);
-
-    const dateObj = addDays(currentStartOfWeek, day);
-    const date = format(dateObj, 'yyyy-MM-dd');
-    const time = formatHour(hour);
-
-    if (!noteText) {
-        console.log(`Note for day ${day}, hour ${hour} is empty. Not performing any action.`);
-        saveSelectedDateToLocalStorage(dateObj); // Save to local storage
-        return;
-    }
-
-    console.log(`Saving note for ${date} at ${time}: "${noteText}"`);
-    await saveNoteToFirebase(date, time, noteText);
-    saveSelectedDateToLocalStorage(dateObj); // Save to local storage
-}
-
-// Load and Display Note for Specific Cell
-async function fetchNoteForCell(noteTextElement, day, hour, startOfWeek, spinnerElement) {
-    const dateObj = addDays(startOfWeek, day);
-    const date = format(dateObj, 'yyyy-MM-dd');
-    const time = formatHour(hour);
-
-    // Show spinner
-    spinnerElement.style.display = "block";
-
-    // Initialize MDC Circular Progress
-    const spinner = new mdc.circularProgress.MDCCircularProgress(spinnerElement);
-    spinner.determinate = true;
-    spinner.progress = 0;
-
-    try {
-        const noteText = await fetchNoteFromFirebase(date, time);
-        noteTextElement.innerText = sanitizeInput(noteText || '');
-    } catch (error) {
-        console.error(`Error loading note for ${date} at ${time}:`, error);
-    }
-
-    // Hide spinner after loading
-    spinnerElement.style.display = "none";
-
-    // Destroy spinner instance
-    spinner.destroy();
-
-    console.log(`Loaded note for ${date} at ${time}: "${noteTextElement.innerText}"`);
-}
-
-// ========================
-// Render Year Calendar Modal
-// ========================
-function renderYearCalendarModal() {
-    const modalBody = document.querySelector(".year-calendar-modal .modal-body");
-    if (!modalBody) {
-        console.error("Element '.year-calendar-modal .modal-body' not found.");
-        return;
-    }
-
-    let currentYear = baseDate.getFullYear();
-    let selectedMonth = baseDate.getMonth(); // 0-indexed (0 = January)
-    let daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
-    let firstDay = new Date(currentYear, selectedMonth, 1);
-    
-    // Get and display the interval for the current week
-    let weekStartDate = getStartOfWeek(baseDate);
-    let weekEndDate = getEndOfWeek(weekStartDate);
-    let monthHeader = document.querySelector(".year-calendar-modal .mdc-dialog__title");
-
-    // Update dialog title with week number and year
-    let weekNumber = getWeekNumberISO(weekStartDate);
-    monthHeader.innerText = `Týden ${weekNumber}, ${currentYear}`;
-
-    // Clear previous content in modal body
-    modalBody.innerHTML = "";
-
-    // Create table for calendar
-    const table = document.createElement("table");
-    table.className = "mdc-data-table__table table-bordered text-center";
-
-    // Create table header
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-    headerRow.className = "mdc-data-table__header-row";
-    const thWeek = document.createElement("th");
-    thWeek.innerText = "Týden";
-    thWeek.className = "mdc-data-table__header-cell";
-    headerRow.appendChild(thWeek);
-    ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"].forEach((day) => {
-        const th = document.createElement("th");
-        th.innerText = day;
-        th.className = "mdc-data-table__header-cell";
-        headerRow.appendChild(th);
-    });
-
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Create table body
-    const tbody = document.createElement("tbody");
-    tbody.className = "mdc-data-table__content";
-    let weekRow = document.createElement("tr");
-    weekRow.className = "mdc-data-table__row";
-
-    // Initialize week number
-    let weekNumberRow = getWeekNumberISO(firstDay);
-
-    // Add week number cell
-    const weekCell = document.createElement("td");
-    weekCell.innerText = `${weekNumberRow}`;
-    weekCell.className = 'weekname mdc-data-table__cell';
-    weekRow.appendChild(weekCell);
-
-    // Calculate number of empty cells before the first day
-    const emptyCells = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-
-    // Append empty cells for days before the first day of the month
-    for (let i = 0; i < emptyCells; i++) {
-        const emptyCell = document.createElement("td");
-        emptyCell.className = "mdc-data-table__cell";
-        weekRow.appendChild(emptyCell);
-    }
-
-    // Fill in the days
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dayDate = new Date(currentYear, selectedMonth, day);
-        const dayCell = document.createElement("td");
-        dayCell.innerText = day;
-        dayCell.className = "mdc-data-table__cell";
-
-        // Highlight the selected week
-        if (isDateInCurrentSelectedWeek(dayDate)) {
-            dayCell.classList.add("table-success", "selected-cell");
-        }
-
-        // Add click event to select the day
-        dayCell.addEventListener("click", () => {
-            baseDate = dayDate; // Update the global selected date
-            renderPlanner(); // Update the planner
-            renderYearCalendarModal(); // Re-render modal content
-            highlightSelectedWeek(baseDate); // Update the selected week highlight
-        });
-
-        weekRow.appendChild(dayCell);
-
-        // If the current day is Sunday or the last day of the month, start a new week row
-        if (dayDate.getDay() === 0 || day === daysInMonth) {
-            // Fill the remaining cells of the last week if the month doesn't end on Sunday
-            if (day === daysInMonth && dayDate.getDay() !== 0) {
-                const remainingCells = 7 - (dayDate.getDay() === 0 ? 7 : dayDate.getDay());
-                for (let i = 0; i < remainingCells; i++) {
-                    const emptyCell = document.createElement("td");
-                    emptyCell.className = "mdc-data-table__cell";
-                    weekRow.appendChild(emptyCell);
-                }
-            }
-
-            tbody.appendChild(weekRow);
-            weekRow = document.createElement("tr");
-            weekRow.className = "mdc-data-table__row";
-
-            // Increment week number
-            weekNumberRow++;
-            const newWeekCell = document.createElement("td");
-            newWeekCell.innerText = `${weekNumberRow}`;
-            newWeekCell.className = 'weekname mdc-data-table__cell';
-            weekRow.appendChild(newWeekCell);
-        }
-    }
-
-    table.appendChild(tbody);
-    modalBody.appendChild(table);
-
-    // Initialize MDC Data Table
-    mdc.dataTable.MDCDataTable.attachTo(table);
-
-    // Highlight the selected week after rendering
-    highlightSelectedWeek(baseDate);
-}
-
-// ========================
-// Firebase Operations
-// ========================
-
-// Save Note to Firebase
-async function saveNoteToFirebase(date, time, text) {
-    const dateObj = new Date(date);
-    const weekStart = getStartOfWeek(dateObj);
-    const weekNumber = getWeekNumberISO(weekStart);
-    const monthName = getMonthName(weekStart);
-
-    const dayIndex = getDayFromDate(dateObj);
-    const hourIndex = getHourFromTime(time);
-
-    const noteRef = database.ref(`planner/${monthName}/week_${weekNumber}/day${dayIndex}/hour${hourIndex}`);
-
-    return noteRef.set(text)
-        .then(() => {
-            console.log(`Note successfully saved for ${date} at ${time}.`);
-            showToast("Poznámka úspěšně uložena.", 'success');
-        })
-        .catch(error => {
-            console.error(`Error saving note for ${date} at ${time}:`, error);
-            showToast("Nepodařilo se uložit poznámku. Prosím, zkuste to znovu.", 'error');
-        });
-}
-
-// Delete Note from Firebase
-async function deleteNoteFromFirebase(date, time) {
-    const dateObj = new Date(date);
-    const weekStart = getStartOfWeek(dateObj);
-    const weekNumber = getWeekNumberISO(weekStart);
-    const monthName = getMonthName(weekStart);
-
-    const dayIndex = getDayFromDate(dateObj);
-    const hourIndex = getHourFromTime(time);
-
-    const noteRef = database.ref(`planner/${monthName}/week_${weekNumber}/day${dayIndex}/hour${hourIndex}`);
-
-    return noteRef.remove()
-        .then(() => {
-            console.log(`Note successfully deleted for ${date} at ${time}.`);
-            showToast("Poznámka úspěšně smazána.", 'success');
-        })
-        .catch(error => {
-            console.error(`Error deleting note for ${date} at ${time}:`, error);
-            showToast("Nepodařilo se smazat poznámku.", 'error');
-        });
-}
-
-// Fetch Specific Note from Firebase
-function fetchNoteFromFirebase(date, time) {
-    const dateObj = new Date(date);
-    const weekStart = getStartOfWeek(dateObj);
-    const weekNumber = getWeekNumberISO(weekStart);
-    const monthName = getMonthName(weekStart);
-    const dayIndex = getDayFromDate(dateObj);
-    const hourIndex = getHourFromTime(time);
-
-    const noteRef = database.ref(`planner/${monthName}/week_${weekNumber}/day${dayIndex}/hour${hourIndex}`);
-
-    return noteRef.once('value')
-        .then(snapshot => snapshot.val())
-        .catch(error => {
-            console.error(`Error fetching note for ${date} at ${time}:`, error);
-            showToast("Nepodařilo se načíst poznámku.", 'error');
-            return null;
-        });
-}
-
-// Fetch All Notes for a Specific Week from Firebase
-function fetchNotesForWeekFromFirebase(weekStartDate) {
-    const startOfWeek = getStartOfWeek(new Date(weekStartDate));
-    const weekNumber = getWeekNumberISO(startOfWeek);
-    const monthName = getMonthName(startOfWeek);
-    const weekRef = database.ref(`planner/${monthName}/week_${weekNumber}`);
-
-    return weekRef.once('value')
-        .then(snapshot => snapshot.val())
-        .catch(error => {
-            console.error("Error fetching notes from Firebase:", error);
-            showToast("Nepodařilo se načíst poznámky z Firebase.", 'error');
-            return null;
-        });
-}
-
-// ========================
-// Navigation and Event Listeners
-// ========================
-
-// Highlight Selected Week in Calendars
-function highlightSelectedWeek(selectedDate) {
-    console.log("Highlighting selected week in calendars.");
-
-    // Get the start and end of the selected week
-    const startOfWeek = getStartOfWeek(selectedDate);
-    const endOfWeek = getEndOfWeek(startOfWeek);
-
-    // Highlight in Year Calendar Modal
-    const yearCalendarCells = document.querySelectorAll(".year-calendar-modal td");
-    yearCalendarCells.forEach((cell) => {
-        const day = parseInt(cell.innerText, 10);
-        if (isNaN(day)) return;
-
-        const month = baseDate.getMonth(); // Ensure the current month context
-        const cellDate = new Date(baseDate.getFullYear(), month, day);
-
-        if (isDateInCurrentSelectedWeek(cellDate)) {
-            cell.classList.add("table-success");
-        } else {
-            cell.classList.remove("table-success");
-        }
-    });
-}
-
-// ========================
-// Swipe Handling Functions
-// ========================
-function setupSwipeListeners() {
-    const plannerContainer = document.querySelector(".planner-table-container");
-
-    if (!plannerContainer) {
-        console.error("Planner table container not found for swipe listeners.");
-        return;
-    }
-
-    // Remove existing listeners to prevent duplicate handlers
-    plannerContainer.removeEventListener('touchstart', handleTouchStart);
-    plannerContainer.removeEventListener('touchmove', handleTouchMove);
-    plannerContainer.removeEventListener('touchend', handleTouchEnd);
-
-    // Check if touch events are supported
-    if ('ontouchstart' in window || navigator.maxTouchPoints) {
-        // Attach new listeners
-        plannerContainer.addEventListener('touchstart', handleTouchStart, false);
-        plannerContainer.addEventListener('touchmove', handleTouchMove, false);
-        plannerContainer.addEventListener('touchend', handleTouchEnd, false);
-    }
-}
-
-function handleTouchStart(event) {
-    touchStartX = event.changedTouches[0].clientX;
-    isSwiping = true;
-}
-
-function handleTouchMove(event) {
-    if (!isSwiping) return;
-    touchEndX = event.changedTouches[0].clientX;
-}
-
-function handleTouchEnd(event) {
-    if (!isSwiping) return;
-    handleSwipeGesture();
-    isSwiping = false;
-}
-
-function handleSwipeGesture() {
-    if (touchStartX === null || touchEndX === null) return;
-    const deltaX = touchEndX - touchStartX;
-    const threshold = 50; // Adjust as necessary
-    if (deltaX > threshold) {
-        moveToPreviousWeek();
-    } else if (deltaX < -threshold) {
-        moveToNextWeek();
-    }
-    touchStartX = null;
-    touchEndX = null;
-}
-
-// ========================
-// Keyboard Navigation
-// ========================
-function setupKeyboardNavigation() {
-    // Initialize currentCell to null. Selection starts only when a cell is clicked or a key is pressed.
-    let currentCell = null;
-
-    // Function to select a cell
-    function selectCell(cell) {
-        if (currentCell) {
-            currentCell.classList.remove("selected-cell");
-        }
-        currentCell = cell;
-        if (currentCell) {
-            currentCell.classList.add("selected-cell");
-            focusEditableContent(currentCell);
-        }
-    }
-
-    // Function to focus on editable content within the cell
-    function focusEditableContent(cell) {
-        const editable = cell.querySelector('.note-text');
-        if (editable) {
-            editable.focus();
-        }
-    }
-
-    // Function to start transcription
-    function startTranscription(cell) {
-        // Trigger click on the mic icon to start transcription
-        topMicIcon.click();
-    }
-
-    // Add click event listeners to all time-slot cells to allow mouse selection
-    const timeSlots = document.querySelectorAll(".time-slot");
-    timeSlots.forEach(cell => {
-        cell.addEventListener('click', () => {
-            selectCell(cell);
-        });
-    });
-
-    document.addEventListener("keydown", function (event) {
-        const KEY_ARROW_RIGHT = "ArrowRight";
-        const KEY_ARROW_LEFT = "ArrowLeft";
-        const KEY_ARROW_DOWN = "ArrowDown";
-        const KEY_ARROW_UP = "ArrowUp";
-        const KEY_CTRL = "Control";
-
-        // Handle Ctrl + Key combinations first
-        if (event.ctrlKey) {
-            if (event.key === 'c' || event.key === 'C') { // Example: Ctrl+C to start transcription
-                event.preventDefault(); // Prevent default behavior
-                if (currentCell) {
-                    startTranscription(currentCell);
-                } else {
-                    showToast("Prosím, vyberte buňku, do které chcete přepsat hlas.", 'info');
-                }
-                return; // Exit after handling Ctrl+Key
-            }
-
-            // Add more Ctrl+Key handlers here if needed
-        }
-
-        // If no cell is selected, select the first cell on any arrow key press
-        if (!currentCell && [KEY_ARROW_RIGHT, KEY_ARROW_LEFT, KEY_ARROW_DOWN, KEY_ARROW_UP].includes(event.key)) {
-            currentCell = document.querySelector(".time-slot");
-            if (currentCell) {
-                selectCell(currentCell);
-                event.preventDefault();
-            }
-            return;
-        }
-
-        if (!currentCell) return; // If still no cell is selected, do nothing
-
-        let nextCell = null;
-        const day = parseInt(currentCell.dataset.day, 10);
-        const hour = parseInt(currentCell.dataset.hour, 10);
-
-        switch (event.key) {
-            case KEY_ARROW_RIGHT:
-                nextCell = document.querySelector(`td[data-day="${(day + 1) % 7}"][data-hour="${hour}"]`);
-                break;
-            case KEY_ARROW_LEFT:
-                nextCell = document.querySelector(`td[data-day="${(day - 1 + 7) % 7}"][data-hour="${hour}"]`);
-                break;
-            case KEY_ARROW_DOWN:
-                nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour + 1 <= 20 ? hour + 1 : 7}"]`);
-                break;
-            case KEY_ARROW_UP:
-                nextCell = document.querySelector(`td[data-day="${day}"][data-hour="${hour - 1 >= 7 ? hour - 1 : 20}"]`);
-                break;
-            default:
-                return; // Ignore other keys
-        }
-
-        // If a valid next cell exists, move focus
-        if (nextCell) {
-            event.preventDefault(); // Prevent default scrolling behavior
-            selectCell(nextCell);
-        }
-    });
-}
-
-// ========================
-// Function to Request Microphone Permission
-// ========================
-function requestMicrophonePermission() {
-    return new Promise((resolve, reject) => {
-        try {
-            recognition.start();
-            recognition.onstart = () => {
-                recognition.stop();
-                recognition.onstart = null;
-                microphonePermissionGranted = true;
-                console.log("Microphone permission granted.");
-                resolve();
-            };
-        } catch (error) {
-            console.error("Error requesting microphone permission:", error);
-            reject(error);
-        }
-    });
-}
-
-// ========================
-// Week Navigation Functions
-// ========================
-function moveToNextWeek() {
-    if (isAnimating) return; // Prevent overlapping animations
-    isAnimating = true;
-
-    // Update baseDate to next week
-    baseDate = addDays(baseDate, 7);
-    renderPlanner();
-    renderYearCalendarModal();
-    // After rendering is done, re-attach swipe listeners
-    setTimeout(() => {
-        setupSwipeListeners();
-        isAnimating = false;
-    }, 500); // Match with CSS transition duration (adjust if needed)
-}
-
-function moveToPreviousWeek() {
-    if (isAnimating) return; // Prevent overlapping animations
-    isAnimating = true;
-
-    // Update baseDate to previous week
-    baseDate = addDays(baseDate, -7);
-    renderPlanner();
-    renderYearCalendarModal();
-
-    // After rendering is done, re-attach swipe listeners
-    setTimeout(() => {
-        setupSwipeListeners();
-        isAnimating = false;
-    }, 500); // Match with CSS transition duration (adjust if needed)
-}
-
-// ========================
-// Function to determine if a year is a leap year
-// ========================
-function isLeapYear(year) {
-    return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0);
-}
-
-// Function to get a date from day of the year
-function getDateFromDay(year, day) {
-    const date = new Date(year, 0); // January 1st
-    return new Date(date.setDate(day));
-}
-
-function capitalizeFirstLetter(string) {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function getWeeksInYear(year) {
-    const d = new Date(year, 11, 31);
-    const week = getWeekNumberISO(d);
-    // If the last day of the year is in week 1, then the total weeks is the week number of the last Thursday of the year
-    if (week === 1) {
-        const lastThursday = new Date(year, 11, 31);
-        lastThursday.setDate(lastThursday.getDate() - ((lastThursday.getDay() + 6) % 7) - 3);
-        return getWeekNumberISO(lastThursday);
-    }
-    return week;
-}
-
-function selectWeek(weekNumber, year) {
-    const firstThursday = new Date(year, 0, 4);
-    const firstWeekStart = new Date(firstThursday.getTime() - ((firstThursday.getDay() + 6) % 7) * 86400000);
-    const selectedDate = new Date(firstWeekStart.getTime() + (weekNumber - 1) * 7 * 86400000);
-    baseDate = selectedDate;
-    renderPlanner();
-    renderYearCalendarModal();
-    saveSelectedDateToLocalStorage(baseDate);
-}
-
-function displayCountdown(value) {
-    const countdownOverlay = document.getElementById("mic-countdown");
-    if (countdownOverlay) {
-        countdownOverlay.innerText = value.toFixed(1);
-        countdownOverlay.style.display = "block";
-    }
-}
-
-// Hide Countdown
-function hideCountdown() {
-    const countdownOverlay = document.getElementById("mic-countdown");
-    if (countdownOverlay) {
-        countdownOverlay.style.display = "none";
-    }
-}
-
-// ========================
-// Function to save selected date to local storage
-// ========================
-function saveSelectedDateToLocalStorage(date) {
-    const dateStr = date.toISOString();
-    localStorage.setItem("selectedDate", dateStr);
-    console.log(`Selected date saved to local storage: ${dateStr}`);
-}
-
-// ========================
-// Set Up Web Speech API for Transcription
-// ========================
-function setupWebSpeechAPI() {
-    console.log("Initializing Web Speech API for voice transcription.");
-
-    // Check browser support
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-        showToast("Web Speech API není podporováno ve vašem prohlížeči. Prosím, použijte Google Chrome nebo Mozilla Firefox.", 'error');
-        console.error("Web Speech API is not supported in your browser.");
-        return;
-    }
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'cs-CZ'; // Set language to Czech
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    // Handle voice transcription results
-    recognition.addEventListener('result', (event) => {
-        console.log("Voice transcription completed. Processing results.");
-        const transcript = event.results[0][0].transcript.trim();
-        console.log(`Transcript: "${transcript}"`);
-        if (currentTranscribingCell) {
-            currentTranscribingCell.innerText = transcript;
-            const day = parseInt(currentTranscribingCell.getAttribute('data-day'), 10);
-            const hour = parseInt(currentTranscribingCell.getAttribute('data-hour'), 10);
-            const dateObj = addDays(currentStartOfWeek, day);
-            const date = format(dateObj, 'yyyy-MM-dd');
-            const time = formatHour(hour);
-            console.log(`Saving transcription for day ${day}, hour ${hour}: "${transcript}"`);
-            saveNoteToFirebase(date, time, transcript)
-                .then(() => {
-                    showToast(`Poznámka přidána: "${transcript}"`, 'success');
-                })
-                .catch((error) => {
-                    showToast("Chyba při ukládání poznámky.", 'error');
-                });
-            saveSelectedDateToLocalStorage(dateObj);
-            stopTranscription(); // Clear current transcription cell
-        } else {
-            console.warn("Active cell for transcription not found.");
-        }
-    });
-
-    recognition.addEventListener('speechend', () => {
-        console.log("Speech ended. Stopping transcription.");
-        if (currentTranscribingCell) {
-            recognition.stop();
-        }
-    });
-
-    recognition.addEventListener('end', () => {
-        console.log("Speech recognition service disconnected.");
-        if (currentTranscribingCell) {
-            stopTranscription();
-        }
-    });
-
-    recognition.addEventListener('error', (event) => {
-        console.error(`Voice transcription error (${event.error}):`, event);
-        showToast(`Chyba přepisu hlasu: ${event.error}.`, 'error');
-        if (currentTranscribingCell) {
-            stopTranscription();
-        }
-    });
-}
-
-// Start Transcription
-function startTranscription(noteTextElement) {
-    if (currentTranscribingCell) {
-        showToast("Přepis je již spuštěn.", 'info');
-        return;
-    }
-
-    currentTranscribingCell = noteTextElement;
-
-    const cell = currentTranscribingCell.closest('td');
-    cell.classList.add('recording');
-
-    if (topMicIcon) {
-        topMicIcon.classList.add('active');
-    }
-
-    try {
-        recognition.start();
-        showToast("Začíná přepis hlasu. Můžete mluvit.", 'success');
-    } catch (error) {
-        console.error("Error starting voice transcription:", error);
-        showToast("Nepodařilo se spustit přepis hlasu.", 'error');
-        stopTranscription();
-    }
-}
-
-function stopTranscription() {
-    if (recognition && currentTranscribingCell) {
-        recognition.stop();
-
-        const cell = currentTranscribingCell.closest('td');
-        cell.classList.remove('recording');
-
-        if (topMicIcon) {
-            topMicIcon.classList.remove('active');
-        }
-
-        currentTranscribingCell = null;
-    }
-}
-
-// ========================
-// Function for Snackbar Notifications
-// ========================
-
-// (Already replaced showToast during initialization)
-
-// ========================
-// Real-Time Clock and Date
-// ========================
-function setupClock() {
-    const clockElement = document.getElementById("real-time-clock");
-    const dateElement = document.getElementById("real-time-date");
-
-    if (!clockElement || !dateElement) {
-        console.error("Clock or date elements not found!");
-        return;
-    }
-
-    console.log("Initializing real-time clock...");
-
-    function updateClock() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        clockElement.innerText = `${hours}:${minutes}:${seconds}`;
-
-        const day = now.getDate().toString().padStart(2, '0');
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const year = now.getFullYear();
-        dateElement.innerText = `${day}.${month}.${year}`;
-    }
-
-    updateClock(); // Initial call
-    setInterval(updateClock, 1000); // Update every second
-}
-function moveToNextWeek() {
-    if (isAnimating) return; // Prevent overlapping animations
-    isAnimating = true;
-
-    // Update baseDate to next week
-    baseDate = addDays(baseDate, 7);
-    renderPlanner();
-    renderYearCalendarModal();
-    // After rendering is done, re-attach swipe listeners
-    setTimeout(() => {
-        setupSwipeListeners();
-        isAnimating = false;
-    }, 500); // Match with CSS transition duration (adjust if needed)
-}
-
-function moveToPreviousWeek() {
-    if (isAnimating) return; // Prevent overlapping animations
-    isAnimating = true;
-
-    // Update baseDate to previous week
-    baseDate = addDays(baseDate, -7);
-    renderPlanner();
-    renderYearCalendarModal();
-
-    // After rendering is done, re-attach swipe listeners
-    setTimeout(() => {
-        setupSwipeListeners();
-        isAnimating = false;
-    }, 500); // Match with CSS transition duration (adjust if needed)
-}

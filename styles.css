@@ -46,8 +46,7 @@ td,.note-text {
 
 .note-text-container {
     position: relative;
-    padding: 8px;
-}
+ }
 
 .note-text {
     min-height: 50px;
@@ -231,4 +230,29 @@ td,.note-text {
 
 #current-week-interval {
     font-size: 1rem;
+}
+/* Rotate the time labels */
+.time-label {
+    position: absolute;
+    left: -9px;
+    top: 28%;
+    transform: rotate(-90deg) translateY(-50%);
+    transform-origin: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Parent cell relative positioning */
+.time-slot {
+    position: relative; /* Required for absolute positioning of time-label */
+}
+
+/* Show the time label on hover */
+.time-slot:hover .time-label {
+    opacity: 1; /* Show label on hover */
+}
+.mdc-data-table__cell {
+    padding: 0px;     white-space: nowrap; 
+    overflow: hidden;  
+  /* text-overflow: ellipsis; */
 }
