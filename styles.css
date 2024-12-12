@@ -41,7 +41,7 @@ background-color: #99e9c4;
 }
 .month-cell {
     cursor: pointer;
-    font-weight: bold;
+    font-weight: normal;
     padding: 10px;
     transition: background-color 0.2s ease, color 0.2s ease;
     position: relative;
