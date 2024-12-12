@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="cs">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Diář</title>
+    <meta name="theme-color" content="#0f5132">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100..700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    <!-- Favicon and Other Icons -->
+    <link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="./site.webmanifest">
+    <link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+</head>
+
+<body>
+    <nav class=" sticky-top d-flex navtop" >
+        <div class="headtop d-flex">
+            <div class="modal-overlay"></div>
+            <div class="year-calendar-modal">
+                <div class="modal-header border-end">
+                    <div id="openCalendar" class="month-header ps-2 pe-2">
+                    </div>
+                </div>
+                <div class="modal-body d-none">
+                </div>
+            </div>
+            <div id="top-mic-container">
+                <i id="top-mic-icon" class="bi bi-mic-fill" title="Vyberte buňku před zahájením přepisu hlasu"></i>
+                <div id="mic-countdown" class="mic-countdown"></div>
+            </div>
+        </div>
+        <!-- Right side: Date and Time -->
+        <div id="go-to-today" class="clickable d-flex flex-column align-items-betwee pe-3">
+            <span id="real-time-date" class="p-1 fw-bold">19.11.2024</span>
+            <span id="real-time-clock" class="p-1">00:00:00</span>
+        </div>
+        </div>
+
+    </nav>
+    <!-- Day Numbers Row -->
+    <div id="day-numbers" class="day-numbers-container"></div>
+    <!-- Planner Container -->
+    <div class="planner-container">
+        <div class="planner-slide-wrapper">
+            <!-- Weekly Planner -->
+            <div class="planner-table-container">
+                <div class="week-view">
+                    <table class="table table-bordered planner-table">
+                        <thead>
+                            <tr id="day-headers" class="shadow-sm">
+                                <!-- Day Headers will be injected here -->
+                            </tr>
+                        </thead>
+                        <tbody id="time-slots">
+                            <!-- Time Slots will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mini Calendar Container -->
+    <div id="mini-calendar-container" class="mini-calendar-container"></div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
+        <div id="notification-toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body" id="toast-body">
+                <!-- Toast messages will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies (Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>

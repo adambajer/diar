@@ -1,0 +1,565 @@
+/* ========================
+   General Reset and Box-sizing
+   ======================== */
+   *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    font-weight: 100;
+    box-sizing: border-box;
+}
+.table>:not(caption)>*>* {
+    padding: 0.2vw;
+}
+/* ========================
+   Top Header Styles
+   ======================== */ 
+.planner-table-container.active {
+    cursor: grabbing;
+}
+.week-view {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+}.week-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center; 
+}
+
+.week-navigation .btn { 
+}
+.navtop td, .navtop th, .navtop tr {
+    border: 0px solid white;
+}
+.navtop th {
+    background-color: #f6f6f6;
+    font-weight: normal;
+}.navtop td {
+    outline: 1px solid white;
+    background-color: #f6f6f6;
+}
+.navtop td.selected-cell {
+background-color: #99e9c4;
+}
+.month-cell {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    position: relative;
+    margin: 2px;
+}
+.month-cell:hover, .month-cell.active {
+    background-color: #f0f0f0;
+    color: #000000;
+}
+.selected-week {
+    background-color: hsl(155, 100%, 92%) !important;
+    color: #0c5460;
+}
+.icons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+.labels {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+#real-time-info { 
+    font-family: "Roboto Mono", monospace;
+}
+
+#day-headers th {
+     text-align: left; 
+    font-weight: 300;
+}
+
+#day-headers th .day-date {
+
+    font-size:4vw}
+
+#day-headers th.current-day { 
+    color: #007bff;
+    border: 2px solid #007bff; /* Optional border for emphasis */
+}
+
+.day-numbers-row {
+    overflow: hidden;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    align-content: flex-end;
+    align-items: stretch;
+
+}
+.day-cell {
+    width: 100%;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s ease;
+    padding: 5px;
+}
+.day-cell:hover {
+    background-color: #f0f0f0;
+}
+.day-cell.selected-day {
+    background-color: #e0f7fa;
+}
+/* ========================
+   Planner Table Styles
+   ======================== */
+.planner-table th.time-slot {
+    width: 14.3%;
+    
+}.planner-table th.day-header {
+     border-right: 1px solid #eaeaea;
+}
+#day-headers th:nth-child(7) {
+border-right: 1px solid #eaeaea;
+}
+.planner-table td.time-slot:nth-child(7) {
+    border-right: 1px solid #eaeaea;
+}
+.planner-table td.time-slot {
+     border-right: 1px solid #eaeaea;
+}
+.left-hed div {
+    border-left: 1px solid #eaeaea;
+}
+ 
+.note-text { 
+ 
+    
+}
+.time-label {
+ 
+    z-index: 9999;
+    right: 0;
+    top: 0;
+    font-size: 1vw;
+    opacity: 0;
+    position: absolute;
+ } 
+td.time-slot:hover .time-label {
+    opacity: 1;
+}
+  
+/* ========================
+   Toast Notifications
+   ======================== */
+.toast-container {
+    z-index: 1060;
+}
+.toast.bg-success {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+}
+.toast.bg-danger {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+ 
+.top-header .bi {
+    color: #aaa;
+} 
+#today-date, .real-nadpis {
+    display: flex; 
+}
+/* ========================
+   Responsive Styles
+   ======================== */
+@media (max-width: 768px) {
+    .top-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .left-hed {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+   
+}
+
+ 
+.planner-container {
+    /* position: relative; */
+    display: flex;
+    /* overflow: hidden; */
+    /* width: 100%; */
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+}
+
+/* Slide Wrapper */
+.planner-slide-wrapper {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    will-change: transform;    transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    width: 100%;
+} 
+
+
+/* Planner Table Container */
+.planner-table-container {
+    flex: 0 0 100%;
+    width: 100%;
+}
+
+/* Existing styles */
+/* Select the 7th th element within the day headers row */
+#day-headers th:nth-child(7) .day-date {
+    color: red;
+}
+/* Existing CSS styles */
+
+/* Custom Slider Container */
+.custom-slider-container {
+    position: relative;
+    width: 100%;
+    overflow-x: scroll; 
+    box-sizing: border-box;
+    background-color: #f9f9f9; 
+}
+
+/* Hide scrollbar for WebKit browsers */
+.custom-slider-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Custom Slider Track */
+#custom-slider {
+   
+    position: relative;
+    display: flex ;
+    align-items: flex-end; 
+    justify-content: center; 
+}
+
+/* Slider Ticks */
+.slider-tick {
+    position: relative;
+    flex: 0 0 0.25vw;
+    height: 20px;
+    background-color: #ccc; 
+    cursor: pointer;
+}
+
+.slider-tick:hover {
+    background-color: #007bff;
+}
+
+ 
+
+/* Tooltip Styles */
+.custom-slider-tooltip { 
+    position: fixed;
+    top: 70px;
+    left: 0;
+    background-color: #333;
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 4px; 
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 1000;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 600px) {
+    .slider-tick {
+        flex: 0 0 4px;
+    }
+}  
+
+
+/* Sundays Highlight */
+td {
+    /* Consider removing or changing these if you want full text display */
+     white-space: nowrap; 
+      overflow: hidden;  
+    /* text-overflow: ellipsis; */
+}
+.note-text-container {
+    position: relative;      overflow: hidden;  
+
+ }
+
+.time-slot.selected-cell {
+    outline: none !important;
+}
+
+
+td[style*="color: red"] {
+    font-weight: bold;
+}
+/* Existing CSS styles */
+.holiday-name {  
+}
+.name-day { 
+} 
+.day-name {font-weight: bold;
+}
+.holiday {
+    background-color: #f8d7da; /* Světle červené pozadí pro státní svátky */
+}.weekend-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 5px;
+    text-align: center;
+    vertical-align: top;
+    border-left: 1px solid #ccc; /* Optional border for weekends */
+}
+
+.weekend-cell .saturday {
+    flex: 1; /* Top half for Saturday */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #ddd;
+    height: 50%;
+}
+
+.weekend-cell .sunday {
+    flex: 1; /* Bottom half for Sunday */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50%;
+}
+tr#day-headers th {
+    border-bottom: 1px solid #eaeaea;
+    background-color: #f6f6f6;
+}
+.accordion-button {
+    padding: 0.5vw;
+    padding-top: 0;
+    padding-bottom: 0;
+}.accordion-body { 
+    padding: 0;
+}.week-grid {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.week-cell {
+    width: 40px;
+    height: 40px;
+    margin: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.week-cell:hover {
+    background-color: #e0e0e0;
+}
+
+.week-cell.selected {
+    
+    background-color: hsl(155, 100%, 92%) !important;
+    border-color: #0f5132;
+}
+
+.week-cell.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+/* Position the microphone icon at the top center */
+#top-mic-container {
+  
+    position: fixed;
+    top:50%;
+    border: 1px solid #eaeaea;
+    right: 0%;   
+    display: flex
+;
+    justify-content: center;
+    align-items: center;
+    background-color: #ffffff7e;
+    padding: 10px; border-bottom-left-radius: 100%;
+    border-top-left-radius: 100%;
+    backdrop-filter: drop-shadow(2px 4px 6px black) blur(20px);
+}
+#top-mic-icon {
+
+    /* padding: 10px; */ 
+    backdrop-filter: drop-shadow(2px 4px 6px black);
+    background-color: #f3f3f3;
+    /* border-radius: 20px; */
+    width: 100%;
+    display: flex; 
+    transform: translateY(1px);
+    /* */
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;border-radius: 100%;
+    padding: 10px;
+   
+}
+
+/* Change color when active */
+#top-mic-icon.active {
+ color: red;
+    border: 1px solid red;
+    box-shadow: 0px 0px 7px 0px rgba(255, 0, 0, 0.3);
+    padding: 10px;    animation: pulse 1s infinite;
+
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0px 0px 20px red;
+    }
+
+    50% {
+        box-shadow: 0px 0px 40px red;
+    }
+
+    100% {
+        box-shadow: 0px 0px 20px red;
+    }
+} 
+.dropdown-menu {
+    padding: 0px !important;
+    background-color: rgba(239, 0, 0, 0.3) !important;
+    border: 0px !important;
+    backdrop-filter: blur(20px);
+}
+.year-calendar-modal td {
+    border: 0px !important;
+}
+/* Highlight selected cell */
+.time-slot.selected-cell {
+    outline: 1px solid #ff0000;
+}
+
+/* Recording state */
+.time-slot.recording {
+    background-color: #ffe6e6; /* Light red to indicate recording */
+}
+.year-calendar-modal tr .weekname {
+    border: 0;
+}
+.weekname { 
+    color: #0000FF !important;
+    border: 0;
+}
+td.time-slot {
+    padding-left: 1vw;
+    outline: none;
+    overflow: auto;
+    word-wrap: break-word; 
+    overflow-wrap: anywhere; 
+    box-sizing: content-box;
+    overflow: oveflow-y;
+} .feedback-orange {
+    color: orange !important;
+    transition: color 0.3s;
+}
+.active-transcription {
+    color: red;
+    transition: color 0.3s;
+}
+.inactive-transcription {
+    color: gray;
+    transition: color 0.3s;
+}
+@keyframes shake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+    100% { transform: translateX(0); }
+}
+.shake {
+    animation: shake 0.5s;
+}.modal-overlay {
+    pointer-events: none; /* Allows clicks to pass through unless active */
+}
+
+.year-calendar-modal {
+    pointer-events: auto; /* Ensures the modal receives pointer events */
+}
+.note-text-container {
+    display: block;
+    width: 100%;
+}
+
+.note-text {
+    display: block;
+    width: 100%;
+    outline: none !important;
+}
+.time-slot.selected-cell {
+    outline: 1px solid red !important;
+}
+.modal-body.opaque {
+    position: absolute;
+    background: white;
+    padding: 1em;
+}
+@media (max-width: 1200px) {
+ 
+    .day-header-content {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        flex-direction: column;
+    }
+       
+    }#go-to-today {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end; /* Aligns text to the right */
+      }
+      
+      #real-time-date {
+        font-weight: bold; /* Make the date stand out */
+      }
+      #real-time-clock {
+        color: #666; /* Slightly lighter color for the time */
+      }
+      .week-year-info {
+        cursor: pointer;
+        font-weight: bold;
+        margin-right: 1rem; /* Add spacing if needed */
+        transition: background-color 0.2s ease;
+      }
+      
+      .week-year-info:hover {
+        background-color: #eaeaea;
+        text-decoration: underline;
+      }
+.navtop {
+    
+    display: flex !important
+;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+} .year-calendar-modal .modal-body {
+    position: absolute; 
+    background: #ffffff57;
+    backdrop-filter: blur(6px);
+    border: 1px solid #ccc;
+}      .header-content {
+    display: flex
+;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: center;
+}
