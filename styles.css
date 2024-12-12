@@ -22,23 +22,16 @@
     display: flex;
     justify-content: center;
     align-items: center; 
+   background:#eaeaea;
 }
 
 .week-navigation .btn { 
 }
 .navtop td, .navtop th, .navtop tr {
     border: 0px solid white;
+   font-weight: 100;
 }
-.navtop th {
-    background-color: #f6f6f6;
-    font-weight: normal;
-}.navtop td {
-    outline: 1px solid white;
-    background-color: #f6f6f6;
-}
-.navtop td.selected-cell {
-background-color: #99e9c4;
-}
+
 .month-cell {
     cursor: pointer;
     font-weight: normal;
