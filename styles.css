@@ -234,14 +234,14 @@ td,.note-text {
 /* Rotate the time labels */
 .time-label {
     position: absolute;
-    left: -9px;
+    right: -15px;
     top: 28%;
     transform: rotate(-90deg) translateY(-50%);
     transform-origin: center;
     opacity: 0;
+    z-index: 99999;
     transition: opacity 0.3s ease;
 }
-
 /* Parent cell relative positioning */
 .time-slot {
     position: relative; /* Required for absolute positioning of time-label */
@@ -255,4 +255,30 @@ td,.note-text {
     padding: 0px;     white-space: nowrap; 
     overflow: hidden;  
   /* text-overflow: ellipsis; */
+}/* Rotated date styling */
+/* Rotated date styling */
+.rotated-date {
+    position: absolute;
+    left: 30px;
+     bottom: 10px; /* Align to bottom */
+    transform: rotate(-90deg); /* Rotate text */
+     font-size: 30px; /* Adjust font size as needed */
+    font-weight: bold; /* Make text bold */
+    transform-origin: bottom left;
+    white-space: nowrap; /* Prevent text wrapping */
+    text-align: left; /* Align text to the left */
+}
+
+/* Header cell styling */
+#day-headers th {
+    position: relative; /* Allow absolute positioning inside */
+    height: 120px; /* Adjust based on design */
+    padding: 10px; /* Add padding */
+    border: 1px solid #ccc; /* Optional border for styling */
+    background-color: #f9f9f9; /* Optional background color */
+}
+
+/* Optional: Styling for the rest of the header content */
+.day-header-content {
+    margin-top: 20px; /* Adjust to avoid overlap with rotated date */
 }

@@ -323,7 +323,7 @@ function renderHeaders(startOfWeek) {
 
     for (let i = 0; i < 7; i++) {
         const dayDate = addDays(startOfWeek, i);
-        const formattedDate = `${dayDate.getDate()}.${dayDate.getMonth() + 1}.`;
+        const formattedDate = `${dayDate.getDate()}.${(dayDate.getMonth() + 1)}.`; // Day.Month.
 
         console.log(`Checking for formattedDate: "${formattedDate}" in calendarData.`);
         const data = calendarData[formattedDate] || { nameDay: "", holiday: "" };
@@ -342,23 +342,30 @@ function renderHeaders(startOfWeek) {
             dayDate.toLocaleString("cs-CZ", { weekday: "long" })
         );
 
-        th.innerHTML = `
-            <div class="day-header-content">
-                <div class="day-date">
-                    ${dayDate.getDate()}
-                </div>
-                <div class="day-info">
-                    <div class="holiday-name">${data.holiday}</div>
-                    <div class="name-day">${data.nameDay}</div>
-                    <div class="day-name">
-                        <strong>${weekdayName}</strong>
-                    </div>
+        // Create rotated div for the date
+        const rotatedDateDiv = document.createElement("div");
+        rotatedDateDiv.className = "rotated-date";
+        rotatedDateDiv.innerText = formattedDate;
+
+        // Create header content container
+        const headerContentDiv = document.createElement("div");
+        headerContentDiv.className = "day-header-content";
+        headerContentDiv.innerHTML = `
+            <div class="day-info">
+                <div class="holiday-name">${data.holiday}</div>
+                <div class="name-day">${data.nameDay}</div>
+                <div class="day-name">
+                    <strong>${weekdayName}</strong>
                 </div>
             </div>
         `;
+
+        th.appendChild(rotatedDateDiv); // Append rotated date
+        th.appendChild(headerContentDiv); // Append the rest of the header content
         dayHeaders.appendChild(th);
     }
 }
+
 
 // ========================
 // Render Time Slots
