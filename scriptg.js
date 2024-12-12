@@ -536,13 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     topMicIcon = document.querySelector("#top-mic-icon");
 
-    // Ověření existence spinner-template
-    const spinnerTemplate = document.getElementById("spinner-template");
-    if (!spinnerTemplate) {
-        console.error("Spinner template not found in DOM!");
-    } else {
-        console.log("Spinner template successfully found.");
-    }
+   
 
     // Load the last selected date from local storage
     const savedDateStr = localStorage.getItem("selectedDate");
