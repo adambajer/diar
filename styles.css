@@ -51,7 +51,7 @@ td,.note-text {
 .note-text {
     min-height: 50px;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 0px;
     padding: 4px;
     cursor: text;
     background-color: #fff;
