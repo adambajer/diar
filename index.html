@@ -29,14 +29,12 @@
     <header class="mdc-top-app-bar">
         <div class="mdc-top-app-bar__row">
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-            <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button" aria-label="Open navigation menu" id="openCalendar">menu</button>
-            <span class="mdc-top-app-bar__title">
-              <div id="openCalendar" class="month-header ps-2 pe-2">
-              </div></span>
+                
               <!-- Week Navigation -->
-            <div class="week-navigation" style="display: flex; align-items: center; margin-left: 20px;">
+            <div class="week-navigation" >
+                <div aria-label="Open navigation menu" id="openCalendar"><span id="current-week-interval"  >19.11.2024 - 25.11.2024</span></div>
                 <button class="mdc-icon-button material-icons" id="prevWeek" aria-label="Předchozí týden">chevron_left</button>
-                <span id="current-week-interval" style="margin: 0 10px; font-weight: bold;">19.11.2024 - 25.11.2024</span>
+
                 <button class="mdc-icon-button material-icons" id="nextWeek" aria-label="Další týden">chevron_right</button>
             </div>  
           </section> 

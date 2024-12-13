@@ -307,10 +307,10 @@ function populatePlannerWithNotes(notes) {
         }
     }
 }
+// ========================
+// Calendar Rendering Functions
+// ========================
 
-// ========================
-// Render Headers
-// ========================
 function renderHeaders(startOfWeek) {
     const dayHeaders = document.getElementById("day-headers");
     if (!dayHeaders) {
@@ -319,57 +319,41 @@ function renderHeaders(startOfWeek) {
     }
     dayHeaders.innerHTML = ""; // Clear existing headers
 
-    console.log("Rendering day headers...");
-
     for (let i = 0; i < 7; i++) {
         const dayDate = addDays(startOfWeek, i);
         const formattedDate = `${dayDate.getDate()}.${(dayDate.getMonth() + 1)}.`; // Day.Month.
-
-        console.log(`Checking for formattedDate: "${formattedDate}" in calendarData.`);
-        const data = calendarData[formattedDate] || { nameDay: "", holiday: "" };
-
-        console.log(`Data for ${formattedDate}:`, data);
-
+        const day2 = dayDate.getDate() < 10 ? `0${dayDate.getDate()}` : dayDate.getDate();
+const month2 = (dayDate.getMonth() + 1) < 10 ? `0${dayDate.getMonth() + 1}` : (dayDate.getMonth() + 1);
+const formattedDate2 = `${day2}.${month2}.`;
         const th = document.createElement("th");
-        th.className = "mdc-data-table__header-cell day-header";
+        th.classList.add("mdc-data-table__header-cell", "day-header");
 
-        // Add CSS class for holidays
-        if (data.holiday) {
-            th.classList.add("holiday");
-        }
+        const weekdayName = capitalizeFirstLetter(dayDate.toLocaleString("cs-CZ", { weekday: "long" }));
 
-        const weekdayName = capitalizeFirstLetter(
-            dayDate.toLocaleString("cs-CZ", { weekday: "long" })
-        );
-
-        // Create rotated div for the date
         const rotatedDateDiv = document.createElement("div");
-        rotatedDateDiv.className = "rotated-date";
-        rotatedDateDiv.innerText = formattedDate;
+        rotatedDateDiv.classList.add("rotated-date");
+        rotatedDateDiv.innerText = formattedDate2;
 
-        // Create header content container
         const headerContentDiv = document.createElement("div");
-        headerContentDiv.className = "day-header-content";
+        headerContentDiv.classList.add("day-header-content");
+
         headerContentDiv.innerHTML = `
-            <div class="day-info">
-            <div class="holiday-name" title="${data.holiday}">${data.holiday}</div>
-                <div class="name-day">${data.nameDay}</div>
+            <div class="mdc-typography--body2 day-info">
+                <div class="holiday-name">${calendarData[formattedDate]?.holiday || ""}</div>
+                <div class="name-day">${calendarData[formattedDate]?.nameDay || ""}</div>
                 <div class="day-name">
                     <strong>${weekdayName}</strong>
                 </div>
             </div>
         `;
 
-        th.appendChild(rotatedDateDiv); // Append rotated date
-        th.appendChild(headerContentDiv); // Append the rest of the header content
+        th.appendChild(rotatedDateDiv);
+        th.appendChild(headerContentDiv);
         dayHeaders.appendChild(th);
     }
 }
 
 
-// ========================
-// Render Time Slots
-// ========================
 function renderTimeSlots(startOfWeek) {
     const tbody = document.getElementById("time-slots");
     if (!tbody) {
@@ -393,7 +377,6 @@ function renderTimeSlots(startOfWeek) {
         tbody.appendChild(row);
     }
 }
-
 function createTimeSlotCell(day, hour, startOfWeek) {
     const cell = document.createElement("td");
     cell.className = "time-slot mdc-data-table__cell";
@@ -401,41 +384,11 @@ function createTimeSlotCell(day, hour, startOfWeek) {
     cell.dataset.hour = hour;
     cell.tabIndex = 0; // Enable focus for keyboard navigation
 
-    // Create the note container
     const noteContainer = createNoteContainer(day, hour, startOfWeek);
     cell.appendChild(noteContainer);
 
-    // Create and append the spinner
-    const spinnerTemplate = document.getElementById("spinner-template");
-    if (!spinnerTemplate) {
-        console.error("Spinner template not found!");
-        return cell;
-    }
-    const spinnerClone = spinnerTemplate.content.cloneNode(true);
-    cell.appendChild(spinnerClone);
-
-    // Now, get the spinnerElement from the cell
-    const spinnerElement = cell.querySelector(".mdc-circular-progress");
-    if (!spinnerElement) {
-        console.error("Spinner element not found in cloned template!");
-        return cell;
-    }
-
-    // Initialize MDC Circular Progress
-    const spinner = new mdc.circularProgress.MDCCircularProgress(spinnerElement);
-    spinner.determinate = true;
-    spinner.progress = 0; // Start with 0% progress
-    spinnerElement.style.display = "none"; // Hide spinner initially
-
-    // Load and display notes
-    fetchNoteForCell(noteContainer.querySelector(".note-text"), day, hour, startOfWeek, spinnerElement);
-
     return cell;
 }
-
-// ========================
-// Create Note Container
-// ========================
 function createNoteContainer(day, hour, startOfWeek) {
     const container = document.createElement("div");
     container.className = "note-text-container";
@@ -452,9 +405,6 @@ function createNoteContainer(day, hour, startOfWeek) {
     return container;
 }
 
-// ========================
-// Create Note Text Element
-// ========================
 function createNoteTextElement(day, hour) {
     const noteText = document.createElement("div");
     noteText.className = "note-text mdc-typography--body1";
@@ -1647,4 +1597,4 @@ const calendarData = {
     "29.12.": { nameDay: "Judita", holiday: "" },
     "30.12.": { nameDay: "David", holiday: "" },
     "31.12.": { nameDay: "Silvestr", holiday: "" }
-};
+}; 
