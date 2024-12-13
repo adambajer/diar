@@ -961,19 +961,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const snackbarElement = document.querySelector('.mdc-snackbar');
     const snackbar = new mdc.snackbar.MDCSnackbar(snackbarElement);
 
-    // Replace showToast function to use MDC Snackbar
-    window.showToast = function(message, type = 'success') {
+    window.showToast = function(message, type = 'success', actionText = null, actionHandler = null) {
         const snackbarLabel = snackbarElement.querySelector('.mdc-snackbar__label');
+        const snackbarSurface = snackbarElement.querySelector('.mdc-snackbar__surface');
         const snackbarAction = snackbarElement.querySelector('.mdc-snackbar__action');
-        
-        // Set message
+    
+        // Set the message
         snackbarLabel.textContent = message;
-
-        // Optionally, set a custom action or icon based on type
-        // For simplicity, we'll just set the label
+    
+        // Remove existing type classes
+        snackbarElement.classList.remove('snackbar-success', 'snackbar-error', 'snackbar-warning');
+    
+        // Add the new type class based on 'type' parameter
+        switch(type.toLowerCase()) {
+            case 'success':
+                snackbarElement.classList.add('snackbar-success');
+                break;
+            case 'error':
+                snackbarElement.classList.add('snackbar-error');
+                break;
+            case 'warning':
+                snackbarElement.classList.add('snackbar-warning');
+                break;
+            default:
+                console.warn(`Unknown toast type: '${type}'. Defaulting to 'success'.`);
+                snackbarElement.classList.add('snackbar-success');
+        }
+    
+        // Configure action button if provided
+        if (actionText && actionHandler) {
+            snackbarAction.textContent = actionText;
+            snackbarAction.style.display = 'inline-block'; // Ensure it's visible
+            snackbarAction.onclick = actionHandler;
+        } else {
+            snackbarAction.style.display = 'none'; // Hide if no action
+        }
+    
+        // Open the snackbar
         snackbar.open();
     };
-
+    
     document.getElementById("go-to-today").addEventListener("click", () => {
         // Set the baseDate to the current date
         baseDate = new Date();

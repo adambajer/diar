@@ -156,8 +156,9 @@ td, .note-text, .mdc-data-table__cell {
 
 /* Snackbar */
 .mdc-snackbar__surface {
-    background-color: #b5b5b5;
+    background-color: #ffffff;
     color: #fff;
+    border: 1px solid;
 }
 
 .mdc-snackbar__label {
@@ -385,9 +386,48 @@ td, .mdc-data-table__cell {
     box-sizing: border-box; /* Ensure padding and borders are included in height */
     vertical-align: top; /* Align content to the top to prevent uneven heights */
 }
+.year-calendar-modal .mdc-data-table__cell {
 
+    height: auto;
+    /* line-height: 52px; */
+    /* min-height: 52px; */
+    padding: 8px;
+    box-sizing: border-box;
+    vertical-align: middle;
+    text-align: center;
+} 
 /* Ensure consistent borders */
 td, th {
     border-left: 1px solid #ccc; /* Standard border for all cells */
 }
 
+.snackbar-success .mdc-snackbar__surface {
+    border-color: #206d58;
+     /* Green */
+ 
+     box-shadow: 0 0 5px 0px #206d58;
+}
+.snackbar-success .mdc-snackbar__label {
+
+    color: #206d58; /* Green */
+}
+/* Error Toast */
+.snackbar-error .mdc-snackbar__surface {
+    border-color: #ff0000; /* Red */
+    
+    box-shadow: 0 0 5px 0px #ff0000;
+}
+
+.snackbar-error  .mdc-snackbar__label {
+ 
+    color: #ff0000; /* Red */
+}
+/* Warning Toast */
+.snackbar-warning .mdc-snackbar__surface {
+    border-color: #8f5600;
+    box-shadow: 0 0 5 0px #8f5600;
+}
+.snackbar-warning .mdc-snackbar__label {
+ 
+    color: #8f5600; /* Orange */
+}
