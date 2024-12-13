@@ -352,7 +352,7 @@ function renderHeaders(startOfWeek) {
         headerContentDiv.className = "day-header-content";
         headerContentDiv.innerHTML = `
             <div class="day-info">
-                <div class="holiday-name">${data.holiday}</div>
+            <div class="holiday-name" title="${data.holiday}">${data.holiday}</div>
                 <div class="name-day">${data.nameDay}</div>
                 <div class="day-name">
                     <strong>${weekdayName}</strong>
