@@ -32,18 +32,31 @@
                 
               <!-- Week Navigation -->
             <div class="week-navigation" >
-                <div aria-label="Open navigation menu" id="openCalendar"><span id="current-week-interval"  >19.11.2024 - 25.11.2024</span></div>
-                <button class="mdc-icon-button material-icons" id="prevWeek" aria-label="Předchozí týden">chevron_left</button>
+                
+                <span class="material-icons" id="prevWeek" aria-label="Předchozí týden">chevron_left</span>
 
-                <button class="mdc-icon-button material-icons" id="nextWeek" aria-label="Další týden">chevron_right</button>
+                <div aria-label="Open navigation menu" id="openCalendar"><span id="current-week-interval"  >19.11.2024 - 25.11.2024</span></div>
+                
+                <span class="material-icons" id="nextWeek" aria-label="Další týden">chevron_right</span>
             </div>  
           </section> 
+          
           <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
-      
+            <div class="clock">
+                <div class="center-dot"></div>
+                <div class="hand hour-hand"></div>
+                <div class="hand minute-hand"></div>
+                <div class="hand second-hand"></div>
+                <div class="numbers"></div>
+            </div>
+          </section>
+          <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+            
                 <!-- Datum a čas -->
             <div class="mdc-typography--body1" id="go-to-today">
                 <span id="real-time-date" class="fw-bold">19.11.2024</span>
-                <span id="real-time-clock">00:00:00</span>
+                 
+                
             </div>
         </section> 
         </div>

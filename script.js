@@ -39,7 +39,7 @@ let isSwiping = false;
 /**
  * Data kalendáře obsahující svátky a jmeniny.
  * Klíče jsou formátovány jako "den.měsíc.", např. "1.1." pro 1. ledna.
- */ 
+ */
 
 // ========================
 // Utility and Helper Functions
@@ -86,7 +86,7 @@ function updateWeekIntervalDisplay() {
     const endOfWeek = getEndOfWeek(startOfWeek);
     const formattedStart = format(startOfWeek, 'dd.MM.yyyy');
     const formattedEnd = format(endOfWeek, 'dd.MM.yyyy');
-    weekIntervalElement.innerText = `${formattedStart} - ${formattedEnd}`;
+    weekIntervalElement.innerText = `${formattedStart}\n ${formattedEnd}`;
 }
 
 // Get Week Number for a Date (ISO 8601)
@@ -323,8 +323,8 @@ function renderHeaders(startOfWeek) {
         const dayDate = addDays(startOfWeek, i);
         const formattedDate = `${dayDate.getDate()}.${(dayDate.getMonth() + 1)}.`; // Day.Month.
         const day2 = dayDate.getDate() < 10 ? `0${dayDate.getDate()}` : dayDate.getDate();
-const month2 = (dayDate.getMonth() + 1) < 10 ? `0${dayDate.getMonth() + 1}` : (dayDate.getMonth() + 1);
-const formattedDate2 = `${day2}.${month2}.`;
+        const month2 = (dayDate.getMonth() + 1) < 10 ? `0${dayDate.getMonth() + 1}` : (dayDate.getMonth() + 1);
+        const formattedDate2 = `${day2}.${month2}.`;
         const th = document.createElement("th");
         th.classList.add("mdc-data-table__header-cell", "day-header");
 
@@ -499,7 +499,7 @@ function renderYearCalendarModal() {
     let selectedMonth = baseDate.getMonth(); // 0-indexed (0 = January)
     let daysInMonth = new Date(currentYear, selectedMonth + 1, 0).getDate();
     let firstDay = new Date(currentYear, selectedMonth, 1);
-    
+
     // Get and display the interval for the current week
     let weekStartDate = getStartOfWeek(baseDate);
     let weekEndDate = getEndOfWeek(weekStartDate);
@@ -948,8 +948,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         console.log("No saved date found. Using current date.");
     }
+    setupAnalogClock();
 
-    setupClock();
     renderPlanner();
     setupSwipeListeners(); // Attach swipe listeners to the initial planner
     setupWebSpeechAPI(); // Initialize Web Speech API for voice transcription
@@ -961,19 +961,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const snackbarElement = document.querySelector('.mdc-snackbar');
     const snackbar = new mdc.snackbar.MDCSnackbar(snackbarElement);
 
-    window.showToast = function(message, type = 'success', actionText = null, actionHandler = null) {
+    window.showToast = function (message, type = 'success', actionText = null, actionHandler = null) {
         const snackbarLabel = snackbarElement.querySelector('.mdc-snackbar__label');
         const snackbarSurface = snackbarElement.querySelector('.mdc-snackbar__surface');
         const snackbarAction = snackbarElement.querySelector('.mdc-snackbar__action');
-    
+
         // Set the message
         snackbarLabel.textContent = message;
-    
+
         // Remove existing type classes
         snackbarElement.classList.remove('snackbar-success', 'snackbar-error', 'snackbar-warning');
-    
+
         // Add the new type class based on 'type' parameter
-        switch(type.toLowerCase()) {
+        switch (type.toLowerCase()) {
             case 'success':
                 snackbarElement.classList.add('snackbar-success');
                 break;
@@ -987,7 +987,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.warn(`Unknown toast type: '${type}'. Defaulting to 'success'.`);
                 snackbarElement.classList.add('snackbar-success');
         }
-    
+
         // Configure action button if provided
         if (actionText && actionHandler) {
             snackbarAction.textContent = actionText;
@@ -996,11 +996,11 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             snackbarAction.style.display = 'none'; // Hide if no action
         }
-    
+
         // Open the snackbar
         snackbar.open();
     };
-    
+
     document.getElementById("go-to-today").addEventListener("click", () => {
         // Set the baseDate to the current date
         baseDate = new Date();
@@ -1226,36 +1226,55 @@ function stopTranscription() {
 
 // (Already replaced showToast during initialization)
 
-// ========================
-// Real-Time Clock and Date
-// ========================
-function setupClock() {
-    const clockElement = document.getElementById("real-time-clock");
+function setupAnalogClock() {
     const dateElement = document.getElementById("real-time-date");
 
-    if (!clockElement || !dateElement) {
-        console.error("Clock or date elements not found!");
-        return;
+    const numbersDiv = document.querySelector('.numbers');
+    for (let i = 1; i <= 12; i++) {
+        const number = document.createElement('div');
+        number.className = 'number';
+        number.style.transform = `rotate(${i * 30}deg)`;
+
+        const text = document.createElement('div');
+        text.style.transform = `rotate(-${i * 30}deg)`;
+        text.textContent = i;
+        text.style.position = 'absolute';
+        text.style.width = '12px';
+        text.style.top = '2px';
+        text.style.left = '50%';
+        text.style.marginLeft = '-6px';
+
+        number.appendChild(text);
+        numbersDiv.appendChild(number);
     }
 
-    console.log("Initializing real-time clock...");
+    function updateAnalogClock() {
+        baseDate = new Date();
+console.log(baseDate);
+        const seconds = baseDate.getSeconds();
+        const minutes = baseDate.getMinutes();
+        const hours = baseDate.getHours() % 12;
 
-    function updateClock() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        clockElement.innerText = `${hours}:${minutes}:${seconds}`;
+        // Each second = 6 degrees (360/60)
+        // Each minute = 6 degrees + a bit extra for the passing seconds (0.1 degrees per second)
+        // Each hour = 30 degrees per hour + 0.5 degrees per minute for a smooth movement
+        const secondAngle = (seconds * 6);
+        const minuteAngle = (minutes * 6 + seconds);
+        const hourAngle = (hours * 30 + minutes);
 
-        const day = now.getDate().toString().padStart(2, '0');
-        const month = (now.getMonth() + 1).toString().padStart(2, '0');
-        const year = now.getFullYear();
-        dateElement.innerText = `${day}.${month}.${year}`;
+        document.querySelector('.second-hand').style.transform =
+            `translateX(-50%) rotate(${secondAngle}deg)`;
+        document.querySelector('.minute-hand').style.transform =
+            `translateX(-50%) rotate(${minuteAngle}deg)`;
+        document.querySelector('.hour-hand').style.transform =
+            `translateX(-50%) rotate(${hourAngle}deg)`;
+
     }
 
-    updateClock(); // Initial call
-    setInterval(updateClock, 1000); // Update every second
+    updateAnalogClock();
+    setInterval(updateAnalogClock, 1000);
 }
+
 
 const calendarData = {
     "1.1.": { nameDay: "Nový rok", holiday: "Nový rok" },
