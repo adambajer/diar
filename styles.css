@@ -131,9 +131,7 @@ td, .note-text, .mdc-data-table__cell {
 }
 
 /* Dialog Modal */
-.year-calendar-modal .mdc-dialog {
-    width: 80%;
-    max-width: 800px;
+.year-calendar-modal .mdc-dialog { 
 }
 
 .year-calendar-modal table {
