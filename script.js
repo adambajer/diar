@@ -195,7 +195,7 @@ async function saveNoteToFirebase(date, time, text) {
         })
         .catch(error => {
             console.error(`Error saving note for ${date} at ${time}:`, error);
-            showToast("Nepodařilo se uložit poznámku. Prosím, zkuste to znovu.", 'error');
+            showToast("Chyba ukládání poznámky.", 'error');
         });
 }
 
@@ -1050,7 +1050,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentTranscribingCell) {
                 startTranscription(currentTranscribingCell);
             } else {
-                showToast("Napřed vyberte buňku, jestli chcete přepsat hlas!", 'warning');
+                showToast("Napřed vyberte buňku, potom lze zapisovat hlasem!", 'warning');
                 topMicIcon.classList.add("shake");
                 topMicIcon.classList.add("feedback-orange");
 
@@ -1142,7 +1142,7 @@ function setupWebSpeechAPI() {
             console.log(`Saving transcription for day ${day}, hour ${hour}: "${transcript}"`);
             saveNoteToFirebase(date, time, transcript)
                 .then(() => {
-                    showToast(`Poznámka přidána: "${transcript}"`, 'success');
+                    showToast(`Poznámka uložena: "${transcript}"`, 'success');
                 })
                 .catch((error) => {
                     showToast("Chyba při ukládání poznámky.", 'error');
@@ -1170,7 +1170,7 @@ function setupWebSpeechAPI() {
 
     recognition.addEventListener('error', (event) => {
         console.error(`Voice transcription error (${event.error}):`, event);
-        showToast(`Chyba přepisu hlasu: ${event.error}.`, 'error');
+        showToast(`Chyba zapisování poznámky z hlasu: ${event.error}.`, 'error');
         if (isRecognizing) {
             stopTranscription();
         }
@@ -1180,7 +1180,7 @@ function setupWebSpeechAPI() {
 // Start Transcription
 function startTranscription(noteTextElement) {
     if (isRecognizing) {
-        showToast("Přepis je již spuštěn.", 'info');
+        showToast("Zapisování pomocí hlasu je již spuštěno.", 'info');
         return;
     }
 
@@ -1196,10 +1196,10 @@ function startTranscription(noteTextElement) {
     try {
         recognition.start();
         isRecognizing = true;
-        showToast("Začíná přepis hlasu. Můžete mluvit.", 'success');
+        showToast("Poslouchám, diktujte poznámku.", 'success');
     } catch (error) {
         console.error("Error starting voice transcription:", error);
-        showToast("Nepodařilo se spustit přepis hlasu.", 'error');
+        showToast("Zápis hlasu se nezdařil!", 'error');
         stopTranscription();
     }
 }
@@ -1228,6 +1228,7 @@ function stopTranscription() {
 
 function setupAnalogClock() {
     const dateElement = document.getElementById("real-time-date");
+    const yearElement = document.getElementById("real-time-year");
 
     const numbersDiv = document.querySelector('.numbers');
     for (let i = 1; i <= 12; i++) {
@@ -1249,11 +1250,16 @@ function setupAnalogClock() {
     }
 
     function updateAnalogClock() {
-        baseDate = new Date();
-console.log(baseDate);
-        const seconds = baseDate.getSeconds();
-        const minutes = baseDate.getMinutes();
-        const hours = baseDate.getHours() % 12;
+      
+       let  baseDate2 = new Date();
+        const month = (baseDate2.getMonth() + 1).toString().padStart(2, '0');
+        const day = baseDate2.getDate().toString().padStart(2, '0');
+        
+        dateElement.innerText = day+ '.'+month+ '.';
+        yearElement.innerText = baseDate2.getFullYear().toString().padStart(2, '0');
+         const seconds = baseDate2.getSeconds();
+        const minutes = baseDate2.getMinutes();
+        const hours = baseDate2.getHours() % 12;
 
         // Each second = 6 degrees (360/60)
         // Each minute = 6 degrees + a bit extra for the passing seconds (0.1 degrees per second)
@@ -1643,4 +1649,15 @@ const calendarData = {
     "29.12.": { nameDay: "Judita", holiday: "" },
     "30.12.": { nameDay: "David", holiday: "" },
     "31.12.": { nameDay: "Silvestr", holiday: "" }
-}; 
+}; // Get today's date in YYYY-MM-DD format
+const today = new Date().toISOString().split('T')[0];
+
+// Select all table headers inside #planner-container
+const headers = document.querySelectorAll('#planner-container th');
+
+// Loop through each header and check if it matches today's date
+headers.forEach(th => {
+  if (th.dataset.date === today) {
+    th.classList.add('today'); // Add a class to highlight today's column
+  }
+});
