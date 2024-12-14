@@ -90,7 +90,7 @@ td, .note-text, .mdc-data-table__cell {
     width: 100%;
     color: black;
     background-color: white;
-    border: 1px solid  black;
+    border: 1px solid #ccc;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -426,7 +426,7 @@ td, th {
     height: 56px;
     border-radius: 50%;
     background: #ffffff;
-    border:1px solid black; 
+    border:1px solid white! 
         position: relative;
  }
 
@@ -486,5 +486,5 @@ td, th {
       }
   section { 
     padding: 4px !important;
-    justify-content: center;
+    
      }      
