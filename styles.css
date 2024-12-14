@@ -258,6 +258,7 @@ td, .note-text, .mdc-data-table__cell {
 /* Header Cell Styling */
 #day-headers th {
     position: relative; /* Allow absolute positioning inside */
+    border:	0px;
     padding: 10px; /* Add padding */
      background-color: #f9f9f9; /* Optional background color */
 }
